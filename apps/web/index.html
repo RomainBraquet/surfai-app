@@ -1215,39 +1215,55 @@ select option { background: #0d2137; color: #f0f4ff; }
         }
 
         async function loadFavoriteSpots() {
-          const container = document.getElementById('fav-spots-list');
-          if (!container) return;
-          try {
-            const userId = dataManager.currentUserId;
-            if (!userId || userId === 'demo_user') {
-              container.innerHTML = '<div class="empty">Connectez Supabase pour voir vos favoris.</div>';
-              return;
-            }
-            const res = await fetch(`${backendUrl}/api/v1/spots?favorites=true&userId=${userId}`);
-            const data = await res.json();
-            const spots = data.spots || [];
-            if (!spots.length) {
-              container.innerHTML = '<div class="empty">Surfez plus pour voir apparaître vos favoris !</div>';
-              return;
-            }
-            container.innerHTML = spots.map(s => {
-              const scoreInfo = _spotScoresCache[s.id];
-              const scoreBadge = scoreInfo
-                ? `<span class="spot-score" style="color:${scoreInfo.score >= 8 ? '#4dff91' : scoreInfo.score >= 6 ? '#00cfff' : '#ed8936'}">${scoreInfo.score} demain</span>`
-                : '';
-              return `
-              <div class="spot-row" onclick="showSpotDetail('${s.id}', '${(s.name || '').replace(/'/g,"\\'")}', ${s.lat || 0}, ${s.lng || 0})">
-                <div>
-                  <div class="spot-name">⭐ ${s.name}</div>
-                  <div class="spot-city">${s.city || ''}</div>
-                </div>
-                ${scoreBadge}<span style="color:rgba(255,255,255,0.3);font-size:1.1rem">›</span>
-              </div>`;
-            }).join('');
-          } catch (e) {
-            container.innerHTML = '<div class="empty">Erreur chargement favoris.</div>';
-          }
-        }
+  const container = document.getElementById('fav-spots-list');
+  if (!container) return;
+  const userId = dataManager.currentUserId;
+  if (!userId || userId === 'demo_user' || !dataManager.supabase) {
+    container.innerHTML = '<div class="empty">Connectez-vous pour voir vos favoris.</div>';
+    return;
+  }
+  try {
+    const { data: favRows, error } = await dataManager.supabase
+      .from('user_favorite_spots')
+      .select('spot_id')
+      .eq('user_id', userId);
+    if (error) throw error;
+    if (!favRows || !favRows.length) {
+      container.innerHTML = '<div class="empty">Aucun favori. Explorez l\'annuaire !</div>';
+      return;
+    }
+    const favIds = new Set(favRows.map(r => r.spot_id));
+    const allSpots = await dataManager.getSpots();
+    const spots = [];
+    Object.values(allSpots).forEach(regions =>
+      Object.values(regions).forEach(cities =>
+        Object.values(cities).forEach(ss =>
+          ss.forEach(s => { if (favIds.has(s.id)) spots.push(s); })
+        )
+      )
+    );
+    if (!spots.length) {
+      container.innerHTML = '<div class="empty">Aucun favori. Explorez l\'annuaire !</div>';
+      return;
+    }
+    container.innerHTML = spots.map(s => {
+      const scoreInfo = _spotScoresCache[s.id];
+      const scoreBadge = scoreInfo
+        ? `<span class="spot-score" style="color:${scoreInfo.score >= 8 ? '#4dff91' : scoreInfo.score >= 6 ? '#00cfff' : '#ed8936'}">${scoreInfo.score} demain</span>`
+        : '';
+      return `
+        <div class="spot-row" onclick="showSpotDetail('${s.id}', '${(s.name || '').replace(/'/g,"\\'")}', ${s.lat || s.coords?.lat || 0}, ${s.lng || s.coords?.lng || 0})">
+          <div>
+            <div class="spot-name">⭐ ${s.name}</div>
+            <div class="spot-city">${s.city || ''}</div>
+          </div>
+          ${scoreBadge}<span style="color:rgba(255,255,255,0.3);font-size:1.1rem">›</span>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    container.innerHTML = '<div class="empty">Erreur chargement favoris.</div>';
+  }
+}
 
         async function prefetchSpotScores(userId) {
           if (!userId || userId === 'demo_user') return;
@@ -1735,9 +1751,6 @@ select option { background: #0d2137; color: #f0f4ff; }
                         });
                     }
                 });
-                
-                // Afficher spots dans l'onglet spots
-                displayAllSpots(spots);
                 
             } catch (error) {
                 console.error('Erreur chargement spots:', error);
