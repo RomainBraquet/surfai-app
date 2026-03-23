@@ -1014,27 +1014,52 @@ select option { background: #0d2137; color: #f0f4ff; }
         // ========================================
 
         async function initAuth() {
+            // Flag pour éviter double-init (onAuthStateChange + getSession)
+            let authHandled = false;
+
+            async function handleSignIn(session) {
+                if (authHandled) return;
+                authHandled = true;
+                dataManager.currentUserId = session.user.id;
+                dataManager.supabase = supabaseClient;
+                if (window.location.search.includes('code=')) {
+                    window.history.replaceState({}, '', window.location.pathname);
+                }
+                hideLoginOverlay();
+                await checkOnboarding();
+            }
+
             supabaseClient.auth.onAuthStateChange(async (event, session) => {
-                if (event === 'SIGNED_IN' && session) {
-                    dataManager.currentUserId = session.user.id;
-                    dataManager.supabase = supabaseClient;
-                    if (window.location.search.includes('code=')) {
-                        window.history.replaceState({}, '', window.location.pathname);
-                    }
-                    hideLoginOverlay();
-                    await checkOnboarding();
+                console.log('[Auth] event:', event, 'session:', !!session);
+                if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+                    await handleSignIn(session);
                 } else if (event === 'SIGNED_OUT') {
+                    authHandled = false;
                     dataManager.currentUserId = null;
                     userData = { sessions: [], spots: [], favoriteSpots: [], predictions: [], profile: {}, boards: [] };
                     showLoginOverlay();
                 }
             });
 
+            // Si ?code= dans l'URL, le SDK va l'échanger via onAuthStateChange
+            // On attend un peu pour laisser le callback se déclencher
+            if (window.location.search.includes('code=')) {
+                console.log('[Auth] Code PKCE détecté, attente échange...');
+                // Le SDK échange le code automatiquement, onAuthStateChange gèrera le SIGNED_IN
+                // Timeout de sécurité : si rien ne se passe en 5s, montrer le login
+                setTimeout(() => {
+                    if (!authHandled) {
+                        console.warn('[Auth] Échange PKCE timeout — affichage login');
+                        showLoginOverlay();
+                    }
+                }, 5000);
+                return;
+            }
+
+            // Pas de code dans l'URL : vérifier session existante
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
-                dataManager.currentUserId = session.user.id;
-                dataManager.supabase = supabaseClient;
-                await checkOnboarding();
+                await handleSignIn(session);
             } else {
                 showLoginOverlay();
             }
