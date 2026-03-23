@@ -372,10 +372,10 @@ select option { background: #0d2137; color: #f0f4ff; }
     <div id="tab-spots" class="tab-panel">
       <div class="spot-list-view" id="spots-list-view">
         <div class="filter-row">
-          <select id="spots-country" onchange="filterSpots()">
+          <select id="spots-country" onchange="onSpotsCountryChange()">
             <option value="">Pays</option>
           </select>
-          <select id="spots-region" onchange="filterSpots()">
+          <select id="spots-region" onchange="onSpotsRegionChange()">
             <option value="">Région</option>
           </select>
           <select id="spots-city" onchange="filterSpots()">
@@ -1183,6 +1183,35 @@ select option { background: #0d2137; color: #f0f4ff; }
               countrySelect.appendChild(opt);
             });
           }
+        }
+
+        async function onSpotsCountryChange() {
+          const country = document.getElementById('spots-country').value;
+          const regionSel = document.getElementById('spots-region');
+          const citySel = document.getElementById('spots-city');
+          regionSel.innerHTML = '<option value="">Région</option>';
+          citySel.innerHTML = '<option value="">Ville</option>';
+          if (country) {
+            const spots = await dataManager.getSpots();
+            Object.keys(spots[country] || {}).forEach(r => {
+              regionSel.innerHTML += `<option value="${r}">${r}</option>`;
+            });
+          }
+          filterSpots();
+        }
+
+        async function onSpotsRegionChange() {
+          const country = document.getElementById('spots-country').value;
+          const region  = document.getElementById('spots-region').value;
+          const citySel = document.getElementById('spots-city');
+          citySel.innerHTML = '<option value="">Ville</option>';
+          if (country && region) {
+            const spots = await dataManager.getSpots();
+            Object.keys(spots[country]?.[region] || {}).forEach(c => {
+              citySel.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+          }
+          filterSpots();
         }
 
         async function loadFavoriteSpots() {
