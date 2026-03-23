@@ -1020,19 +1020,26 @@ select option { background: #0d2137; color: #f0f4ff; }
             async function handleSignIn(session) {
                 if (authHandled) return;
                 authHandled = true;
+                console.log('[Auth] handleSignIn userId:', session.user.id);
                 dataManager.currentUserId = session.user.id;
                 dataManager.supabase = supabaseClient;
                 if (window.location.search.includes('code=')) {
                     window.history.replaceState({}, '', window.location.pathname);
                 }
                 hideLoginOverlay();
-                await checkOnboarding();
+                try {
+                    await checkOnboarding(session.user.id);
+                } catch(e) {
+                    console.error('[Auth] handleSignIn error:', e);
+                }
             }
 
-            supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            supabaseClient.auth.onAuthStateChange((event, session) => {
                 console.log('[Auth] event:', event, 'session:', !!session);
+                // IMPORTANT : ne pas faire d'await dans ce callback (deadlock SDK v2)
+                // Déférer le travail async hors du callback
                 if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
-                    await handleSignIn(session);
+                    setTimeout(() => handleSignIn(session), 0);
                 } else if (event === 'SIGNED_OUT') {
                     authHandled = false;
                     dataManager.currentUserId = null;
@@ -1138,16 +1145,30 @@ select option { background: #0d2137; color: #f0f4ff; }
 
         // --- Onboarding ---
 
-        async function checkOnboarding() {
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            const { data } = await supabaseClient
-                .from('profiles')
-                .select('id')
-                .eq('id', user.id)
-                .single();
-            if (!data) {
-                showOnboarding(user.id);
-            } else {
+        async function checkOnboarding(userId) {
+            try {
+                console.log('[Auth] checkOnboarding userId:', userId);
+                // Timeout de 5s pour éviter un hang infini
+                const profilePromise = supabaseClient
+                    .from('profiles')
+                    .select('id')
+                    .eq('id', userId)
+                    .maybeSingle();
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('profiles query timeout')), 5000)
+                );
+                const { data, error } = await Promise.race([profilePromise, timeoutPromise]);
+                console.log('[Auth] profile found:', !!data, 'error:', error?.message);
+
+                if (!data) {
+                    showOnboarding(userId);
+                } else {
+                    await initApp();
+                }
+            } catch (err) {
+                console.error('[Auth] checkOnboarding error:', err);
+                // Timeout ou erreur → tenter initApp directement (le profil existe peut-être mais RLS bloque)
+                console.log('[Auth] Fallback: lancement initApp malgré erreur');
                 await initApp();
             }
         }
