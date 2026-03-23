@@ -1225,6 +1225,8 @@ select option { background: #0d2137; color: #f0f4ff; }
               .map(r => `<option value="${r}">${r}</option>`)
               .join('');
             regionSel.innerHTML = '<option value="">Région</option>' + regionHtml;
+          } else {
+            regionSel.innerHTML = '<option value="">Région</option>';
           }
           await filterSpots();
         }
@@ -1525,9 +1527,19 @@ select option { background: #0d2137; color: #f0f4ff; }
             const userId = dataManager.currentUserId;
             let favSpots = [];
             if (userId && userId !== 'demo_user') {
-              const res = await fetch(`${backendUrl}/api/v1/spots?favorites=true&userId=${userId}`);
-              const data = await res.json();
-              favSpots = data.spots || [];
+              const { data: favRows } = await dataManager.supabase
+                .from('user_favorite_spots')
+                .select('spot_id')
+                .eq('user_id', userId);
+              const favIds = (favRows || []).map(r => r.spot_id);
+                const allSpotsForFav = await dataManager.getSpots();
+              Object.values(allSpotsForFav).forEach(regions =>
+                Object.values(regions).forEach(cities =>
+                  Object.values(cities).forEach(spots =>
+                    spots.forEach(s => { if (favIds.includes(s.id)) favSpots.push(s); })
+                  )
+                )
+              );
             }
             if (favSpots.length) {
               const grpFav = document.createElement('optgroup');
@@ -1712,13 +1724,6 @@ select option { background: #0d2137; color: #f0f4ff; }
                 </div>
               </details>
             </div>`;
-
-          const sessionsHtml = sessions.slice(0, 10).map(s => {
-            const date = new Date(s.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-            const spot = s.spots?.name || s.spot_id || '?';
-            const stars = '★'.repeat(Math.min(s.rating || 0, 10));
-            return `<div class="session-compact"><span>${date} · ${spot}</span><span style="color:#4dff91;font-size:0.78rem">${stars}</span></div>`;
-          }).join('');
 
           const supabaseUrl = document.getElementById('supabase-url') ? document.getElementById('supabase-url').value : '';
           const supabaseKey = document.getElementById('supabase-key') ? document.getElementById('supabase-key').value : '';
