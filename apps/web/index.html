@@ -1266,8 +1266,8 @@ select option { background: #0d2137; color: #f0f4ff; }
     const spots = [];
     Object.values(allSpots).forEach(regions =>
       Object.values(regions).forEach(cities =>
-        Object.values(cities).forEach(ss =>
-          ss.forEach(s => { if (favIds.has(s.id)) spots.push(s); })
+        Object.entries(cities).forEach(([cityName, ss]) =>
+          ss.forEach(s => { if (favIds.has(s.id)) spots.push({ ...s, city: cityName }); })
         )
       )
     );
@@ -1281,7 +1281,7 @@ select option { background: #0d2137; color: #f0f4ff; }
         ? `<span class="spot-score" style="color:${scoreInfo.score >= 8 ? '#4dff91' : scoreInfo.score >= 6 ? '#00cfff' : '#ed8936'}">${scoreInfo.score} demain</span>`
         : '';
       return `
-        <div class="spot-row" onclick="showSpotDetail('${s.id}', '${(s.name || '').replace(/'/g,"\\'")}', ${s.lat || s.coords?.lat || 0}, ${s.lng || s.coords?.lng || 0})">
+        <div class="spot-row" onclick="showSpotDetail('${s.id}', '${(s.name || '').replace(/'/g,"\\'")}', ${s.lat || 0}, ${s.lng || 0})">
           <div>
             <div class="spot-name">⭐ ${s.name}</div>
             <div class="spot-city">${s.city || ''}</div>
@@ -1718,13 +1718,6 @@ select option { background: #0d2137; color: #f0f4ff; }
             return `<div class="session-compact"><span>${date} · ${spot}</span><span style="color:#4dff91;font-size:0.78rem">${stars}</span></div>`;
           }).join('');
 
-          const historiqueHtml = `
-            <div class="card">
-              <span class="section-label">📋 Historique sessions</span>
-              <div style="font-size:0.68rem;color:#555;margin-bottom:8px">(utilisé par le moteur IA pour personnaliser tes prédictions)</div>
-              ${sessionsHtml || '<div class="empty">Aucune session.</div>'}
-            </div>`;
-
           const supabaseUrl = document.getElementById('supabase-url') ? document.getElementById('supabase-url').value : '';
           const supabaseKey = document.getElementById('supabase-key') ? document.getElementById('supabase-key').value : '';
 
@@ -1752,7 +1745,7 @@ select option { background: #0d2137; color: #f0f4ff; }
               </div>
             </div>`;
 
-          container.innerHTML = identiteHtml + boardsHtml + historiqueHtml + configHtml;
+          container.innerHTML = identiteHtml + boardsHtml + configHtml;
         }
 
         function toggleConfig(btn) {
@@ -2702,11 +2695,9 @@ select option { background: #0d2137; color: #f0f4ff; }
 
             userData.profile = {
                 nickname,
-                level,
-                wavePreferences: {
-                    min: parseFloat(waveMin) || 0.8,
-                    max: parseFloat(waveMax) || 2.5
-                }
+                surf_level: level,
+                min_wave_height: parseFloat(waveMin) || 0.8,
+                max_wave_height: parseFloat(waveMax) || 2.5
             };
 
             localStorage.setItem('surfai_profile', JSON.stringify(userData.profile));
