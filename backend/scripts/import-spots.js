@@ -88,82 +88,60 @@ function namesMatch(a, b) {
 // SURFLINE TAXONOMY CRAWL
 // ========================================
 
+// Crawl récursif — descend autant de niveaux que nécessaire
+async function crawlNode(nodeId, context, spots, depth = 0) {
+    if (depth > 6) return; // sécurité anti-boucle infinie
+
+    await sleep(SLEEP_TAXONOMY);
+    let data;
+    try {
+        data = await fetchJSON(
+            `https://services.surfline.com/taxonomy?type=taxonomy&id=${nodeId}&maxDepth=1`
+        );
+    } catch (err) {
+        console.warn(`    [WARN] Skip node ${context.lastGeoname || nodeId}: ${err.message}`);
+        return;
+    }
+
+    const children = data.contains || [];
+
+    for (const child of children) {
+        const coords = child.location?.coordinates;
+
+        if (child.type === 'spot' && coords?.length === 2) {
+            spots.push({
+                surfline_id: child._id,
+                name: child.name,
+                lat: coords[1],
+                lng: coords[0],
+                country: context.country,
+                region: context.region || context.lastGeoname,
+                city: context.city || context.lastGeoname || context.region,
+            });
+        } else if (child.type === 'geoname' || child.type === 'subregion') {
+            // C'est un noeud géographique — descendre plus profond
+            const newContext = { ...context };
+            if (depth === 0) {
+                // Premier niveau sous le pays = région
+                newContext.region = child.name;
+                newContext.city = null;
+                newContext.lastGeoname = child.name;
+            } else {
+                // Niveaux suivants = city ou sous-zone
+                newContext.city = child.name;
+                newContext.lastGeoname = child.name;
+            }
+            await crawlNode(child._id, newContext, spots, depth + 1);
+        }
+    }
+}
+
 async function crawlCountry(countryName, countryId) {
     console.log(`\n  📍 ${countryName}...`);
     const spots = [];
+    const context = { country: countryName, region: null, city: null, lastGeoname: null };
 
-    // Get regions
-    await sleep(SLEEP_TAXONOMY);
-    const countryData = await fetchJSON(
-        `https://services.surfline.com/taxonomy?type=taxonomy&id=${countryId}&maxDepth=1`
-    );
-    const regions = countryData.contains || [];
-
-    for (const region of regions) {
-        const regionName = region.name;
-        const regionId = region._id;
-
-        // Get subregions/spots within region
-        await sleep(SLEEP_TAXONOMY);
-        let regionData;
-        try {
-            regionData = await fetchJSON(
-                `https://services.surfline.com/taxonomy?type=taxonomy&id=${regionId}&maxDepth=1`
-            );
-        } catch (err) {
-            console.warn(`    [WARN] Skip region ${regionName}: ${err.message}`);
-            continue;
-        }
-
-        const children = regionData.contains || [];
-
-        for (const child of children) {
-            const coords = child.location?.coordinates;
-
-            if (child.type === 'spot' && coords?.length === 2) {
-                // Direct spot under region
-                spots.push({
-                    surfline_id: child._id,
-                    name: child.name,
-                    lat: coords[1],
-                    lng: coords[0],
-                    country: countryName,
-                    region: regionName,
-                    city: regionName,
-                });
-            } else if (child.type !== 'spot') {
-                // Subregion — go deeper
-                await sleep(SLEEP_TAXONOMY);
-                let subData;
-                try {
-                    subData = await fetchJSON(
-                        `https://services.surfline.com/taxonomy?type=taxonomy&id=${child._id}&maxDepth=1`
-                    );
-                } catch (err) {
-                    console.warn(`    [WARN] Skip subregion ${child.name}: ${err.message}`);
-                    continue;
-                }
-
-                const subChildren = subData.contains || [];
-                for (const spot of subChildren) {
-                    const sc = spot.location?.coordinates;
-                    if (spot.type === 'spot' && sc?.length === 2) {
-                        spots.push({
-                            surfline_id: spot._id,
-                            name: spot.name,
-                            lat: sc[1],
-                            lng: sc[0],
-                            country: countryName,
-                            region: regionName,
-                            city: child.name,
-                        });
-                    }
-                }
-            }
-        }
-
-        process.stdout.write(`    ${regionName}: ${spots.length} spots total\r`);
-    }
+    await crawlNode(countryId, context, spots, 0);
 
     console.log(`    → ${countryName}: ${spots.length} spots`);
     return spots;
