@@ -1,13 +1,3 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/apps/web/$1" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" }
-      ]
-    }
-  ]
+  "outputDirectory": "apps/web"
 }
