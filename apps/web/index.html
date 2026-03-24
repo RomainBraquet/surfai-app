@@ -2,8 +2,12 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏄‍♂️ SurfAI - App Intelligente (Backend)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0e27">
+    <link rel="manifest" href="manifest.json">
+    <title>SurfAI</title>
     <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -2970,6 +2974,11 @@ select option { background: #0d2137; color: #f0f4ff; }
               downloadShareCard(canvas, sessionData);
             }
           }
+        }
+
+        // PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
         }
 
     </script>
