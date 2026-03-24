@@ -1054,7 +1054,9 @@ select option { background: #0d2137; color: #f0f4ff; }
         // ========================================
         // VARIABLES GLOBALES ET INITIALISATION
         // ========================================
-        let backendUrl = 'http://localhost:3001';
+        let backendUrl = window.location.hostname === 'localhost'
+            ? 'http://localhost:3001'
+            : 'https://surfai-backend.vercel.app';
         let backendApiKey = null;
         const DEFAULT_SUPABASE_URL = 'https://zssiqpxlqshsmhpqjzgb.supabase.co';
         const DEFAULT_SUPABASE_KEY = 'sb_publishable_3C5uSVKx16FeKH7qlSGsRw_DYHWQlBC';
