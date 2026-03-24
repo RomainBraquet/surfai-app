@@ -183,18 +183,7 @@ body {
 
 .btn-quick:active { background: rgba(77,255,145,0.15); }
 
-/* ---- Spots ---- */
-.spot-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  cursor: pointer;
-}
-.spot-row:last-child { border-bottom: none; }
-.spot-row:active { opacity: 0.7; }
-
+/* ---- Spots (legacy, kept for compatibility) ---- */
 .spot-name { font-size: 0.85rem; font-weight: 600; color: #f0f4ff; }
 .spot-city { font-size: 0.73rem; color: rgba(255,255,255,0.45); margin-top: 2px; }
 .spot-score { font-size: 0.78rem; font-weight: 700; }
@@ -405,6 +394,44 @@ select option { background: #0d2137; color: #f0f4ff; }
 .auth-card .auth-msg { margin-top: 12px; font-size: 0.82rem; min-height: 20px; }
 .auth-card .auth-msg.success { color: #4dff91; }
 .auth-card .auth-msg.error { color: #fc8181; }
+
+/* ===== SPOTS REDESIGN ===== */
+.fav-strip { padding: 0 4px; margin-bottom: 12px; }
+.fav-strip-label { color: rgba(255,255,255,0.4); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.fav-strip-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+.fav-strip-scroll::-webkit-scrollbar { display: none; }
+.fav-card { min-width: 100px; border-radius: 10px; padding: 8px; text-align: center; cursor: pointer; flex-shrink: 0; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); transition: border-color 0.2s; }
+.fav-score { border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.7rem; margin-bottom: 4px; color: #0a0e27; }
+.fav-name { color: #f0f4ff; font-size: 0.75rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
+.fav-city { color: rgba(255,255,255,0.35); font-size: 0.6rem; }
+
+.spots-search { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #f0f4ff; font-size: 0.9rem; outline: none; margin-bottom: 8px; }
+.spots-search::placeholder { color: rgba(255,255,255,0.3); }
+.sort-chips { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+.sort-chip { border-radius: 20px; padding: 4px 12px; font-size: 0.7rem; cursor: pointer; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); }
+.sort-chip.active { background: rgba(77,255,145,0.15); border-color: #4dff91; color: #4dff91; }
+.filter-panel { display: none; margin-bottom: 8px; }
+.filter-panel.open { display: flex; gap: 6px; }
+.filter-panel select { flex: 1; padding: 6px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #f0f4ff; font-size: 0.75rem; }
+.active-filters { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; }
+.active-filter { background: rgba(77,255,145,0.1); border: 1px solid rgba(77,255,145,0.3); border-radius: 12px; padding: 2px 8px; font-size: 0.65rem; color: #4dff91; cursor: pointer; }
+
+.spot-row { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 10px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+.spot-row:active { background: rgba(255,255,255,0.08); }
+.spot-row-info { flex: 1; min-width: 0; }
+.spot-row-name { color: #f0f4ff; font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spot-row-meta { color: rgba(255,255,255,0.4); font-size: 0.7rem; margin-top: 2px; }
+
+.spots-load-more { width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: rgba(255,255,255,0.5); cursor: pointer; font-size: 0.8rem; margin-top: 8px; }
+.spots-load-more:disabled { opacity: 0.4; cursor: default; }
+
+.gmaps-btn { display: block; width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #f0f4ff; text-align: center; text-decoration: none; font-size: 0.85rem; margin: 12px 0; }
+.spot-chars { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.spot-char { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 10px; text-align: center; }
+.spot-char-label { color: rgba(255,255,255,0.35); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.spot-char-value { color: #f0f4ff; font-size: 0.85rem; font-weight: 600; }
+.spot-char-sub { color: rgba(255,255,255,0.3); font-size: 0.65rem; margin-top: 2px; }
+.spot-wind-box { background: rgba(0,207,255,0.06); border: 1px solid rgba(0,207,255,0.2); border-radius: 10px; padding: 10px; display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
     </style>
 </head>
 <body>
@@ -421,33 +448,22 @@ select option { background: #0d2137; color: #f0f4ff; }
     <!-- ===== SPOTS ===== -->
     <div id="tab-spots" class="tab-panel">
       <div class="spot-list-view" id="spots-list-view">
-        <div class="filter-row">
-          <select id="spots-country" onchange="onSpotsCountryChange()">
-            <option value="">Pays</option>
-          </select>
-          <select id="spots-region" onchange="onSpotsRegionChange()">
-            <option value="">Région</option>
-          </select>
-          <select id="spots-city" onchange="filterSpots()">
-            <option value="">Ville</option>
-          </select>
+        <div id="fav-strip-container"></div>
+        <input type="text" class="spots-search" id="spots-search" placeholder="🔍 Rechercher un spot...">
+        <div class="sort-chips">
+            <div class="sort-chip active" data-sort="az" onclick="setSpotsSort('az')">A→Z</div>
+            <div class="sort-chip" data-sort="distance" onclick="setSpotsSort('distance')">📍 Distance</div>
+            <div class="sort-chip" data-sort="filter" onclick="toggleFilterPanel()">🔽 Filtrer</div>
         </div>
-
-        <div class="card">
-          <span class="section-label">⭐ Mes favoris</span>
-          <div id="fav-spots-list"><div class="loading">Chargement...</div></div>
+        <div id="active-filters" class="active-filters"></div>
+        <div id="filter-panel" class="filter-panel">
+            <select id="spots-country" onchange="onSpotsCountryChange()"><option value="">Pays</option></select>
+            <select id="spots-region" onchange="onSpotsRegionChange()"><option value="">Région</option></select>
         </div>
-
-        <div class="card">
-          <span class="section-label">🌍 Tous les spots</span>
-          <div id="all-spots-list"><div class="loading">Chargement...</div></div>
-        </div>
+        <div id="spots-list"></div>
+        <button id="spots-load-more" class="spots-load-more" onclick="loadMoreSpots()">Voir plus</button>
       </div>
-
-      <div class="spot-detail" id="spot-detail-view">
-        <button class="back-btn" onclick="backToSpotsList()">← Retour</button>
-        <div id="spot-detail-content"></div>
-      </div>
+      <div class="spot-detail" id="spot-detail"></div>
     </div>
 
     <!-- ===== SESSION ===== -->
