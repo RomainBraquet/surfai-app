@@ -463,7 +463,8 @@ select option { background: #0d2137; color: #f0f4ff; }
         <div id="filter-panel" class="filter-panel">
             <select id="spots-country" onchange="onSpotsCountryChange()"><option value="">Pays</option></select>
         </div>
-        <div id="surf-zone-chips" style="display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:10px;padding-bottom:2px"></div>
+        <div id="surf-zone-chips" style="display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:8px;padding-bottom:2px"></div>
+        <div id="city-chips" style="display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:10px;padding-bottom:2px"></div>
         <div id="spots-list"></div>
         <button id="spots-load-more" class="spots-load-more" onclick="loadMoreSpots()">Voir plus</button>
       </div>
@@ -1530,6 +1531,7 @@ select option { background: #0d2137; color: #f0f4ff; }
 
             if (_spotsFilters.country) query = query.eq('country', _spotsFilters.country);
             if (_spotsFilters.surf_zone) query = query.eq('surf_zone', _spotsFilters.surf_zone);
+            if (_spotsFilters.city) query = query.eq('city', _spotsFilters.city);
             if (_spotsFilters.search && _spotsFilters.search.length >= 2) {
                 const s = _spotsFilters.search.replace(/[.,()]/g, '');
                 query = query.or(`name.ilike.%${s}%,city.ilike.%${s}%,region.ilike.%${s}%,country.ilike.%${s}%`);
@@ -1666,14 +1668,53 @@ select option { background: #0d2137; color: #f0f4ff; }
             loadAndRenderSpots();
         }
 
-        function selectSurfZone(el, zone) {
+        async function selectSurfZone(el, zone) {
             const isActive = el.classList.contains('active');
             document.querySelectorAll('.zone-chip').forEach(c => c.classList.remove('active'));
+            _spotsFilters.city = undefined;
+
             if (isActive) {
                 _spotsFilters.surf_zone = undefined;
+                // Masquer les city chips
+                const cityContainer = document.getElementById('city-chips');
+                if (cityContainer) { cityContainer.style.display = 'none'; cityContainer.innerHTML = ''; }
             } else {
                 el.classList.add('active');
                 _spotsFilters.surf_zone = zone;
+
+                // Drill-down : si >10 spots dans cette zone, afficher les villes
+                const cityContainer = document.getElementById('city-chips');
+                if (cityContainer) {
+                    const { data } = await supabaseClient
+                        .from('spots')
+                        .select('city')
+                        .eq('surf_zone', zone)
+                        .not('city', 'is', null);
+                    const cities = [...new Set((data || []).map(s => s.city))].sort();
+                    if (cities.length > 1 && data.length > 10) {
+                        cityContainer.style.display = 'block';
+                        cityContainer.innerHTML = `<div class="zone-chips">${cities.map(c =>
+                            `<div class="zone-chip" onclick="selectCity(this, '${c.replace(/'/g, "\\'")}')">${c}</div>`
+                        ).join('')}</div>`;
+                    } else {
+                        cityContainer.style.display = 'none';
+                        cityContainer.innerHTML = '';
+                    }
+                }
+            }
+            renderActiveFilters();
+            _spotsPage = 0; _spotsLoaded = [];
+            loadAndRenderSpots();
+        }
+
+        function selectCity(el, city) {
+            const isActive = el.classList.contains('active');
+            document.querySelectorAll('#city-chips .zone-chip').forEach(c => c.classList.remove('active'));
+            if (isActive) {
+                _spotsFilters.city = undefined;
+            } else {
+                el.classList.add('active');
+                _spotsFilters.city = city;
             }
             renderActiveFilters();
             _spotsPage = 0; _spotsLoaded = [];
@@ -1686,6 +1727,7 @@ select option { background: #0d2137; color: #f0f4ff; }
             const chips = [];
             if (_spotsFilters.country) chips.push(`<span class="active-filter" onclick="clearFilter('country')">✕ ${_spotsFilters.country}</span>`);
             if (_spotsFilters.surf_zone) chips.push(`<span class="active-filter" onclick="clearFilter('surf_zone')">✕ ${_spotsFilters.surf_zone}</span>`);
+            if (_spotsFilters.city) chips.push(`<span class="active-filter" onclick="clearFilter('city')">✕ ${_spotsFilters.city}</span>`);
             el.innerHTML = chips.join('');
         }
 
@@ -1693,12 +1735,21 @@ select option { background: #0d2137; color: #f0f4ff; }
             delete _spotsFilters[key];
             if (key === 'country') {
                 delete _spotsFilters.surf_zone;
+                delete _spotsFilters.city;
                 document.getElementById('spots-country').value = '';
                 const zc = document.getElementById('surf-zone-chips');
                 if (zc) { zc.style.display = 'none'; zc.innerHTML = ''; }
+                const cc = document.getElementById('city-chips');
+                if (cc) { cc.style.display = 'none'; cc.innerHTML = ''; }
             }
             if (key === 'surf_zone') {
-                document.querySelectorAll('.zone-chip').forEach(c => c.classList.remove('active'));
+                delete _spotsFilters.city;
+                document.querySelectorAll('#surf-zone-chips .zone-chip').forEach(c => c.classList.remove('active'));
+                const cc = document.getElementById('city-chips');
+                if (cc) { cc.style.display = 'none'; cc.innerHTML = ''; }
+            }
+            if (key === 'city') {
+                document.querySelectorAll('#city-chips .zone-chip').forEach(c => c.classList.remove('active'));
             }
             renderActiveFilters();
             _spotsPage = 0; _spotsLoaded = [];
