@@ -439,6 +439,61 @@ select option { background: #0d2137; color: #f0f4ff; }
 .spot-char-value { color: #f0f4ff; font-size: 0.85rem; font-weight: 600; }
 .spot-char-sub { color: rgba(255,255,255,0.3); font-size: 0.65rem; margin-top: 2px; }
 .spot-wind-box { background: rgba(0,207,255,0.06); border: 1px solid rgba(0,207,255,0.2); border-radius: 10px; padding: 10px; display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+
+/* ===== SESSION SHARE CARD OVERLAY ===== */
+#share-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(10,14,39,0.95);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+#share-overlay.hidden { display: none; }
+.share-card {
+  background: #0d2137;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 28px 24px;
+  width: 340px;
+  max-height: 90vh;
+  overflow-y: auto;
+  text-align: center;
+}
+.share-card h2 { color: #f0f4ff; font-size: 1.3rem; margin: 0 0 6px; }
+.share-card .share-check { font-size: 40px; margin-bottom: 8px; }
+.share-card .share-spot { color: #f0f4ff; font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
+.share-card .share-meta { color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-bottom: 20px; }
+.share-card .share-stars { color: #ffd700; }
+.share-btn-primary {
+  display: block; width: 100%; padding: 14px; border: none; border-radius: 12px;
+  background: #4dff91; color: #0a0e27; font-size: 1rem; font-weight: 700;
+  cursor: pointer; margin-bottom: 12px;
+}
+.share-btn-primary:active { opacity: 0.85; }
+.share-btn-skip {
+  background: none; border: none; color: rgba(255,255,255,0.45);
+  font-size: 0.9rem; cursor: pointer; padding: 8px;
+}
+.share-btn-skip:hover { color: rgba(255,255,255,0.7); }
+.share-preview-img {
+  width: 100%; max-width: 300px; border-radius: 10px;
+  margin: 0 auto 16px; display: block;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.share-btn-row {
+  display: flex; gap: 10px; justify-content: center; margin-bottom: 12px;
+}
+.share-btn-row button {
+  flex: 1; padding: 12px; border: none; border-radius: 10px;
+  font-size: 0.9rem; font-weight: 600; cursor: pointer;
+}
+.share-btn-save {
+  background: rgba(255,255,255,0.1); color: #f0f4ff;
+}
+.share-btn-share {
+  background: #4dff91; color: #0a0e27;
+}
+.share-file-input { display: none; }
     </style>
 </head>
 <body>
@@ -2072,9 +2127,35 @@ select option { background: #0d2137; color: #f0f4ff; }
             const result = await response.json();
             if (!result.success) throw new Error(result.error || 'Erreur serveur');
 
-            const meteoMsg = result.meteo ? '— météo capturée automatiquement' : '';
-            showMessage('success', '✅ Session enregistrée ' + meteoMsg, 'session-feedback');
+            // Capture spot name/city BEFORE form reset
+            const spotSelect = document.getElementById('session-spot');
+            const capturedSpotName = spotSelect.options[spotSelect.selectedIndex]?.text || '';
+            // Try to extract city from cached spot data
+            let capturedSpotCity = '';
+            try {
+              const allSpots = await dataManager.getSpots();
+              Object.values(allSpots).forEach(regions => {
+                Object.values(regions).forEach(cities => {
+                  Object.values(cities).forEach(spots => {
+                    spots.forEach(s => {
+                      if (s.id === spotId) capturedSpotCity = s.city || s.commune || '';
+                    });
+                  });
+                });
+              });
+            } catch(e) { /* ignore */ }
 
+            // Build share data before reset
+            const shareSessionData = {
+              spotName: capturedSpotName,
+              spotCity: capturedSpotCity,
+              date: date,
+              rating: rating,
+              nickname: (userData.profile && (userData.profile.nickname || userData.profile.pseudo)) || '',
+              meteo: result.meteo || null
+            };
+
+            // Reset form
             document.getElementById('session-spot').value = '';
             document.querySelectorAll('input[name="rating"]').forEach(r => r.checked = false);
             document.getElementById('session-notes').value = '';
@@ -2082,6 +2163,9 @@ select option { background: #0d2137; color: #f0f4ff; }
             dataManager.cache.aiPreferences = null;
             userData.sessions = [];
             await loadSessions();
+
+            // Show share confirmation overlay instead of just a toast
+            showSessionConfirmation(shareSessionData);
 
           } catch (error) {
             showMessage('error', '❌ Erreur: ' + error.message, 'session-feedback');
@@ -2635,6 +2719,257 @@ select option { background: #0d2137; color: #f0f4ff; }
                 <p>🟢 IA Engine: v2.0 Opérationnel</p>
                 <p>🟢 Données: Harmonisées et cohérentes</p>
             `;
+        }
+
+        // ========================================
+        // SESSION SHARE CARD
+        // ========================================
+
+        function formatSessionDate(dateStr) {
+          const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+          const d = new Date(dateStr + 'T00:00:00');
+          return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+        }
+
+        function showSessionConfirmation(sessionData) {
+          // Remove existing overlay if any
+          const existing = document.getElementById('share-overlay');
+          if (existing) existing.remove();
+
+          const starsStr = sessionData.rating ? '★'.repeat(sessionData.rating) : '';
+          const dateStr = formatSessionDate(sessionData.date);
+          const spotLine = sessionData.spotCity
+            ? `${sessionData.spotName} · ${sessionData.spotCity}`
+            : sessionData.spotName;
+
+          const overlay = document.createElement('div');
+          overlay.id = 'share-overlay';
+          overlay.innerHTML = `
+            <div class="share-card">
+              <div class="share-check">&#10003;</div>
+              <h2>Session enregistree !</h2>
+              <p class="share-spot">${spotLine}</p>
+              <p class="share-meta">${dateStr}${starsStr ? ' · <span class="share-stars">' + starsStr + '</span>' : ''}</p>
+              <button class="share-btn-primary" id="share-pick-photo-btn">Partager ta session</button>
+              <input type="file" accept="image/*" class="share-file-input" id="share-file-input">
+              <button class="share-btn-skip" id="share-skip-btn">Passer</button>
+            </div>
+          `;
+          document.body.appendChild(overlay);
+
+          // Bind events
+          document.getElementById('share-skip-btn').addEventListener('click', () => {
+            overlay.remove();
+          });
+
+          const fileInput = document.getElementById('share-file-input');
+          document.getElementById('share-pick-photo-btn').addEventListener('click', () => {
+            fileInput.click();
+          });
+
+          fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            await showShareCardPreview(sessionData, file);
+          });
+        }
+
+        async function showShareCardPreview(sessionData, photoFile) {
+          const overlay = document.getElementById('share-overlay');
+          if (!overlay) return;
+
+          // Show loading state
+          overlay.querySelector('.share-card').innerHTML = '<p style="color:rgba(255,255,255,0.6)">Generation en cours...</p>';
+
+          try {
+            const canvas = await generateShareCard(photoFile, sessionData);
+            const previewUrl = canvas.toDataURL('image/png');
+
+            overlay.querySelector('.share-card').innerHTML = `
+              <img src="${previewUrl}" class="share-preview-img" alt="Preview">
+              <div class="share-btn-row">
+                <button class="share-btn-save" id="share-save-btn">Enregistrer</button>
+                <button class="share-btn-share" id="share-share-btn">Partager</button>
+              </div>
+              <button class="share-btn-skip" id="share-close-btn">Fermer</button>
+            `;
+
+            document.getElementById('share-close-btn').addEventListener('click', () => {
+              overlay.remove();
+            });
+
+            document.getElementById('share-save-btn').addEventListener('click', () => {
+              downloadShareCard(canvas, sessionData);
+            });
+
+            document.getElementById('share-share-btn').addEventListener('click', () => {
+              shareCard(canvas, sessionData);
+            });
+          } catch (err) {
+            console.error('Share card generation error:', err);
+            overlay.querySelector('.share-card').innerHTML = `
+              <p style="color:#ff6b6b">Erreur lors de la generation de l'image.</p>
+              <button class="share-btn-skip" onclick="document.getElementById('share-overlay').remove()">Fermer</button>
+            `;
+          }
+        }
+
+        function loadImage(file) {
+          return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            if (file instanceof File) {
+              const reader = new FileReader();
+              reader.onload = (e) => { img.src = e.target.result; };
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            } else {
+              img.src = file;
+            }
+          });
+        }
+
+        function drawImageCover(ctx, img, x, y, w, h) {
+          const imgRatio = img.width / img.height;
+          const canvasRatio = w / h;
+          let sx, sy, sw, sh;
+          if (imgRatio > canvasRatio) {
+            sh = img.height;
+            sw = sh * canvasRatio;
+            sx = (img.width - sw) / 2;
+            sy = 0;
+          } else {
+            sw = img.width;
+            sh = sw / canvasRatio;
+            sx = 0;
+            sy = (img.height - sh) / 2;
+          }
+          ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+        }
+
+        async function generateShareCard(photo, sessionData) {
+          const canvas = document.createElement('canvas');
+          canvas.width = 1080;
+          canvas.height = 1350;
+          const ctx = canvas.getContext('2d');
+
+          // 1. Draw photo as background (crop center cover)
+          const img = await loadImage(photo);
+          drawImageCover(ctx, img, 0, 0, 1080, 1350);
+
+          // 2. Gradient overlay on bottom half
+          const grad = ctx.createLinearGradient(0, 600, 0, 1350);
+          grad.addColorStop(0, 'rgba(10,14,39,0)');
+          grad.addColorStop(0.4, 'rgba(10,14,39,0.6)');
+          grad.addColorStop(1, 'rgba(10,14,39,0.9)');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 600, 1080, 750);
+
+          // 3. Text overlay — build from bottom up
+          ctx.textAlign = 'center';
+          const cx = 540; // center x
+          let curY = 1290; // start near bottom
+
+          // Date
+          const dateStr = formatSessionDate(sessionData.date);
+          ctx.font = '22px -apple-system, BlinkMacSystemFont, sans-serif';
+          ctx.fillStyle = 'rgba(255,255,255,0.5)';
+          ctx.fillText(dateStr, cx, curY);
+          curY -= 50;
+
+          // Rating stars + nickname line
+          const parts = [];
+          if (sessionData.rating) {
+            parts.push('★'.repeat(sessionData.rating));
+          }
+          if (sessionData.nickname) {
+            parts.push('@' + sessionData.nickname);
+          }
+          if (parts.length > 0) {
+            ctx.font = '24px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillStyle = '#f0f4ff';
+            ctx.fillText(parts.join('  ·  '), cx, curY);
+            curY -= 50;
+          }
+
+          // Conditions line (meteo)
+          if (sessionData.meteo) {
+            const m = sessionData.meteo;
+            const condParts = [];
+            if (m.waveHeight != null) condParts.push(m.waveHeight + 'm');
+            if (m.windSpeed != null) {
+              let windStr = m.windSpeed + ' km/h';
+              if (m.windDirection) windStr += ' ' + m.windDirection;
+              condParts.push(windStr);
+            }
+            if (m.wavePeriod != null) condParts.push(m.wavePeriod + 's');
+            if (condParts.length > 0) {
+              ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
+              ctx.fillStyle = '#4dff91';
+              ctx.fillText(condParts.join('  ·  '), cx, curY);
+              curY -= 55;
+            }
+          }
+
+          // City
+          if (sessionData.spotCity) {
+            ctx.font = '28px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.fillText(sessionData.spotCity, cx, curY);
+            curY -= 45;
+          }
+
+          // Spot name
+          ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, sans-serif';
+          ctx.fillStyle = '#f0f4ff';
+          ctx.fillText(sessionData.spotName, cx, curY);
+          curY -= 55;
+
+          // SurfAI logo text
+          ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, sans-serif';
+          ctx.fillStyle = '#00cfff';
+          ctx.fillText('SurfAI', cx, curY);
+
+          return canvas;
+        }
+
+        function downloadShareCard(canvas, sessionData) {
+          canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const safeName = (sessionData.spotName || 'session').replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+            a.download = `surfai-${safeName}-${sessionData.date}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }, 'image/png');
+        }
+
+        async function shareCard(canvas, sessionData) {
+          try {
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            const safeName = (sessionData.spotName || 'session').replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+            const file = new File([blob], `surfai-${safeName}.png`, { type: 'image/png' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                files: [file],
+                title: `Session surf - ${sessionData.spotName}`,
+                text: `Session a ${sessionData.spotName} via SurfAI`
+              });
+            } else {
+              // Fallback to download
+              downloadShareCard(canvas, sessionData);
+            }
+          } catch (e) {
+            if (e.name !== 'AbortError') {
+              // User didn't cancel, fallback to download
+              downloadShareCard(canvas, sessionData);
+            }
+          }
         }
 
     </script>
