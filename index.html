@@ -1465,22 +1465,43 @@ select option { background: #0d2137; color: #f0f4ff; }
             const favs = fData.favorites || [];
             if (!favs.length) return;
 
-            container.innerHTML = `
-              <div class="card">
-                <span class="section-label">⭐ Mes spots favoris</span>
-                ${favs.map(s => {
-                  const score = _spotScoresCache?.[s.id]?.score;
-                  const color = score >= 8 ? '#4dff91' : score >= 6 ? '#00cfff' : score ? '#ed8936' : '';
-                  return `<div onclick="showTab('spots'); setTimeout(() => showSpotDetail('${s.id}'), 300)"
-                       style="display:flex;align-items:center;gap:10px;padding:10px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05)">
-                    ${score ? `<div style="background:${color};color:#0a0e27;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;flex-shrink:0">${score}</div>` : ''}
-                    <div style="flex:1;min-width:0">
-                      <div style="color:#f0f4ff;font-size:0.85rem;font-weight:600">${s.name}</div>
-                      <div style="color:rgba(255,255,255,0.4);font-size:0.7rem">${s.city || ''}</div>
+            // Fausses conditions — TODO: remplacer par Open-Meteo
+            const fakeConditions = [
+                { wave: 1.2, wind: 12, dir: 'NE', period: 11 },
+                { wave: 1.5, wind: 8, dir: 'SE', period: 13 },
+                { wave: 0.8, wind: 15, dir: 'NO', period: 9 },
+                { wave: 1.8, wind: 6, dir: 'E', period: 12 },
+                { wave: 1.0, wind: 20, dir: 'O', period: 10 },
+            ];
+
+            const favsHtml = favs.map((s, i) => {
+                const cond = fakeConditions[i % fakeConditions.length];
+                const score = _spotScoresCache?.[s.id]?.score;
+                const scoreColor = score >= 8 ? '#4dff91' : score >= 6 ? '#00cfff' : score ? '#ed8936' : '';
+                return `<div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,0.05)">
+                    ${score ? `<div style="background:${scoreColor};color:#0a0e27;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0">${score}</div>` : ''}
+                    <div style="flex:1;min-width:0;cursor:pointer" onclick="showTab('spots'); setTimeout(() => showSpotDetail('${s.id}'), 300)">
+                        <div style="color:#f0f4ff;font-size:0.85rem;font-weight:500">${s.name}</div>
+                        <div style="color:rgba(255,255,255,0.4);font-size:0.7rem">${s.city || ''} · 🌊 ${cond.wave}m · 💨 ${cond.wind}km/h ${cond.dir} · ${cond.period}s</div>
                     </div>
-                    ${score ? `<div style="color:${color};font-size:0.75rem;font-weight:600">${score}/10</div>` : ''}
-                  </div>`;
-                }).join('')}
+                    <div onclick="event.stopPropagation();toggleFavorite('${s.id}',this);setTimeout(()=>loadAccueilFavs('${userId}'),500)" class="active"
+                         style="font-size:1.1rem;cursor:pointer;padding:4px 6px;flex-shrink:0">⭐</div>
+                </div>`;
+            }).join('');
+
+            container.innerHTML = `
+              <div class="card" style="padding:0;overflow:hidden">
+                <div onclick="toggleAccueilFavs()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;cursor:pointer;background:rgba(77,255,145,0.08);border-bottom:1px solid rgba(77,255,145,0.15)">
+                    <div style="display:flex;align-items:center;gap:8px">
+                        <span style="font-size:1.1rem">⭐</span>
+                        <span style="color:#4dff91;font-size:0.9rem;font-weight:600">Mes favoris</span>
+                        <span style="background:rgba(77,255,145,0.2);color:#4dff91;border-radius:12px;padding:1px 8px;font-size:0.7rem;font-weight:700">${favs.length}</span>
+                    </div>
+                    <div id="accueil-favs-arrow" style="color:#4dff91;font-size:0.8rem;transition:transform 0.2s">▾</div>
+                </div>
+                <div id="accueil-favs-list" style="display:none;padding:4px 10px">
+                    ${favsHtml}
+                </div>
               </div>`;
           } catch(e) { /* silent */ }
         }
@@ -1713,6 +1734,15 @@ select option { background: #0d2137; color: #f0f4ff; }
                         </div>
                     </div>`;
             } catch(e) { container.innerHTML = ''; }
+        }
+
+        function toggleAccueilFavs() {
+            const list = document.getElementById('accueil-favs-list');
+            const arrow = document.getElementById('accueil-favs-arrow');
+            if (!list) return;
+            const isOpen = list.style.display !== 'none';
+            list.style.display = isOpen ? 'none' : 'block';
+            if (arrow) arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
         }
 
         function toggleSpotsFavs() {
