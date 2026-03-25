@@ -549,10 +549,11 @@ select option { background: #0d2137; color: #f0f4ff; }
 
           <div class="card">
             <span class="section-label">📍 Spot</span>
-            <input type="text" id="session-spot-search" placeholder="Rechercher un spot..." autocomplete="off"
-                   style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#f0f4ff;font-size:0.9rem;margin-bottom:4px;outline:none">
             <input type="hidden" id="session-spot" required>
-            <div id="session-spot-results" style="max-height:200px;overflow-y:auto;display:none"></div>
+            <div id="session-spot-display" onclick="openSpotPicker('session-spot','session-spot-display')"
+                 style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);font-size:0.9rem;cursor:pointer">
+              Choisir un spot...
+            </div>
           </div>
 
           <div class="card">
@@ -1154,6 +1155,7 @@ select option { background: #0d2137; color: #f0f4ff; }
         async function initApp() {
             await checkBackendConnection();
             await loadHarmonizedData();
+            await loadFavIds();
             await loadSessions();
             await loadAccueil();
         }
@@ -1425,20 +1427,52 @@ select option { background: #0d2137; color: #f0f4ff; }
               <div id="accueil-windows"><div class="loading">Analyse IA en cours...</div></div>
             </div>`;
 
+          const favsAccueilHtml = `<div id="accueil-favs"></div>`;
+
           const quickHtml = `
             <div class="quick-btns">
               <button class="btn-quick" onclick="showTab('session', document.querySelectorAll('.nav-tab')[2])">➕ Session</button>
               <button class="btn-quick" onclick="showTab('spots', document.querySelectorAll('.nav-tab')[1])">📍 Spots</button>
             </div>`;
 
-          container.innerHTML = heroHtml + windowsHtml + quickHtml;
+          container.innerHTML = heroHtml + windowsHtml + favsAccueilHtml + quickHtml;
 
           loadGeoWeather();
           if (userId && supabaseClient) {
             loadAccueilWindows(userId);
+            loadAccueilFavs(userId);
           } else {
             document.getElementById('accueil-windows').innerHTML = '<div class="empty">Connectez-vous pour voir vos créneaux personnalisés.</div>';
           }
+        }
+
+        async function loadAccueilFavs(userId) {
+          const container = document.getElementById('accueil-favs');
+          if (!container) return;
+          try {
+            const res = await fetch(`${backendUrl}/api/v1/favorites?userId=${userId}`);
+            const fData = await res.json();
+            const favs = fData.favorites || [];
+            if (!favs.length) return;
+
+            container.innerHTML = `
+              <div class="card">
+                <span class="section-label">⭐ Mes spots favoris</span>
+                ${favs.map(s => {
+                  const score = _spotScoresCache?.[s.id]?.score;
+                  const color = score >= 8 ? '#4dff91' : score >= 6 ? '#00cfff' : score ? '#ed8936' : '';
+                  return `<div onclick="showTab('spots'); setTimeout(() => showSpotDetail('${s.id}'), 300)"
+                       style="display:flex;align-items:center;gap:10px;padding:10px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05)">
+                    ${score ? `<div style="background:${color};color:#0a0e27;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;flex-shrink:0">${score}</div>` : ''}
+                    <div style="flex:1;min-width:0">
+                      <div style="color:#f0f4ff;font-size:0.85rem;font-weight:600">${s.name}</div>
+                      <div style="color:rgba(255,255,255,0.4);font-size:0.7rem">${s.city || ''}</div>
+                    </div>
+                    ${score ? `<div style="color:${color};font-size:0.75rem;font-weight:600">${score}/10</div>` : ''}
+                  </div>`;
+                }).join('')}
+              </div>`;
+          } catch(e) { /* silent */ }
         }
 
         async function loadGeoWeather() {
@@ -1670,11 +1704,15 @@ select option { background: #0d2137; color: #f0f4ff; }
                     const distTxt = s._dist != null ? `${s._dist.toFixed(1)}km` : '';
                     const loc = [s.city, s.surf_zone || s.region, s.country].filter(Boolean).join(' · ');
                     const meta = [distTxt, loc, waveType].filter(Boolean).join(' · ');
-                    return `<div class="spot-row" onclick="showSpotDetail('${s.id}')">
-                        <div class="spot-row-info">
+                    const isFav = _favSpotIds.has(s.id);
+                    return `<div class="spot-row">
+                        <div class="spot-row-info" onclick="showSpotDetail('${s.id}')">
                             <div class="spot-row-name">${s.name}</div>
                             <div class="spot-row-meta">${meta}</div>
                         </div>
+                        <div onclick="event.stopPropagation();toggleFavorite('${s.id}',this)"
+                             class="${isFav ? 'active' : ''}"
+                             style="font-size:1.2rem;cursor:pointer;padding:4px 8px;flex-shrink:0">${isFav ? '⭐' : '☆'}</div>
                     </div>`;
                 }).join('');
             }
@@ -1703,12 +1741,12 @@ select option { background: #0d2137; color: #f0f4ff; }
                 return;
             }
 
-            const { data } = await supabaseClient
-                .from('user_favorite_spots')
-                .select('spot_id, spots(id, name, city, lat, lng)')
-                .eq('user_id', userId);
-
-            const favs = (data || []).map(r => r.spots).filter(Boolean);
+            let favs = [];
+            try {
+                const res = await fetch(`${backendUrl}/api/v1/favorites?userId=${userId}`);
+                const fData = await res.json();
+                favs = fData.favorites || [];
+            } catch(e) { /* silent */ }
 
             if (favs.length === 0) {
                 container.innerHTML = '<div class="fav-strip"><div class="fav-strip-label">⭐ Mes spots</div><div style="color:rgba(255,255,255,0.3);font-size:0.75rem;padding:8px 0">Ajoute des spots en favoris</div></div>';
@@ -2048,24 +2086,35 @@ select option { background: #0d2137; color: #f0f4ff; }
             document.getElementById('spot-detail')?.classList.remove('active');
         }
 
-        async function toggleFavorite(spotId, btn) {
-          const isNowFav = !btn.classList.contains('active');
-          btn.classList.toggle('active');
-          btn.textContent = isNowFav ? '⭐ Favori' : '☆ Favori';
-          if (!dataManager.supabase) return;
+        // Set global des IDs favoris (chargé au démarrage)
+        let _favSpotIds = new Set();
+
+        async function loadFavIds() {
           const userId = dataManager.currentUserId;
           if (!userId) return;
           try {
-            if (isNowFav) {
-              await dataManager.supabase
-                .from('user_favorite_spots')
-                .upsert({ user_id: userId, spot_id: spotId });
+            const res = await fetch(`${backendUrl}/api/v1/favorites?userId=${userId}`);
+            const data = await res.json();
+            _favSpotIds = new Set((data.favorites || []).map(f => f.id));
+          } catch(e) { /* silent */ }
+        }
+
+        async function toggleFavorite(spotId, btn) {
+          const userId = dataManager.currentUserId;
+          if (!userId) return;
+          try {
+            const res = await fetch(`${backendUrl}/api/v1/favorites/toggle`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId, spotId })
+            });
+            const data = await res.json();
+            if (data.isFavorite) {
+              _favSpotIds.add(spotId);
+              if (btn) { btn.classList.add('active'); btn.textContent = '⭐'; }
             } else {
-              await dataManager.supabase
-                .from('user_favorite_spots')
-                .delete()
-                .eq('user_id', userId)
-                .eq('spot_id', spotId);
+              _favSpotIds.delete(spotId);
+              if (btn) { btn.classList.remove('active'); btn.textContent = '☆'; }
             }
           } catch (e) {
             console.warn('toggleFavorite:', e.message);
@@ -2092,67 +2141,169 @@ select option { background: #0d2137; color: #f0f4ff; }
         }
 
         async function populateSessionSpots() {
-          const searchInput = document.getElementById('session-spot-search');
-          const hiddenInput = document.getElementById('session-spot');
-          const resultsDiv = document.getElementById('session-spot-results');
-          if (!searchInput || !resultsDiv) return;
-
-          // Charger les favoris
-          let favSpots = [];
-          const userId = dataManager.currentUserId;
-          if (userId && supabaseClient) {
-              const { data } = await supabaseClient
-                  .from('user_favorite_spots')
-                  .select('spot_id, spots(id, name, city)')
-                  .eq('user_id', userId);
-              favSpots = (data || []).map(r => r.spots).filter(Boolean);
-          }
-
-          // Afficher les favoris par défaut
-          renderSpotResults(favSpots, [], resultsDiv, hiddenInput, searchInput);
-          resultsDiv.style.display = 'block';
-
-          let searchTimeout;
-          searchInput.oninput = () => {
-              clearTimeout(searchTimeout);
-              const q = searchInput.value.trim();
-              hiddenInput.value = ''; // reset selection
-              if (q.length < 2) {
-                  renderSpotResults(favSpots, [], resultsDiv, hiddenInput, searchInput);
-                  return;
-              }
-              searchTimeout = setTimeout(async () => {
-                  const s = q.replace(/[.,()]/g, '');
-                  const { data } = await supabaseClient
-                      .from('spots')
-                      .select('id, name, city')
-                      .or(`name.ilike.%${s}%,city.ilike.%${s}%`)
-                      .order('name')
-                      .limit(20);
-                  renderSpotResults(favSpots, data || [], resultsDiv, hiddenInput, searchInput);
-              }, 300);
-          };
-          searchInput.onfocus = () => { resultsDiv.style.display = 'block'; };
+          // Nothing to do — spot picker is opened via openSpotPicker()
         }
 
-        function renderSpotResults(favs, searched, container, hiddenInput, searchInput) {
-            let html = '';
-            if (favs.length && !searchInput.value.trim()) {
-                html += '<div style="color:#4dff91;font-size:0.7rem;padding:4px 8px;text-transform:uppercase">⭐ Mes favoris</div>';
-                html += favs.map(s => `<div class="spot-result-item" onclick="selectSpotResult('${s.id}','${(s.name||'').replace(/'/g,"\\'")}',this)" style="padding:8px;cursor:pointer;border-radius:6px;color:#f0f4ff;font-size:0.85rem">${s.name} <span style="color:rgba(255,255,255,0.4);font-size:0.75rem">${s.city||''}</span></div>`).join('');
+        // ========================================
+        // SPOT PICKER — composant réutilisable
+        // ========================================
+        let _spotPickerCallback = null;
+        let _spotPickerFavs = [];
+        let _spotPickerCountries = [];
+        let _spotPickerSearchTimeout = null;
+
+        async function openSpotPicker(hiddenInputId, displayId) {
+            // Create overlay
+            let overlay = document.getElementById('spot-picker-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'spot-picker-overlay';
+                overlay.style.cssText = 'position:fixed;inset:0;z-index:1001;background:rgba(10,14,39,0.97);display:flex;flex-direction:column;padding:12px;overflow:hidden';
+                document.body.appendChild(overlay);
             }
-            if (searched.length) {
-                html += searched.map(s => `<div class="spot-result-item" onclick="selectSpotResult('${s.id}','${(s.name||'').replace(/'/g,"\\'")}',this)" style="padding:8px;cursor:pointer;border-radius:6px;color:#f0f4ff;font-size:0.85rem">${s.name} <span style="color:rgba(255,255,255,0.4);font-size:0.75rem">${s.city||''}</span></div>`).join('');
+            overlay.style.display = 'flex';
+
+            _spotPickerCallback = (id, name) => {
+                document.getElementById(hiddenInputId).value = id;
+                const display = document.getElementById(displayId);
+                if (display) { display.textContent = name; display.style.color = '#f0f4ff'; }
+                overlay.style.display = 'none';
+            };
+
+            // Load favorites
+            _spotPickerFavs = [];
+            const userId = dataManager.currentUserId;
+            if (userId && supabaseClient) {
+                try {
+                    const { data } = await supabaseClient
+                        .from('user_favorite_spots')
+                        .select('spot_id, spots(id, name, city, surf_zone, country)')
+                        .eq('user_id', userId);
+                    _spotPickerFavs = (data || []).map(r => r.spots).filter(Boolean);
+                } catch(e) {}
             }
-            if (!html) html = '<div style="color:rgba(255,255,255,0.3);font-size:0.8rem;padding:8px">Tape le nom d\'un spot...</div>';
-            container.innerHTML = html;
-            container.style.display = 'block';
+
+            // Load countries
+            try {
+                const { data } = await supabaseClient.from('spots').select('country').not('country', 'is', null).order('country');
+                _spotPickerCountries = [...new Set((data || []).map(s => s.country))];
+            } catch(e) { _spotPickerCountries = []; }
+
+            renderSpotPicker();
         }
 
-        function selectSpotResult(id, name, el) {
-            document.getElementById('session-spot').value = id;
-            document.getElementById('session-spot-search').value = name;
-            document.getElementById('session-spot-results').style.display = 'none';
+        function renderSpotPicker(spots, filterLabel) {
+            const overlay = document.getElementById('spot-picker-overlay');
+            if (!overlay) return;
+
+            const favsHtml = _spotPickerFavs.length ? `
+                <div style="margin-bottom:12px">
+                    <div style="color:#4dff91;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">⭐ Mes favoris</div>
+                    ${_spotPickerFavs.map(s => `
+                        <div onclick="_spotPickerCallback('${s.id}','${(s.name||'').replace(/'/g,"\\'")}')"
+                             style="padding:10px;background:rgba(77,255,145,0.06);border:1px solid rgba(77,255,145,0.15);border-radius:8px;margin-bottom:4px;cursor:pointer;color:#f0f4ff;font-size:0.85rem">
+                            ${s.name} <span style="color:rgba(255,255,255,0.4)">${s.city || ''}</span>
+                        </div>
+                    `).join('')}
+                </div>` : '';
+
+            const countriesHtml = _spotPickerCountries.length ? `
+                <div style="margin-bottom:10px">
+                    <div style="color:rgba(255,255,255,0.4);font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Pays</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                        ${_spotPickerCountries.map(c => `
+                            <div onclick="spotPickerFilterCountry('${c}')"
+                                 style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)">${c}</div>
+                        `).join('')}
+                    </div>
+                </div>` : '';
+
+            const spotsListHtml = spots ? `
+                <div style="margin-bottom:10px">
+                    ${filterLabel ? '<div style="color:#00cfff;font-size:0.7rem;text-transform:uppercase;margin-bottom:6px">' + filterLabel + '</div>' : ''}
+                    <div style="max-height:300px;overflow-y:auto">
+                        ${spots.map(s => `
+                            <div onclick="_spotPickerCallback('${s.id}','${(s.name||'').replace(/'/g,"\\'")}')"
+                                 style="padding:8px;cursor:pointer;color:#f0f4ff;font-size:0.85rem;border-bottom:1px solid rgba(255,255,255,0.05)">
+                                ${s.name} <span style="color:rgba(255,255,255,0.4);font-size:0.75rem">${s.city || ''} · ${s.surf_zone || s.country || ''}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>` : '';
+
+            overlay.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                    <div style="color:#f0f4ff;font-size:1rem;font-weight:600">Choisir un spot</div>
+                    <div onclick="document.getElementById('spot-picker-overlay').style.display='none'"
+                         style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:1.2rem;padding:4px 8px">✕</div>
+                </div>
+                <input type="text" id="spot-picker-search" placeholder="🔍 Rechercher un spot..."
+                       style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#f0f4ff;font-size:0.9rem;margin-bottom:12px;outline:none">
+                <div style="flex:1;overflow-y:auto">
+                    ${favsHtml}
+                    ${spotsListHtml || countriesHtml}
+                </div>`;
+
+            // Wire search
+            const searchEl = document.getElementById('spot-picker-search');
+            if (searchEl) {
+                searchEl.oninput = () => {
+                    clearTimeout(_spotPickerSearchTimeout);
+                    const q = searchEl.value.trim();
+                    if (q.length < 2) { renderSpotPicker(); return; }
+                    _spotPickerSearchTimeout = setTimeout(async () => {
+                        const s = q.replace(/[.,()]/g, '');
+                        const { data } = await supabaseClient
+                            .from('spots')
+                            .select('id, name, city, surf_zone, country')
+                            .or(`name.ilike.%${s}%,city.ilike.%${s}%`)
+                            .order('name')
+                            .limit(20);
+                        renderSpotPicker(data || [], 'Résultats pour "' + q + '"');
+                    }, 300);
+                };
+                searchEl.focus();
+            }
+        }
+
+        async function spotPickerFilterCountry(country) {
+            const FRANCE_ZONE_ORDER = ['Pays Basque', 'Landes', 'Gironde', 'Charentes', 'Vendée', 'Bretagne Sud', 'Bretagne Nord', 'Normandie / Manche', 'Nord', 'Méditerranée Ouest', 'Méditerranée Est', 'Corse', 'Réunion'];
+            const { data } = await supabaseClient.from('spots').select('surf_zone').eq('country', country).not('surf_zone', 'is', null);
+            const rawZones = [...new Set((data || []).map(s => s.surf_zone))];
+            const zones = country === 'France'
+                ? FRANCE_ZONE_ORDER.filter(z => rawZones.includes(z)).concat(rawZones.filter(z => !FRANCE_ZONE_ORDER.includes(z)).sort())
+                : rawZones.sort();
+
+            if (zones.length > 1) {
+                // Show zone chips
+                const overlay = document.getElementById('spot-picker-overlay');
+                const container = overlay.querySelector('[style*="overflow-y:auto"]') || overlay.lastElementChild;
+                const zonesHtml = `
+                    <div style="margin-bottom:10px">
+                        <div style="color:rgba(255,255,255,0.4);font-size:0.7rem;text-transform:uppercase;margin-bottom:6px">${country} — Zones</div>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap">
+                            ${zones.map(z => `
+                                <div onclick="spotPickerFilterZone('${z.replace(/'/g,"\\'")}')"
+                                     style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(0,207,255,0.3);background:rgba(0,207,255,0.08);color:#00cfff">${z}</div>
+                            `).join('')}
+                        </div>
+                    </div>`;
+                // Re-render with zones
+                renderSpotPicker();
+                const scrollArea = document.getElementById('spot-picker-overlay').querySelector('[style*="overflow-y:auto"]');
+                if (scrollArea) {
+                    scrollArea.innerHTML = zonesHtml;
+                }
+            } else {
+                // Direct to spot list
+                const { data: spots } = await supabaseClient.from('spots').select('id, name, city, surf_zone, country').eq('country', country).order('name').limit(50);
+                renderSpotPicker(spots || [], country);
+            }
+        }
+
+        async function spotPickerFilterZone(zone) {
+            const { data: spots } = await supabaseClient.from('spots').select('id, name, city, surf_zone, country').eq('surf_zone', zone).order('name').limit(50);
+            renderSpotPicker(spots || [], zone);
         }
 
         async function submitSession() {
@@ -2189,7 +2340,7 @@ select option { background: #0d2137; color: #f0f4ff; }
             if (!result.success) throw new Error(result.error || 'Erreur serveur');
 
             // Capture spot name/city BEFORE form reset
-            const capturedSpotName = document.getElementById('session-spot-search')?.value || '';
+            const capturedSpotName = document.getElementById('session-spot-display')?.textContent?.trim() || '';
             let capturedSpotCity = '';
             try {
               const { data: spotData } = await supabaseClient.from('spots').select('city').eq('id', spotId).single();
@@ -2208,7 +2359,8 @@ select option { background: #0d2137; color: #f0f4ff; }
 
             // Reset form
             document.getElementById('session-spot').value = '';
-            document.getElementById('session-spot-search').value = '';
+            const spotDisplay = document.getElementById('session-spot-display');
+            if (spotDisplay) { spotDisplay.textContent = 'Choisir un spot...'; spotDisplay.style.color = 'rgba(255,255,255,0.4)'; }
             document.querySelectorAll('input[name="rating"]').forEach(r => r.checked = false);
             document.getElementById('session-notes').value = '';
             document.getElementById('session-board').value = '';
@@ -2260,10 +2412,11 @@ select option { background: #0d2137; color: #f0f4ff; }
               </div>
               <div class="form-group" style="margin-bottom:10px">
                 <label>📍 Spot de base (météo accueil)</label>
-                <input type="text" id="profile-home-spot-search" placeholder="Rechercher un spot..."
-                       style="width:100%;box-sizing:border-box;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#f0f4ff;font-size:0.85rem;outline:none">
                 <input type="hidden" id="profile-home-spot">
-                <div id="profile-spot-results" style="max-height:150px;overflow-y:auto;display:none"></div>
+                <div id="profile-home-spot-display" onclick="openSpotPicker('profile-home-spot','profile-home-spot-display')"
+                     style="width:100%;box-sizing:border-box;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);font-size:0.85rem;cursor:pointer">
+                  ${savedHomeSpot?.name || '— Choisir un spot —'}
+                </div>
               </div>
               <div class="datetime-row" style="margin-bottom:10px">
                 <div class="form-group" style="margin:0">
@@ -2343,32 +2496,9 @@ select option { background: #0d2137; color: #f0f4ff; }
 
           container.innerHTML = identiteHtml + boardsHtml + configHtml;
 
-          // Wire up profile spot search
-          const profSpotSearch = document.getElementById('profile-home-spot-search');
-          const profSpotHidden = document.getElementById('profile-home-spot');
-          const profSpotResults = document.getElementById('profile-spot-results');
-          if (profSpotSearch && savedHomeSpot) {
-              profSpotSearch.value = savedHomeSpot.name || '';
-              profSpotHidden.value = savedHomeSpot.id || '';
-          }
-          if (profSpotSearch) {
-              let pst;
-              profSpotSearch.oninput = () => {
-                  clearTimeout(pst);
-                  const q = profSpotSearch.value.trim();
-                  profSpotHidden.value = '';
-                  if (q.length < 2) { profSpotResults.style.display = 'none'; return; }
-                  pst = setTimeout(async () => {
-                      const s = q.replace(/[.,()]/g, '');
-                      const { data } = await supabaseClient.from('spots').select('id, name, city, lat, lng').or(`name.ilike.%${s}%,city.ilike.%${s}%`).order('name').limit(15);
-                      profSpotResults.innerHTML = (data||[]).map(sp =>
-                          `<div onclick="document.getElementById('profile-home-spot').value='${sp.id}';document.getElementById('profile-home-spot-search').value='${(sp.name||'').replace(/'/g,"\\'")}';document.getElementById('profile-spot-results').style.display='none';document.getElementById('profile-home-spot').dataset.lat='${sp.lat}';document.getElementById('profile-home-spot').dataset.lng='${sp.lng}'"
-                           style="padding:8px;cursor:pointer;color:#f0f4ff;font-size:0.85rem">${sp.name} <span style="color:rgba(255,255,255,0.4)">${sp.city||''}</span></div>`
-                      ).join('') || '<div style="color:rgba(255,255,255,0.3);padding:8px">Aucun résultat</div>';
-                      profSpotResults.style.display = 'block';
-                  }, 300);
-              };
-              profSpotSearch.onfocus = () => { if (profSpotSearch.value.length >= 2) profSpotSearch.oninput(); };
+          // Set saved home spot value
+          if (savedHomeSpot?.id) {
+              document.getElementById('profile-home-spot').value = savedHomeSpot.id;
           }
         }
 
