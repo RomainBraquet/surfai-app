@@ -334,6 +334,27 @@ router.post('/favorites/toggle', async (req, res) => {
   }
 });
 
+// GET /api/v1/spots/conditions?spotIds=id1,id2,id3
+router.get('/spots/conditions', async (req, res) => {
+  try {
+    const db = require('../services/supabaseService');
+    const openMeteo = require('../services/openMeteoService');
+    const spotIds = (req.query.spotIds || '').split(',').filter(Boolean);
+    if (!spotIds.length) return res.json({ success: true, conditions: {} });
+
+    const { data: spots } = await db.supabase
+      .from('spots')
+      .select('id, lat, lng')
+      .in('id', spotIds);
+
+    const validSpots = (spots || []).filter(s => s.lat && s.lng);
+    const conditions = await openMeteo.getConditions(validSpots);
+    res.json({ success: true, conditions });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // ─── ROUTES PRÉDICTIONS ──────────────────────────────────
 
 // GET /api/v1/predictions/best-windows?userId=X&days=5

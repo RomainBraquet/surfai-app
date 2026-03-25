@@ -1465,24 +1465,23 @@ select option { background: #0d2137; color: #f0f4ff; }
             const favs = fData.favorites || [];
             if (!favs.length) return;
 
-            // Fausses conditions — TODO: remplacer par Open-Meteo
-            const fakeConditions = [
-                { wave: 1.2, wind: 12, dir: 'NE', period: 11 },
-                { wave: 1.5, wind: 8, dir: 'SE', period: 13 },
-                { wave: 0.8, wind: 15, dir: 'NO', period: 9 },
-                { wave: 1.8, wind: 6, dir: 'E', period: 12 },
-                { wave: 1.0, wind: 20, dir: 'O', period: 10 },
-            ];
+            // Charger les conditions réelles via Open-Meteo
+            let spotConditions = {};
+            try {
+                const cRes = await fetch(`${backendUrl}/api/v1/spots/conditions?spotIds=${favs.map(f=>f.id).join(',')}`);
+                const cData = await cRes.json();
+                spotConditions = cData.conditions || {};
+            } catch(e) {}
 
             const favsHtml = favs.map((s, i) => {
-                const cond = fakeConditions[i % fakeConditions.length];
+                const cond = spotConditions[s.id] || {};
                 const score = _spotScoresCache?.[s.id]?.score;
                 const scoreColor = score >= 8 ? '#4dff91' : score >= 6 ? '#00cfff' : score ? '#ed8936' : '';
                 return `<div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,0.05)">
                     ${score ? `<div style="background:${scoreColor};color:#0a0e27;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0">${score}</div>` : ''}
                     <div style="flex:1;min-width:0;cursor:pointer" onclick="showTab('spots'); setTimeout(() => showSpotDetail('${s.id}'), 300)">
                         <div style="color:#f0f4ff;font-size:0.85rem;font-weight:500">${s.name}</div>
-                        <div style="color:rgba(255,255,255,0.4);font-size:0.7rem">${s.city || ''} · 🌊 ${cond.wave}m · 💨 ${cond.wind}km/h ${cond.dir} · ${cond.period}s</div>
+                        <div style="color:rgba(255,255,255,0.4);font-size:0.7rem">${s.city || ''}${cond.waveHeight != null ? ` · 🌊 ${cond.waveHeight.toFixed(1)}m` : ''}${cond.windSpeed != null ? ` · 💨 ${Math.round(cond.windSpeed)}km/h ${cond.windDirection || ''}` : ''}${cond.wavePeriod != null ? ` · ${cond.wavePeriod.toFixed(0)}s` : ''}</div>
                     </div>
                     <div onclick="event.stopPropagation();toggleFavorite('${s.id}',this);setTimeout(()=>loadAccueilFavs('${userId}'),500)" class="active"
                          style="font-size:1.1rem;cursor:pointer;padding:4px 6px;flex-shrink:0">⭐</div>
@@ -1695,24 +1694,23 @@ select option { background: #0d2137; color: #f0f4ff; }
                 const favs = fData.favorites || [];
                 if (!favs.length) { container.innerHTML = ''; return; }
 
-                // TODO: remplacer par de vraies données Open-Meteo
-                const fakeConditions = [
-                    { wave: 1.2, wind: 12, dir: 'NE', period: 11 },
-                    { wave: 1.5, wind: 8, dir: 'SE', period: 13 },
-                    { wave: 0.8, wind: 15, dir: 'NO', period: 9 },
-                    { wave: 1.8, wind: 6, dir: 'E', period: 12 },
-                    { wave: 1.0, wind: 20, dir: 'O', period: 10 },
-                ];
+                // Conditions réelles via Open-Meteo
+                let spotConditions = {};
+                try {
+                    const cRes = await fetch(`${backendUrl}/api/v1/spots/conditions?spotIds=${favs.map(f=>f.id).join(',')}`);
+                    const cData = await cRes.json();
+                    spotConditions = cData.conditions || {};
+                } catch(e) {}
 
                 const favsHtml = favs.map((s, i) => {
-                    const cond = fakeConditions[i % fakeConditions.length];
+                    const cond = spotConditions[s.id] || {};
                     const score = _spotScoresCache?.[s.id]?.score;
                     const scoreColor = score >= 8 ? '#4dff91' : score >= 6 ? '#00cfff' : score ? '#ed8936' : '';
                     return `<div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,0.05)">
                         ${score ? `<div style="background:${scoreColor};color:#0a0e27;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0">${score}</div>` : ''}
                         <div style="flex:1;min-width:0;cursor:pointer" onclick="showSpotDetail('${s.id}')">
                             <div style="color:#f0f4ff;font-size:0.85rem;font-weight:500">${s.name}</div>
-                            <div style="color:rgba(255,255,255,0.4);font-size:0.7rem">${s.city || ''} · 🌊 ${cond.wave}m · 💨 ${cond.wind}km/h ${cond.dir} · ${cond.period}s</div>
+                            <div style="color:rgba(255,255,255,0.4);font-size:0.7rem">${s.city || ''}${cond.waveHeight != null ? ` · 🌊 ${cond.waveHeight.toFixed(1)}m` : ''}${cond.windSpeed != null ? ` · 💨 ${Math.round(cond.windSpeed)}km/h ${cond.windDirection || ''}` : ''}${cond.wavePeriod != null ? ` · ${cond.wavePeriod.toFixed(0)}s` : ''}</div>
                         </div>
                         <div onclick="toggleFavorite('${s.id}',this);setTimeout(()=>renderSpotsFavs(),500)" class="active"
                              style="font-size:1.1rem;cursor:pointer;padding:4px 6px;flex-shrink:0">⭐</div>
