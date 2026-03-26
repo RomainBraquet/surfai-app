@@ -1558,11 +1558,20 @@ select option { background: #0d2137; color: #f0f4ff; }
             return data.success ? data.weather : null;
           };
 
-          if (navigator.geolocation) {
+          // Si géoloc déjà connue (via onglet Spots), l'utiliser directement
+          if (_userLat != null) {
+            try {
+              const weather = await fetchWeatherCoords(_userLat, _userLng);
+              if (weather) updateMeteo(weather, '📍 Position actuelle · maintenant');
+              else loadGeoWeatherFallback(fetchWeatherCoords, updateMeteo);
+            } catch(e) { loadGeoWeatherFallback(fetchWeatherCoords, updateMeteo); }
+          } else if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
               async (pos) => {
                 try {
                   const { latitude, longitude } = pos.coords;
+                  _userLat = latitude;
+                  _userLng = longitude;
                   const weather = await fetchWeatherCoords(latitude, longitude);
                   if (weather) updateMeteo(weather, '📍 Position actuelle · maintenant');
                 } catch (e) {
