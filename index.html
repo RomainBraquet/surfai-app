@@ -2282,6 +2282,9 @@ select option { background: #0d2137; color: #f0f4ff; }
             if (callback === 'home') {
                 const profilBtn = document.querySelectorAll('.nav-tab')[3];
                 showTab('profil', profilBtn);
+            } else if (callback === 'board') {
+                const boardsBtn = document.querySelectorAll('.nav-tab')[4];
+                showTab('boards', boardsBtn);
             } else {
                 const sessionBtn = document.querySelectorAll('.nav-tab')[2];
                 showTab('session', sessionBtn);
@@ -2307,17 +2310,22 @@ select option { background: #0d2137; color: #f0f4ff; }
             } catch(e) { spotName = 'Spot sélectionné'; }
 
             if (callback === 'home') {
-                // Home spot pour le profil
                 document.getElementById('profile-home-spot').value = spotId;
                 const display = document.getElementById('profile-home-spot-display');
                 if (display) { display.textContent = spotName; display.style.color = '#f0f4ff'; }
-                // Sauvegarder immédiatement
                 localStorage.setItem('home_spot', JSON.stringify({ id: spotId, name: spotName, lat: spotLat, lng: spotLng }));
-                // Revenir au profil
                 const profilBtn = document.querySelectorAll('.nav-tab')[3];
                 showTab('profil', profilBtn);
+            } else if (callback === 'board') {
+                // Ajouter le spot à la liste multi-spots de la board
+                if (!_boardSpots.find(s => s.id === spotId)) {
+                    _boardSpots.push({ id: spotId, name: spotName });
+                }
+                const boardsBtn = document.querySelectorAll('.nav-tab')[4];
+                showTab('boards', boardsBtn);
+                // Re-render après que loadBoardsTab ait fini — on attend un tick
+                setTimeout(() => renderBoardSpotsList(), 300);
             } else {
-                // Session spot
                 document.getElementById('session-spot').value = spotId;
                 const display = document.getElementById('session-spot-display');
                 if (display) { display.textContent = spotName; display.style.color = '#f0f4ff'; }
@@ -2992,8 +3000,15 @@ select option { background: #0d2137; color: #f0f4ff; }
                 <div onclick="showTab('profil', document.querySelectorAll('.nav-tab')[3])" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:0.8rem;padding:4px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:6px">← Profil</div>
               </div>
               ${boardsList}
-              <div class="card" style="margin-top:14px;padding:14px">
-                <span class="section-label" style="margin-bottom:12px;display:block">Ajouter une board</span>
+              <div style="margin-top:14px">
+                <div onclick="toggleAddBoard()" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;background:rgba(77,255,145,0.08);border:1px solid rgba(77,255,145,0.2);border-radius:10px">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="color:#4dff91;font-size:0.9rem;font-weight:600">+ Ajouter une board</span>
+                  </div>
+                  <div id="add-board-arrow" style="color:#4dff91;font-size:0.8rem;transition:transform 0.2s">▾</div>
+                </div>
+              </div>
+              <div id="add-board-form" class="card" style="display:none;margin-top:6px;padding:14px">
 
                 <!-- Section 1 : L'essentiel -->
                 <div style="color:#4dff91;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">L'essentiel</div>
@@ -3081,14 +3096,6 @@ select option { background: #0d2137; color: #f0f4ff; }
                   <div class="form-group" style="margin:0;flex:1"><label>Houle max (m)</label><input type="number" id="board-wave-max" step="0.1" placeholder="2.0"></div>
                 </div>
                 <div class="form-group">
-                  <label>Vent</label>
-                  <div id="board-wind-chips" style="display:flex;gap:6px;flex-wrap:wrap">
-                    <div onclick="selectChip(this,'board-wind')" data-value="offshore" class="chip-option chip-selected" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(77,255,145,0.3);background:rgba(77,255,145,0.1);color:#4dff91">Offshore</div>
-                    <div onclick="selectChip(this,'board-wind')" data-value="onshore" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)">Onshore</div>
-                    <div onclick="selectChip(this,'board-wind')" data-value="any" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)">Peu importe</div>
-                  </div>
-                </div>
-                <div class="form-group">
                   <label>Marée</label>
                   <div id="board-tide-chips" style="display:flex;gap:6px;flex-wrap:wrap">
                     <div onclick="selectChip(this,'board-tide')" data-value="haute" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)">Haute</div>
@@ -3097,10 +3104,25 @@ select option { background: #0d2137; color: #f0f4ff; }
                     <div onclick="selectChip(this,'board-tide')" data-value="any" class="chip-option chip-selected" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(77,255,145,0.3);background:rgba(77,255,145,0.1);color:#4dff91">Peu importe</div>
                   </div>
                 </div>
+                <div class="form-group">
+                  <label>Mes spots avec cette board</label>
+                  <div id="board-spots-list" style="margin-bottom:6px"></div>
+                  <div onclick="openBoardSpotPicker()" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);font-size:0.85rem;cursor:pointer;text-align:center">+ Ajouter un spot</div>
+                </div>
 
                 <button class="btn-primary" onclick="addBoard()" style="margin-top:8px">Ajouter cette board</button>
               </div>
             </div>`;
+        }
+
+        function toggleAddBoard() {
+          const form = document.getElementById('add-board-form');
+          const arrow = document.getElementById('add-board-arrow');
+          if (!form) return;
+          const isOpen = form.style.display !== 'none';
+          form.style.display = isOpen ? 'none' : 'block';
+          if (arrow) arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+          if (!isOpen) _boardSpots = []; // reset spots quand on ouvre
         }
 
         function selectChip(el, group) {
@@ -3484,6 +3506,28 @@ select option { background: #0d2137; color: #f0f4ff; }
         let _boardShareMode = '';
         let _boardShareId = null;
         let _boardShareExtras = {};
+        let _boardSpots = []; // spots associés à la board en cours d'ajout/édition
+
+        function openBoardSpotPicker() {
+          _spotPickMode = true;
+          _spotPickCallback = 'board';
+          const banner = document.getElementById('spot-pick-banner');
+          if (banner) banner.style.display = 'flex';
+          const spotsBtn = document.querySelectorAll('.nav-tab')[1];
+          showTab('spots', spotsBtn);
+        }
+
+        function renderBoardSpotsList() {
+          const container = document.getElementById('board-spots-list');
+          if (!container) return;
+          if (!_boardSpots.length) { container.innerHTML = ''; return; }
+          container.innerHTML = _boardSpots.map((s, i) => `
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(77,255,145,0.06);border:1px solid rgba(77,255,145,0.15);border-radius:6px;margin-bottom:4px">
+              <div style="flex:1;color:#f0f4ff;font-size:0.82rem">${s.name}</div>
+              <div onclick="_boardSpots.splice(${i},1);renderBoardSpotsList()" style="color:rgba(255,77,77,0.5);cursor:pointer;font-size:0.8rem;padding:2px 6px">✕</div>
+            </div>
+          `).join('');
+        }
 
         function showBoardPhotoPickStep() {
           const overlay = document.getElementById('board-share-overlay');
