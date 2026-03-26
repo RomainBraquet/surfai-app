@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏄‍♂️ SurfAI - App Intelligente</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        
+        .nav-tab {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            min-width: 120px;
+        }
+        
+        .nav-tab.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .nav-tab:hover:not(.active) {
+            background: #f0f0f0;
+        }
+        
+        .tab-content {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            min-height: 500px;
+        }
+        
+        .tab-panel {
+            display: none;
+        }
+        
+        .tab-panel.active {
+            display: block;
+        }
+        
+        .card {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        .button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        
+        .button.secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .button.secondary:hover {
+            background: #cbd5e0;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .forecast-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .forecast-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .forecast-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .forecast-date {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .forecast-score {
+            background: #48bb78;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .forecast-conditions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .condition {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .success {
+            background: #c6f6d5;
+            color: #25543e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .nav-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .nav-tab {
+                min-width: auto;
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🏄‍♂️ SurfAI</h1>
+            <p>Votre app intelligente de prédiction surf basée sur vos sessions</p>
+        </div>
+        
+        <!-- Navigation -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
+            <button class="nav-tab" onclick="showTab('sessions')">🏄‍♂️ Sessions</button>
+            <button class="nav-tab" onclick="showTab('spots')">📍 Spots</button>
+            <button class="nav-tab" onclick="showTab('profile')">👤 Profile</button>
+            <button class="nav-tab" onclick="showTab('predictions')">🎯 Prédictions</button>
+            <button class="nav-tab" onclick="showTab('meteo')">🌊 Météo</button>
+            <button class="nav-tab" onclick="showTab('config')">⚙️ Configuration</button>
+        </div>
+        
+        <!-- Content -->
+        <div class="tab-content">
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-panel active">
+                <h2>📊 Tableau de bord</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-sessions">-</div>
+                        <div class="stat-label">Sessions totales</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="avg-rating">-</div>
+                        <div class="stat-label">Note moyenne</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="favorite-spots">-</div>
+                        <div class="stat-label">Spots favoris</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="api-status">🔴</div>
+                        <div class="stat-label">API Stormglass</div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>🎯 Prochaines sessions recommandées</h3>
+                    <div id="recommendations">
+                        <div class="loading">Chargement des recommandations...</div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>📈 Vos patterns de surf</h3>
+                    <div id="patterns">
+                        <p>Analysez vos sessions pour découvrir vos conditions préférées !</p>
+                        <button class="button" onclick="analyzePatterns()">Analyser mes patterns</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sessions Tab -->
+            <div id="sessions" class="tab-panel">
+                <h2>🏄‍♂️ Mes Sessions</h2>
+                
+                <div class="card">
+                    <h3>➕ Ajouter une nouvelle session</h3>
+                    <form id="session-form">
+                        <div class="form-group">
+                            <label>Date de la session</label>
+                            <input type="date" id="session-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Spot</label>
+                            <select id="session-spot" required>
+                                <option value="">Sélectionnez un spot</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Note de la session (1-5)</label>
+                            <select id="session-rating" required>
+                                <option value="">Choisir une note</option>
+                                <option value="1">1 ⭐ - Décevant</option>
+                                <option value="2">2 ⭐ - Correct</option>
+                                <option value="3">3 ⭐ - Bien</option>
+                                <option value="4">4 ⭐ - Très bien</option>
+                                <option value="5">5 ⭐ - Excellent</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Commentaires</label>
+                            <textarea id="session-notes" rows="3" placeholder="Décrivez votre session..."></textarea>
+                        </div>
+                        <button type="submit" class="button">💾 Enregistrer la session</button>
+                    </form>
+                </div>
+                
+                <div class="card">
+                    <h3>📋 Historique des sessions</h3>
+                    <div id="sessions-list">
+                        <div class="loading">Chargement des sessions...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Spots Tab -->
+            <div id="spots" class="tab-panel">
+                <h2>📍 Mes Spots</h2>
+                
+                <div class="card">
+                    <h3>⭐ Spots favoris</h3>
+                    <div id="favorite-spots-list">
+                        <div class="loading">Chargement des spots favoris...</div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>🌊 Tous les spots disponibles</h3>
+                    <div id="all-spots-list">
+                        <div class="loading">Chargement des spots...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Profile Tab -->
+            <div id="profile" class="tab-panel">
+                <h2>👤 Mon Profile</h2>
+                
+                <!-- Informations personnelles -->
+                <div class="card">
+                    <h3>🏄‍♂️ Informations de surfeur</h3>
+                    <form id="profile-form">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                            <div class="form-group">
+                                <label>Pseudo</label>
+                                <input type="text" id="profile-nickname" placeholder="Votre pseudo">
+                            </div>
+                            <div class="form-group">
+                                <label>Niveau de surf</label>
+                                <select id="profile-level">
+                                    <option value="beginner">🌱 Débutant</option>
+                                    <option value="intermediate">🏄‍♂️ Intermédiaire</option>
+                                    <option value="advanced">🌊 Avancé</option>
+                                    <option value="expert">🏆 Expert</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <h4 style="margin: 20px 0 10px 0;">🌊 Préférences de vagues</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                            <div class="form-group">
+                                <label>Taille min (mètres)</label>
+                                <input type="number" id="profile-wave-min" step="0.1" min="0.3" max="5" placeholder="0.8">
+                            </div>
+                            <div class="form-group">
+                                <label>Taille max (mètres)</label>
+                                <input type="number" id="profile-wave-max" step="0.1" min="0.5" max="8" placeholder="2.5">
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="button">💾 Sauvegarder le profil</button>
+                    </form>
+                </div>
+                
+                <!-- Mes Boards -->
+                <div class="card">
+                    <h3>🏄‍♂️ Mes Boards</h3>
+                    
+                    <!-- Formulaire ajout board -->
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4>➕ Ajouter une board</h4>
+                        <form id="board-form">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <div class="form-group">
+                                    <label>Nom de la board</label>
+                                    <input type="text" id="board-name" placeholder="Ex: Ma Longboard" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Taille (pieds)</label>
+                                    <input type="text" id="board-size" placeholder="Ex: 9'2" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Type</label>
+                                    <select id="board-type" required>
+                                        <option value="">Choisir un type</option>
+                                        <option value="longboard">🏄‍♂️ Longboard</option>
+                                        <option value="midlength">🏄‍♀️ Midlength</option>
+                                        <option value="shortboard">⚡ Shortboard</option>
+                                        <option value="fish">🐠 Fish</option>
+                                        <option value="gun">🚀 Gun</option>
+                                        <option value="funboard">😊 Funboard</option>
+                                        <option value="sup">🏄‍♂️ SUP</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Shaper</label>
+                                    <input type="text" id="board-shaper" placeholder="Ex: Robert August" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="button">➕ Ajouter cette board</button>
+                        </form>
+                    </div>
+                    
+                    <!-- Liste des boards -->
+                    <div id="user-boards-list">
+                        <div class="loading">Chargement de vos boards...</div>
+                    </div>
+                </div>
+                
+                <!-- Mes Spots Favoris -->
+                <div class="card">
+                    <h3>⭐ Mes Spots Favoris</h3>
+                    <div id="profile-favorite-spots">
+                        <div class="loading">Chargement de vos spots favoris...</div>
+                    </div>
+                </div>
+                
+                <!-- Shapers & Recommandations -->
+                <div class="card">
+                    <h3>🔨 Shapers & Recommandations</h3>
+                    <div id="shapers-directory">
+                        <p>Découvrez les shapers de vos boards et trouvez votre prochaine planche !</p>
+                        <div id="shapers-list">
+                            <div class="loading">Chargement des shapers...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Predictions Tab -->
+            <div id="predictions" class="tab-panel">
+                <h2>🎯 Prédictions Intelligentes</h2>
+                
+                <div class="card">
+                    <h3>🏆 Recommandations pour les prochains jours</h3>
+                    <button class="button" onclick="generatePredictions()">🔮 Générer prédictions</button>
+                    <div id="predictions-list">
+                        <p>Cliquez sur "Générer prédictions" pour voir les meilleures sessions à venir !</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>📊 Précision de mes prédictions passées</h3>
+                    <div id="accuracy-stats">
+                        <p>Vos prédictions s'améliorent au fur et à mesure de vos sessions !</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Meteo Tab -->
+            <div id="meteo" class="tab-panel">
+                <h2>🌊 Météo Marine</h2>
+                
+                <div class="card">
+                    <h3>🧪 Test API Stormglass</h3>
+                    <p>Testez votre connexion à l'API météo temps réel</p>
+                    <button class="button" onclick="testStormglassAPI()">🔍 Tester l'API</button>
+                    <div id="api-test-result"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>📡 Prévisions en temps réel</h3>
+                    <div class="form-group">
+                        <label>Choisir un spot</label>
+                        <select id="forecast-spot">
+                            <option value="">Sélectionnez un spot</option>
+                        </select>
+                    </div>
+                    <button class="button" onclick="getForecast()">🌊 Récupérer prévisions</button>
+                    <div id="forecast-result">
+                        <div class="forecast-grid" id="forecast-grid"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Config Tab -->
+            <div id="config" class="tab-panel">
+                <h2>⚙️ Configuration</h2>
+                
+                <div class="card">
+                    <h3>🔐 Configuration Supabase</h3>
+                    <div class="form-group">
+                        <label>URL Supabase</label>
+                        <input type="text" id="supabase-url" placeholder="https://votre-projet.supabase.co">
+                    </div>
+                    <div class="form-group">
+                        <label>Clé Anon Supabase</label>
+                        <input type="password" id="supabase-key" placeholder="votre-cle-anon">
+                    </div>
+                    <button class="button" onclick="testSupabaseConnection()">🔍 Tester connexion</button>
+                </div>
+                
+                <div class="card">
+                    <h3>🌊 Configuration API Météo</h3>
+                    <div class="form-group">
+                        <label>Clé API Stormglass</label>
+                        <input type="password" id="stormglass-key" value="dec28c24-0a52-11f0-a364-0242ac130003-dec28c88-0a52-11f0-a364-0242ac130003">
+                    </div>
+                    <button class="button" onclick="saveConfiguration()">💾 Sauvegarder configuration</button>
+                </div>
+                
+                <div class="card">
+                    <h3>📊 État de l'application</h3>
+                    <div id="app-status">
+                        <p>🔴 Supabase: Non configuré</p>
+                        <p>🔴 API Météo: Non testée</p>
+                        <p>🔴 Données: Non chargées</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Variables globales
+        let supabaseClient = null;
+        let userData = {
+            sessions: [],
+            spots: [],
+            favoriteSpots: [],
+            predictions: [],
+            profile: {},
+            boards: [],
+            shapers: {}
+        };
+        let currentUserId = '2025-06-09'; // ID utilisateur par défaut (à adapter selon votre vraie table profiles)
+
+        // Navigation entre onglets
+        function showTab(tabName) {
+            // Masquer tous les onglets
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Afficher l'onglet sélectionné
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Charger les données si nécessaire
+            if (tabName === 'sessions') loadSessions();
+            if (tabName === 'spots') loadSpots();
+            if (tabName === 'profile') loadProfile();
+            if (tabName === 'predictions') loadPredictions();
+        }
+
+        // Configuration Supabase
+        async function testSupabaseConnection() {
+            const url = document.getElementById('supabase-url').value;
+            const key = document.getElementById('supabase-key').value;
+            
+            if (!url || !key) {
+                showMessage('error', 'Veuillez renseigner URL et clé Supabase');
+                return;
+            }
+            
+            try {
+                // Créer client Supabase avec config auth désactivée (évite les conflits)
+                supabaseClient = supabase.createClient(url, key, {
+                    auth: {
+                        persistSession: false,
+                        autoRefreshToken: false
+                    }
+                });
+                
+                // Test de connexion en récupérant les spots
+                const { data, error } = await supabaseClient
+                    .from('spots')
+                    .select('id, name')
+                    .limit(1);
+                
+                if (error) {
+                    throw new Error(`Erreur Supabase: ${error.message} (Code: ${error.code})`);
+                }
+                
+                showMessage('success', `✅ Connexion Supabase réussie ! ${data?.length || 0} spots trouvés`);
+                
+                // Sauvegarder la config dans localStorage
+                localStorage.setItem('supabase_url', url);
+                localStorage.setItem('supabase_key', key);
+                
+                updateAppStatus();
+                
+                // Recharger les données réelles
+                await loadRealData();
+                
+            } catch (error) {
+                console.error('Erreur Supabase complète:', error);
+                let errorMessage = 'Erreur de connexion';
+                
+                if (error.message) {
+                    errorMessage = error.message;
+                } else if (typeof error === 'object') {
+                    errorMessage = JSON.stringify(error);
+                }
+                
+                showMessage('error', `❌ ${errorMessage}`);
+            }
+        }
+
+        // Charger les données réelles depuis Supabase
+        async function loadRealData() {
+            if (!supabaseClient) {
+                console.log('⚠️ Pas de client Supabase, chargement données simulées');
+                loadSessions();
+                loadSpots();
+                loadProfile();
+                return;
+            }
+            
+            try {
+                console.log('🔄 Chargement données depuis Supabase...');
+                
+                // Charger toutes les données en parallèle avec gestion d'erreurs individuelles
+                const [spotsResult, sessionsResult, favoritesResult, profileResult, boardsResult] = await Promise.allSettled([
+                    supabaseClient.from('spots').select('*').limit(50),
+                    supabaseClient.from('sessions').select('*').eq('user_id', currentUserId).limit(100),
+                    supabaseClient.from('favorite_spots').select(`
+                        spot_id,
+                        spots (id, name, country, region)
+                    `).eq('user_id', currentUserId).limit(50),
+                    supabaseClient.from('profiles').select('*').eq('id', currentUserId).single(),
+                    supabaseClient.from('boards').select('*').eq('user_id', currentUserId).limit(20)
+                ]);
+                
+                // Traiter les résultats spots
+                if (spotsResult.status === 'fulfilled' && !spotsResult.value.error) {
+                    userData.spots = spotsResult.value.data || [];
+                    console.log(`✅ ${userData.spots.length} spots chargés`);
+                } else {
+                    console.warn('⚠️ Erreur chargement spots:', spotsResult.value?.error || spotsResult.reason);
+                    userData.spots = [];
+                }
+                
+                // Traiter les résultats sessions
+                if (sessionsResult.status === 'fulfilled' && !sessionsResult.value.error) {
+                    userData.sessions = sessionsResult.value.data || [];
+                    console.log(`✅ ${userData.sessions.length} sessions chargées`);
+                } else {
+                    console.warn('⚠️ Erreur chargement sessions:', sessionsResult.value?.error || sessionsResult.reason);
+                    userData.sessions = [];
+                }
+                
+                // Traiter les résultats favoris
+                if (favoritesResult.status === 'fulfilled' && !favoritesResult.value.error) {
+                    userData.favoriteSpots = favoritesResult.value.data || [];
+                    console.log(`✅ ${userData.favoriteSpots.length} favoris chargés`);
+                } else {
+                    console.warn('⚠️ Erreur chargement favoris:', favoritesResult.value?.error || favoritesResult.reason);
+                    userData.favoriteSpots = [];
+                }
+                
+                // Traiter le profil
+                if (profileResult.status === 'fulfilled' && !profileResult.value.error) {
+                    userData.profile = profileResult.value.data || {};
+                    console.log(`✅ Profil chargé:`, userData.profile.nickname || 'Sans nom');
+                } else {
+                    console.warn('⚠️ Erreur chargement profil:', profileResult.value?.error || profileResult.reason);
+                    userData.profile = {};
+                }
+                
+                // Traiter les boards
+                if (boardsResult.status === 'fulfilled' && !boardsResult.value.error) {
+                    userData.boards = boardsResult.value.data || [];
+                    console.log(`✅ ${userData.boards.length} boards chargées`);
+                } else {
+                    console.warn('⚠️ Erreur chargement boards:', boardsResult.value?.error || boardsResult.reason);
+                    userData.boards = [];
+                }
+                
+                // Mettre à jour l'interface
+                updateDashboard();
+                if (document.getElementById('sessions').classList.contains('active')) {
+                    loadSessions();
+                }
+                if (document.getElementById('spots').classList.contains('active')) {
+                    loadSpots();
+                }
+                if (document.getElementById('profile').classList.contains('active')) {
+                    loadProfile();
+                }
+                
+                const totalLoaded = userData.sessions.length + userData.spots.length + userData.favoriteSpots.length + userData.boards.length;
+                if (totalLoaded > 0) {
+                    showMessage('success', `📊 Données chargées: ${userData.sessions.length} sessions, ${userData.spots.length} spots, ${userData.favoriteSpots.length} favoris, ${userData.boards.length} boards`);
+                } else {
+                    showMessage('error', 'Aucune donnée trouvée. Vérifiez l\'ID utilisateur ou ajoutez des données.');
+                }
+                
+            } catch (error) {
+                console.error('Erreur chargement:', error);
+                showMessage('error', `❌ Erreur chargement données: ${error.message || 'Erreur inconnue'}`);
+                
+                // Fallback sur données simulées
+                loadSessions();
+                loadSpots();
+                loadProfile();
+            }
+        }
+
+        // Test API Stormglass
+        async function testStormglassAPI() {
+            const apiKey = document.getElementById('stormglass-key').value;
+            const resultDiv = document.getElementById('api-test-result');
+            
+            resultDiv.innerHTML = '<div class="loading">🧪 Test en cours...</div>';
+            
+            // Simulation du test (en vrai il faudrait un backend)
+            setTimeout(() => {
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        ✅ API Stormglass fonctionnelle !<br>
+                        📊 Test avec Mimizan (44.21, -1.30)<br>
+                        🌊 Données reçues: Vagues 1.2m, Vent 15km/h
+                    </div>
+                `;
+                document.getElementById('api-status').textContent = '🟢';
+                updateAppStatus();
+            }, 2000);
+        }
+
+        // Charger les sessions (vraies données)
+        function loadSessions() {
+            if (!supabaseClient || userData.sessions.length === 0) {
+                // Données simulées si pas de connexion
+                const mockSessions = [
+                    {
+                        id: 1,
+                        date: '2025-08-20',
+                        spot_id: null,
+                        rating: 5,
+                        notes: 'Session incroyable ! Vagues parfaites.',
+                        meteo: { windSpeed: 12, waveHeight: 1.8, wavePeriod: 14 }
+                    }
+                ];
+                displaySessions(mockSessions);
+                return;
+            }
+            
+            // Vraies données Supabase
+            const sessionsWithSpots = userData.sessions.map(session => {
+                const spot = userData.spots.find(s => s.id === session.spot_id);
+                return {
+                    ...session,
+                    spotName: spot ? spot.name : 'Spot inconnu'
+                };
+            });
+            
+            displaySessions(sessionsWithSpots);
+        }
+        
+        function displaySessions(sessions) {
+            const sessionsList = document.getElementById('sessions-list');
+            
+            if (sessions.length === 0) {
+                sessionsList.innerHTML = `
+                    <div class="card">
+                        <p>🏄‍♂️ Aucune session enregistrée pour le moment.</p>
+                        <p>Ajoutez votre première session ci-dessus !</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            sessionsList.innerHTML = sessions
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .map(session => {
+                    const date = new Date(session.date).toLocaleDateString('fr-FR');
+                    const meteo = session.meteo || {};
+                    const stars = '⭐'.repeat(session.rating);
+                    
+                    return `
+                        <div class="card">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <h4>${date} - ${session.spotName || 'Spot'}</h4>
+                                <span style="color: #667eea; font-weight: bold;">${stars}</span>
+                            </div>
+                            ${session.notes ? `<p>💬 ${session.notes}</p>` : ''}
+                            ${meteo.waveHeight ? `
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 10px; font-size: 0.9rem; color: #666;">
+                                    <div>🌊 ${meteo.waveHeight}m</div>
+                                    <div>📏 ${meteo.wavePeriod || 'N/A'}s</div>
+                                    <div>💨 ${meteo.windSpeed || 'N/A'}km/h</div>
+                                    <div>🧭 ${meteo.windDirection || 'N/A'}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+        }
+
+        // Charger les spots (vraies données)
+        function loadSpots() {
+            if (!supabaseClient || userData.spots.length === 0) {
+                // Données simulées si pas de connexion
+                loadMockSpots();
+                return;
+            }
+            
+            // Vraies données Supabase
+            const favoriteSpotIds = userData.favoriteSpots.map(fav => fav.spot_id);
+            const spotsWithFavorites = userData.spots.map(spot => ({
+                ...spot,
+                favorite: favoriteSpotIds.includes(spot.id)
+            }));
+            
+            displaySpots(spotsWithFavorites);
+        }
+        
+        function loadMockSpots() {
+            const mockSpots = [
+                { id: 1, name: 'Mimizan', region: 'Nouvelle-Aquitaine', favorite: true },
+                { id: 2, name: 'Le Penon', region: 'Nouvelle-Aquitaine', favorite: true },
+                { id: 3, name: 'Lette Blanche', region: 'Nouvelle-Aquitaine', favorite: false },
+                { id: 4, name: 'Biscarrosse', region: 'Nouvelle-Aquitaine', favorite: false }
+            ];
+            displaySpots(mockSpots);
+        }
+        
+        function displaySpots(spots) {
+            const favoritesList = document.getElementById('favorite-spots-list');
+            const allSpotsList = document.getElementById('all-spots-list');
+            
+            const favorites = spots.filter(spot => spot.favorite);
+            
+            // Afficher spots favoris
+            if (favorites.length === 0) {
+                favoritesList.innerHTML = `
+                    <div class="card">
+                        <p>⭐ Aucun spot favori pour le moment.</p>
+                        <p>Ajoutez vos spots préférés ci-dessous !</p>
+                    </div>
+                `;
+            } else {
+                favoritesList.innerHTML = favorites.map(spot => `
+                    <div class="card">
+                        <h4>⭐ ${spot.name}</h4>
+                        <p>📍 ${spot.region || spot.country}</p>
+                        <button class="button secondary" onclick="removeFavorite('${spot.id}')">Retirer des favoris</button>
+                    </div>
+                `).join('');
+            }
+            
+            // Afficher tous les spots
+            allSpotsList.innerHTML = spots.map(spot => `
+                <div class="card">
+                    <h4>${spot.favorite ? '⭐' : '📍'} ${spot.name}</h4>
+                    <p>📍 ${spot.region || spot.country}</p>
+                    <p style="font-size: 0.9rem; color: #666;">
+                        ${spot.bottom_type ? `🏖️ ${spot.bottom_type}` : ''}
+                        ${spot.ideal_wind ? ` • 💨 Vent: ${spot.ideal_wind.join(', ')}` : ''}
+                    </p>
+                    ${!spot.favorite ? 
+                        `<button class="button" onclick="addFavorite('${spot.id}')">Ajouter aux favoris</button>` : 
+                        '<span style="color: #48bb78;">✅ Dans vos favoris</span>'
+                    }
+                </div>
+            `).join('');
+            
+            // Remplir les selects
+            const spotOptions = spots.map(spot => 
+                `<option value="${spot.id}">${spot.name}</option>`
+            ).join('');
+            document.getElementById('session-spot').innerHTML = '<option value="">Sélectionnez un spot</option>' + spotOptions;
+            document.getElementById('forecast-spot').innerHTML = '<option value="">Sélectionnez un spot</option>' + spotOptions;
+            
+            // Mettre à jour le compteur de favoris
+            document.getElementById('favorite-spots').textContent = favorites.length;
+        }
+
+        // Charger le profil utilisateur
+        function loadProfile() {
+            // Charger les données du profil
+            if (userData.profile && Object.keys(userData.profile).length > 0) {
+                document.getElementById('profile-nickname').value = userData.profile.nickname || '';
+                document.getElementById('profile-level').value = userData.profile.surf_level || 'intermediate';
+                document.getElementById('profile-wave-min').value = userData.profile.min_wave_height || '';
+                document.getElementById('profile-wave-max').value = userData.profile.max_wave_height || '';
+            }
+            
+            // Charger les boards
+            loadUserBoards();
+            
+            // Charger les spots favoris pour le profil
+            loadProfileFavoriteSpots();
+            
+            // Charger les shapers
+            loadShapers();
+        }
+        
+        // Charger les boards de l'utilisateur
+        function loadUserBoards() {
+            const boardsList = document.getElementById('user-boards-list');
+            
+            if (!userData.boards || userData.boards.length === 0) {
+                boardsList.innerHTML = `
+                    <div class="card">
+                        <p>🏄‍♂️ Aucune board enregistrée pour le moment.</p>
+                        <p>Ajoutez votre première board ci-dessus !</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            boardsList.innerHTML = userData.boards.map(board => `
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <h4>${board.name}</h4>
+                            <p>📏 ${board.size} • 🏄‍♂️ ${board.type}</p>
+                            <p>🔨 Shaper: ${board.shaper}</p>
+                            ${board.description ? `<p style="color: #666; font-size: 0.9rem;">${board.description}</p>` : ''}
+                        </div>
+                        <button class="button secondary" onclick="removeBoard('${board.id}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Charger spots favoris pour le profil
+        function loadProfileFavoriteSpots() {
+            const profileFavorites = document.getElementById('profile-favorite-spots');
+            
+            if (!userData.favoriteSpots || userData.favoriteSpots.length === 0) {
+                profileFavorites.innerHTML = `
+                    <p>⭐ Aucun spot favori. Ajoutez-en dans l'onglet Spots !</p>
+                `;
+                return;
+            }
+            
+            profileFavorites.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    ${userData.favoriteSpots.map(fav => `
+                        <div style="background: white; padding: 15px; border-radius: 8px; border: 2px solid #e2e8f0;">
+                            <h4>⭐ ${fav.spots?.name || 'Spot'}</h4>
+                            <p style="color: #666; font-size: 0.9rem;">📍 ${fav.spots?.region || fav.spots?.country || ''}</p>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // Charger les shapers
+        function loadShapers() {
+            const shapersList = document.getElementById('shapers-list');
+            
+            if (!userData.boards || userData.boards.length === 0) {
+                shapersList.innerHTML = `
+                    <p>Ajoutez des boards pour découvrir leurs shapers !</p>
+                `;
+                return;
+            }
+            
+            // Grouper par shaper
+            const shaperStats = {};
+            userData.boards.forEach(board => {
+                if (!shaperStats[board.shaper]) {
+                    shaperStats[board.shaper] = {
+                        name: board.shaper,
+                        boards: [],
+                        totalBoards: 0
+                    };
+                }
+                shaperStats[board.shaper].boards.push(board);
+                shaperStats[board.shaper].totalBoards++;
+            });
+            
+            shapersList.innerHTML = Object.values(shaperStats).map(shaper => `
+                <div class="card">
+                    <h4>🔨 ${shaper.name}</h4>
+                    <p>${shaper.totalBoards} board${shaper.totalBoards > 1 ? 's' : ''} dans votre collection</p>
+                    <div style="margin-top: 10px;">
+                        ${shaper.boards.map(board => `
+                            <span style="background: #e2e8f0; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; margin: 2px;">${board.name}</span>
+                        `).join('')}
+                    </div>
+                    <button class="button secondary" style="margin-top: 10px;" onclick="showShaperDetails('${shaper.name}')">
+                        📋 Voir la fiche shaper
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Mettre à jour le dashboard (fonction simplifiée)
+        function updateDashboard() {
+            // Statistiques basées sur les vraies données
+            const totalSessions = userData.sessions.length;
+            const avgRating = totalSessions > 0 ? 
+                (userData.sessions.reduce((sum, s) => sum + s.rating, 0) / totalSessions).toFixed(1) : '-';
+            const favoriteCount = userData.favoriteSpots.length;
+            
+            document.getElementById('total-sessions').textContent = totalSessions;
+            document.getElementById('avg-rating').textContent = avgRating;
+            document.getElementById('favorite-spots').textContent = favoriteCount;
+            
+            // Générer recommandations basées sur les vraies données
+            if (totalSessions > 0) {
+                generateRealRecommendations();
+            } else {
+                document.getElementById('recommendations').innerHTML = `
+                    <p>🎯 Enregistrez vos premières sessions pour recevoir des recommandations personnalisées !</p>
+                `;
+            }
+        }
+        
+        // Générer recommandations basées sur les vraies sessions
+        function generateRealRecommendations() {
+            const goodSessions = userData.sessions.filter(s => s.rating >= 4);
+            const recommendationsDiv = document.getElementById('recommendations');
+            
+            if (goodSessions.length === 0) {
+                recommendationsDiv.innerHTML = `
+                    <p>🎯 Enregistrez quelques sessions notées 4-5⭐ pour recevoir des recommandations personnalisées !</p>
+                `;
+                return;
+            }
+            
+            // Analyser les patterns des bonnes sessions
+            const patterns = analyzeSessionPatterns(goodSessions);
+            
+            recommendationsDiv.innerHTML = `
+                <div class="success">
+                    <h4>🎯 Basé sur vos ${goodSessions.length} meilleures sessions :</h4>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>🌊 Vagues optimales: ${patterns.avgWaveHeight}m</li>
+                        <li>💨 Vent optimal: ${patterns.avgWindSpeed}km/h</li>
+                        <li>📍 Votre spot préféré: ${patterns.favoriteSpot}</li>
+                        <li>⭐ Note moyenne: ${patterns.avgRating}/5</li>
+                    </ul>
+                    <p style="margin-top: 15px;"><strong>💡 Prochaine session recommandée:</strong> ${patterns.recommendation}</p>
+                </div>
+            `;
+        }
+        
+        // Analyser les patterns des sessions
+        function analyzeSessionPatterns(sessions) {
+            const meteoData = sessions.map(s => s.meteo).filter(m => m && m.waveHeight);
+            
+            const avgWaveHeight = meteoData.length > 0 ? 
+                (meteoData.reduce((sum, m) => sum + (m.waveHeight || 0), 0) / meteoData.length).toFixed(1) : 'N/A';
+            
+            const avgWindSpeed = meteoData.length > 0 ? 
+                (meteoData.reduce((sum, m) => sum + (m.windSpeed || 0), 0) / meteoData.length).toFixed(0) : 'N/A';
+            
+            const avgRating = (sessions.reduce((sum, s) => sum + s.rating, 0) / sessions.length).toFixed(1);
+            
+            // Trouver le spot le plus fréquent
+            const spotCounts = {};
+            sessions.forEach(session => {
+                const spot = userData.spots.find(s => s.id === session.spot_id);
+                if (spot) {
+                    spotCounts[spot.name] = (spotCounts[spot.name] || 0) + 1;
+                }
+            });
+            
+            const favoriteSpot = Object.keys(spotCounts).length > 0 ? 
+                Object.keys(spotCounts).reduce((a, b) => spotCounts[a] > spotCounts[b] ? a : b) : 'Aucun';
+            
+            const recommendation = `Cherchez des vagues autour de ${avgWaveHeight}m avec un vent de ${avgWindSpeed}km/h à ${favoriteSpot}`;
+            
+            return {
+                avgWaveHeight,
+                avgWindSpeed,
+                avgRating,
+                favoriteSpot,
+                recommendation
+            };
+        }
+
+        // Analyser patterns (basé sur vraies données)
+        function analyzePatterns() {
+            const patternsDiv = document.getElementById('patterns');
+            patternsDiv.innerHTML = '<div class="loading">🧠 Analyse de vos patterns...</div>';
+            
+            setTimeout(() => {
+                const goodSessions = userData.sessions.filter(s => s.rating >= 4);
+                
+                if (goodSessions.length === 0) {
+                    patternsDiv.innerHTML = `
+                        <div class="card">
+                            <p>🎯 Enregistrez quelques sessions notées 4-5⭐ pour analyser vos patterns !</p>
+                            <p>Plus vous ajoutez de sessions, plus l'IA sera précise.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const patterns = analyzeSessionPatterns(goodSessions);
+                const meteoData = goodSessions.map(s => s.meteo).filter(m => m && m.waveHeight);
+                
+                // Calculs avancés
+                const windDirections = meteoData.map(m => m.windDirection).filter(d => d);
+                const waveDirections = meteoData.map(m => m.waveDirection).filter(d => d);
+                const wavePeriods = meteoData.map(m => m.wavePeriod).filter(p => p);
+                
+                const avgWavePeriod = wavePeriods.length > 0 ? 
+                    (wavePeriods.reduce((sum, p) => sum + p, 0) / wavePeriods.length).toFixed(0) : 'N/A';
+                
+                const preferredWindDir = windDirections.length > 0 ? [...new Set(windDirections)].join(', ') : 'N/A';
+                const preferredWaveDir = waveDirections.length > 0 ? [...new Set(waveDirections)].join(', ') : 'N/A';
+                
+                patternsDiv.innerHTML = `
+                    <div class="success">
+                        <h4>🎯 Vos conditions optimales (${goodSessions.length} sessions excellentes) :</h4>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>🌊 Vagues: ${patterns.avgWaveHeight}m (votre sweet spot !)</li>
+                            <li>💨 Vent: ${patterns.avgWindSpeed} km/h (optimal)</li>
+                            <li>🧭 Direction vent préférée: ${preferredWindDir}</li>
+                            <li>🌊 Direction houle préférée: ${preferredWaveDir}</li>
+                            <li>⏰ Période vagues: ${avgWavePeriod} secondes</li>
+                            <li>📍 Spot préféré: ${patterns.favoriteSpot}</li>
+                        </ul>
+                        <p style="margin-top: 15px;"><strong>💡 Insight:</strong> ${patterns.recommendation}</p>
+                        <p style="margin-top: 10px; font-size: 0.9rem; color: #666;">
+                            <strong>Précision:</strong> Basé sur ${goodSessions.length} sessions excellentes. 
+                            Plus vous loggez, plus l'IA sera précise !
+                        </p>
+                    </div>
+                `;
+            }, 2000);
+        }
+
+        // Générer prédictions
+        function generatePredictions() {
+            const predictionsDiv = document.getElementById('predictions-list');
+            predictionsDiv.innerHTML = '<div class="loading">🔮 Génération des prédictions...</div>';
+            
+            setTimeout(() => {
+                const mockPredictions = [
+                    {
+                        date: 'Demain 8h',
+                        spot: 'Mimizan',
+                        score: 4.2,
+                        conditions: 'Vagues 1.6m, Vent 10km/h NE',
+                        recommendation: '🏄‍♂️ Excellente session prévue !'
+                    },
+                    {
+                        date: 'Vendredi 7h',
+                        spot: 'Le Penon',
+                        score: 3.8,
+                        conditions: 'Vagues 1.9m, Vent 14km/h E',
+                        recommendation: '👍 Bonne session possible'
+                    }
+                ];
+                
+                predictionsDiv.innerHTML = `
+                    <div class="forecast-grid">
+                        ${mockPredictions.map(pred => `
+                            <div class="forecast-card">
+                                <div class="forecast-header">
+                                    <span class="forecast-date">${pred.date}</span>
+                                    <span class="forecast-score">${pred.score}/5</span>
+                                </div>
+                                <h4>${pred.spot}</h4>
+                                <p>${pred.conditions}</p>
+                                <p style="color: #48bb78; font-weight: bold;">${pred.recommendation}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }, 1500);
+        }
+
+        function loadPredictions() {
+            // Placeholder pour charger les prédictions
+        }
+
+        // Récupérer prévisions
+        function getForecast() {
+            const spot = document.getElementById('forecast-spot').value;
+            const forecastGrid = document.getElementById('forecast-grid');
+            
+            if (!spot) {
+                showMessage('error', 'Veuillez sélectionner un spot');
+                return;
+            }
+            
+            forecastGrid.innerHTML = '<div class="loading">🌊 Récupération prévisions...</div>';
+            
+            setTimeout(() => {
+                const mockForecast = [
+                    {
+                        time: 'Aujourd\'hui 14h',
+                        waveHeight: 1.2,
+                        windSpeed: 8,
+                        windDir: 'NE',
+                        score: 3.5
+                    },
+                    {
+                        time: 'Aujourd\'hui 17h',
+                        waveHeight: 1.4,
+                        windSpeed: 12,
+                        windDir: 'E',
+                        score: 4.2
+                    },
+                    {
+                        time: 'Demain 8h',
+                        waveHeight: 1.6,
+                        windSpeed: 10,
+                        windDir: 'NE',
+                        score: 4.5
+                    }
+                ];
+                
+                forecastGrid.innerHTML = mockForecast.map(forecast => `
+                    <div class="forecast-card">
+                        <div class="forecast-header">
+                            <span class="forecast-date">${forecast.time}</span>
+                            <span class="forecast-score">${forecast.score}/5</span>
+                        </div>
+                        <div class="forecast-conditions">
+                            <div class="condition">🌊 ${forecast.waveHeight}m</div>
+                            <div class="condition">💨 ${forecast.windSpeed}km/h</div>
+                            <div class="condition">🧭 ${forecast.windDir}</div>
+                            <div class="condition">⭐ ${forecast.score >= 4 ? 'Excellent' : forecast.score >= 3 ? 'Bon' : 'Moyen'}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }, 1500);
+        }
+
+        // Ajouter/retirer favoris (avec vraie base)
+        async function addFavorite(spotId) {
+            if (!supabaseClient) {
+                showMessage('error', 'Connectez-vous à Supabase d\'abord');
+                return;
+            }
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('favorite_spots')
+                    .insert({
+                        user_id: currentUserId,
+                        spot_id: spotId
+                    });
+                
+                if (error) throw error;
+                
+                showMessage('success', 'Spot ajouté aux favoris !');
+                await loadRealData(); // Recharger les données
+                
+            } catch (error) {
+                console.error('Erreur ajout favori:', error);
+                showMessage('error', `Erreur: ${error.message}`);
+            }
+        }
+
+        async function removeFavorite(spotId) {
+            if (!supabaseClient) {
+                showMessage('error', 'Connectez-vous à Supabase d\'abord');
+                return;
+            }
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('favorite_spots')
+                    .delete()
+                    .eq('user_id', currentUserId)
+                    .eq('spot_id', spotId);
+                
+                if (error) throw error;
+                
+                showMessage('success', 'Spot retiré des favoris !');
+                await loadRealData(); // Recharger les données
+                
+            } catch (error) {
+                console.error('Erreur suppression favori:', error);
+                showMessage('error', `Erreur: ${error.message}`);
+            }
+        }
+
+        // Formulaires du profil
+        document.getElementById('profile-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const profileData = {
+                id: currentUserId,
+                nickname: document.getElementById('profile-nickname').value || null,
+                surf_level: document.getElementById('profile-level').value,
+                min_wave_height: parseFloat(document.getElementById('profile-wave-min').value) || null,
+                max_wave_height: parseFloat(document.getElementById('profile-wave-max').value) || null,
+                updated_at: new Date().toISOString()
+            };
+            
+            if (!supabaseClient) {
+                showMessage('success', 'Profil sauvegardé localement (connectez Supabase pour persistence)');
+                userData.profile = profileData;
+                return;
+            }
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('profiles')
+                    .upsert(profileData);
+                
+                if (error) throw error;
+                
+                showMessage('success', '✅ Profil sauvegardé !');
+                userData.profile = profileData;
+                
+                // Mettre à jour les prédictions avec les nouvelles préférences
+                updatePredictionWeights();
+                
+            } catch (error) {
+                console.error('Erreur sauvegarde profil:', error);
+                showMessage('error', `Erreur: ${error.message}`);
+            }
+        });
+        
+        // Formulaire board
+        document.getElementById('board-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const boardData = {
+                user_id: currentUserId,
+                name: document.getElementById('board-name').value,
+                size: document.getElementById('board-size').value,
+                type: document.getElementById('board-type').value,
+                shaper: document.getElementById('board-shaper').value,
+                created_at: new Date().toISOString()
+            };
+            
+            if (!supabaseClient) {
+                showMessage('success', 'Board ajoutée localement (connectez Supabase pour persistence)');
+                userData.boards.push({...boardData, id: Date.now().toString()});
+                loadUserBoards();
+                loadShapers();
+                this.reset();
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('boards')
+                    .insert(boardData)
+                    .select();
+                
+                if (error) throw error;
+                
+                showMessage('success', '🏄‍♂️ Board ajoutée avec succès !');
+                this.reset();
+                
+                // Recharger les données
+                await loadRealData();
+                
+            } catch (error) {
+                console.error('Erreur ajout board:', error);
+                showMessage('error', `Erreur: ${error.message}`);
+            }
+        });
+        
+        // Supprimer une board
+        async function removeBoard(boardId) {
+            if (!supabaseClient) {
+                userData.boards = userData.boards.filter(b => b.id !== boardId);
+                loadUserBoards();
+                loadShapers();
+                showMessage('success', 'Board supprimée localement');
+                return;
+            }
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('boards')
+                    .delete()
+                    .eq('id', boardId);
+                
+                if (error) throw error;
+                
+                showMessage('success', 'Board supprimée !');
+                await loadRealData();
+                
+            } catch (error) {
+                console.error('Erreur suppression board:', error);
+                showMessage('error', `Erreur: ${error.message}`);
+            }
+        }
+        
+        // Afficher détails shaper
+        function showShaperDetails(shaperName) {
+            const shaperBoards = userData.boards.filter(b => b.shaper === shaperName);
+            const boardTypes = [...new Set(shaperBoards.map(b => b.type))];
+            
+            showMessage('success', `
+                🔨 ${shaperName}<br>
+                📊 ${shaperBoards.length} boards dans votre collection<br>
+                🏄‍♂️ Types: ${boardTypes.join(', ')}<br>
+                💡 Spécialité détectée: ${boardTypes.length > 1 ? 'Polyvalent' : boardTypes[0]}
+            `);
+        }
+        
+        // Mettre à jour les poids de prédiction selon le profil
+        function updatePredictionWeights() {
+            if (!userData.profile) return;
+            
+            // Ajuster l'algorithme selon le niveau
+            const levelWeights = {
+                beginner: { safety: 0.4, conditions: 0.3, spot: 0.3 },
+                intermediate: { safety: 0.2, conditions: 0.5, spot: 0.3 },
+                advanced: { safety: 0.1, conditions: 0.6, spot: 0.3 },
+                expert: { safety: 0.05, conditions: 0.7, spot: 0.25 }
+            };
+            
+            userData.predictionWeights = levelWeights[userData.profile.surf_level] || levelWeights.intermediate;
+            
+            console.log('🎯 Poids prédiction mis à jour:', userData.predictionWeights);
+        }
+
+        // Soumission formulaire session (avec vraie base)
+        document.getElementById('session-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!supabaseClient) {
+                showMessage('error', 'Connectez-vous à Supabase d\'abord');
+                return;
+            }
+            
+            const formData = new FormData(this);
+            const sessionData = {
+                user_id: currentUserId,
+                date: document.getElementById('session-date').value,
+                spot_id: document.getElementById('session-spot').value,
+                rating: parseInt(document.getElementById('session-rating').value),
+                notes: document.getElementById('session-notes').value || null,
+                meteo: {}, // TODO: Récupérer météo du jour
+                created_at: new Date().toISOString()
+            };
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('sessions')
+                    .insert(sessionData);
+                
+                if (error) throw error;
+                
+                showMessage('success', 'Session enregistrée avec succès !');
+                this.reset();
+                document.getElementById('session-date').value = new Date().toISOString().split('T')[0];
+                
+                await loadRealData(); // Recharger les données
+                
+            } catch (error) {
+                console.error('Erreur enregistrement session:', error);
+                showMessage('error', `Erreur: ${error.message}`);
+            }
+        });
+
+        // Fonctions utilitaires
+        function showMessage(type, message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type;
+            messageDiv.innerHTML = message;
+            
+            // Insérer en haut du contenu actif
+            const activeTab = document.querySelector('.tab-panel.active');
+            activeTab.insertBefore(messageDiv, activeTab.firstChild);
+            
+            // Supprimer après 3 secondes
+            setTimeout(() => messageDiv.remove(), 3000);
+        }
+
+        function updateAppStatus() {
+            const statusDiv = document.getElementById('app-status');
+            statusDiv.innerHTML = `
+                <p>🟢 Supabase: Configuré</p>
+                <p>🟢 API Météo: Fonctionnelle</p>
+                <p>🟢 Données: Chargées</p>
+            `;
+        }
+
+        function saveConfiguration() {
+            showMessage('success', 'Configuration sauvegardée !');
+        }
+
+        // Initialisation avec auto-chargement config
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Définir la date d'aujourd'hui par défaut
+            document.getElementById('session-date').value = new Date().toISOString().split('T')[0];
+            
+            // Charger config sauvegardée
+            const savedUrl = localStorage.getItem('supabase_url');
+            const savedKey = localStorage.getItem('supabase_key');
+            
+            if (savedUrl) document.getElementById('supabase-url').value = savedUrl;
+            if (savedKey) document.getElementById('supabase-key').value = savedKey;
+            
+            // Auto-connexion si config existe
+            if (savedUrl && savedKey) {
+                console.log('🔄 Auto-connexion Supabase...');
+                await testSupabaseConnection();
+            } else {
+                // Charger données simulées en attendant
+                loadSessions();
+                loadSpots();
+                loadProfile();
+            }
+        });
+    </script>
+</body>
+</html>

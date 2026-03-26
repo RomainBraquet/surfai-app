@@ -85,7 +85,7 @@ Quand l'utilisateur clique "📤 Partager" sur une board, un overlay propose 3 o
 │         SurfAI 🏄               │
 └─────────────────────────────────┘
 ```
-**CTA :** Partager sur Instagram / WhatsApp / Copier le lien
+**CTA :** Partager sur Instagram Story
 **Ton :** fier, lifestyle, "regarde ma planche"
 
 ### Option 2 — "Vendre ma board" (Marketplace)
@@ -109,7 +109,7 @@ Quand l'utilisateur clique "📤 Partager" sur une board, un overlay propose 3 o
 - Prix souhaité (€)
 - Localisation (ville)
 - Message perso optionnel ("vendue car j'ai changé de niveau")
-**CTA :** Partager sur Leboncoin / Facebook Marketplace / WhatsApp / Copier
+**CTA :** Partager sur Instagram Story
 **Ton :** transactionnel, clair, confiance
 
 ### Option 3 — "Réparer ma board" (Shaper/réparateur)
@@ -135,7 +135,7 @@ Quand l'utilisateur clique "📤 Partager" sur une board, un overlay propose 3 o
 - Description du problème (texte libre)
 - Localisation (ville)
 - Urgence : tranquille / rapide / urgent
-**CTA :** Partager sur WhatsApp / Instagram Story / Copier
+**CTA :** Partager sur Instagram Story
 **Ton :** pratique, entraide communautaire
 **Futur :** quand l'annuaire shapers/réparateurs existera, proposer directement des contacts locaux
 

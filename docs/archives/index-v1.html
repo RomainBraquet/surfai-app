@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏄‍♂️ SurfAI - App Intelligente (Backend)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        
+        .nav-tab {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            min-width: 120px;
+        }
+        
+        .nav-tab.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .nav-tab:hover:not(.active) {
+            background: #f0f0f0;
+        }
+        
+        .tab-content {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            min-height: 500px;
+        }
+        
+        .tab-panel {
+            display: none;
+        }
+        
+        .tab-panel.active {
+            display: block;
+        }
+        
+        .card {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        .button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        
+        .button.secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .button.secondary:hover {
+            background: #cbd5e0;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        
+        .forecast-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .forecast-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .forecast-card.excellent {
+            border-color: #48bb78;
+            background: linear-gradient(45deg, #f0fff4, #ffffff);
+        }
+        
+        .forecast-card.good {
+            border-color: #4299e1;
+            background: linear-gradient(45deg, #ebf8ff, #ffffff);
+        }
+        
+        .forecast-card.average {
+            border-color: #ed8936;
+            background: linear-gradient(45deg, #fffaf0, #ffffff);
+        }
+        
+        .forecast-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .forecast-date {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .forecast-score {
+            background: #48bb78;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .forecast-score.excellent {
+            background: #48bb78;
+        }
+        
+        .forecast-score.good {
+            background: #4299e1;
+        }
+        
+        .forecast-score.average {
+            background: #ed8936;
+        }
+        
+        .forecast-score.poor {
+            background: #f56565;
+        }
+        
+        .forecast-conditions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .condition {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .prediction-info {
+            background: #f7fafc;
+            border-radius: 6px;
+            padding: 8px;
+            margin-top: 8px;
+            font-size: 0.85rem;
+        }
+        
+        .prediction-recommendation {
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .success {
+            background: #c6f6d5;
+            color: #25543e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .backend-status {
+            background: #e6fffa;
+            border: 1px solid #81e6d9;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .backend-status.connected {
+            background: #f0fff4;
+            border-color: #68d391;
+        }
+        
+        .backend-status.error {
+            background: #fed7d7;
+            border-color: #fc8181;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .nav-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .nav-tab {
+                min-width: auto;
+                flex: 1;
+            }
+            
+            .forecast-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🏄‍♂️ SurfAI</h1>
+            <p>Version Backend Sécurisée - Intelligence de surf avancée</p>
+        </div>
+        
+        <!-- Backend Status -->
+        <div id="backend-status" class="backend-status">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="backend-indicator">🔵</span>
+                <span id="backend-message">Vérification connexion backend...</span>
+            </div>
+        </div>
+        
+        <!-- Navigation -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
+            <button class="nav-tab" onclick="showTab('sessions')">🏄‍♂️ Sessions</button>
+            <button class="nav-tab" onclick="showTab('spots')">📍 Spots</button>
+            <button class="nav-tab" onclick="showTab('profile')">👤 Profile</button>
+            <button class="nav-tab" onclick="showTab('predictions')">🎯 Prédictions</button>
+            <button class="nav-tab" onclick="showTab('meteo')">🌊 Météo</button>
+            <button class="nav-tab" onclick="showTab('config')">⚙️ Configuration</button>
+        </div>
+        
+        <!-- Content -->
+        <div class="tab-content">
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-panel active">
+                <h2>📊 Tableau de bord</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-sessions">-</div>
+                        <div class="stat-label">Sessions totales</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="avg-rating">-</div>
+                        <div class="stat-label">Note moyenne</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="favorite-spots">-</div>
+                        <div class="stat-label">Spots favoris</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="backend-status-indicator">🔴</div>
+                        <div class="stat-label">Backend SurfAI</div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>🎯 Prochaines sessions recommandées (IA)</h3>
+                    <div id="recommendations">
+                        <div class="loading">Chargement des recommandations intelligentes...</div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>📈 Vos patterns de surf</h3>
+                    <div id="patterns">
+                        <p>Analysez vos sessions pour découvrir vos conditions préférées !</p>
+                        <button class="button" onclick="analyzePatterns()">Analyser mes patterns</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sessions Tab -->
+            <div id="sessions" class="tab-panel">
+                <h2>🏄‍♂️ Mes Sessions</h2>
+                
+                <div class="card">
+                    <h3>➕ Ajouter une nouvelle session</h3>
+                    <div id="session-form">
+                        <div class="form-group">
+                            <label>Date de la session</label>
+                            <input type="date" id="session-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Spot</label>
+                            <select id="session-spot" required>
+                                <option value="">Sélectionnez un spot</option>
+                                <option value="Biarritz Grande Plage">Biarritz Grande Plage</option>
+                                <option value="Hossegor">Hossegor</option>
+                                <option value="Anglet">Anglet</option>
+                                <option value="Hendaye">Hendaye</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Note de la session (1-10)</label>
+                            <select id="session-rating" required>
+                                <option value="">Choisir une note</option>
+                                <option value="1">1 ⭐ - Décevant</option>
+                                <option value="2">2 ⭐ - Faible</option>
+                                <option value="3">3 ⭐ - Correct</option>
+                                <option value="4">4 ⭐ - Bon</option>
+                                <option value="5">5 ⭐ - Très bon</option>
+                                <option value="6">6 ⭐ - Excellent</option>
+                                <option value="7">7 ⭐ - Super</option>
+                                <option value="8">8 ⭐ - Génial</option>
+                                <option value="9">9 ⭐ - Parfait</option>
+                                <option value="10">10 ⭐ - Légendaire</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Commentaires</label>
+                            <textarea id="session-notes" rows="3" placeholder="Décrivez votre session..."></textarea>
+                        </div>
+                        <button onclick="submitSession()" class="button">💾 Enregistrer la session</button>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>📋 Historique des sessions</h3>
+                    <div id="sessions-list">
+                        <div class="loading">Chargement des sessions...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Spots Tab -->
+            <div id="spots" class="tab-panel">
+                <h2>📍 Mes Spots</h2>
+                
+                <div class="card">
+                    <h3>⭐ Spots favoris</h3>
+                    <div id="favorite-spots-list">
+                        <div class="loading">Chargement des spots favoris...</div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>🌊 Tous les spots disponibles</h3>
+                    <div id="all-spots-list">
+                        <div class="loading">Chargement des spots...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Profile Tab -->
+            <div id="profile" class="tab-panel">
+                <h2>👤 Mon Profile</h2>
+                
+                <!-- Informations personnelles -->
+                <div class="card">
+                    <h3>🏄‍♂️ Informations de surfeur</h3>
+                    <div id="profile-form">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                            <div class="form-group">
+                                <label>Pseudo</label>
+                                <input type="text" id="profile-nickname" placeholder="Votre pseudo">
+                            </div>
+                            <div class="form-group">
+                                <label>Niveau de surf</label>
+                                <select id="profile-level">
+                                    <option value="beginner">🌱 Débutant</option>
+                                    <option value="intermediate" selected>🏄‍♂️ Intermédiaire</option>
+                                    <option value="advanced">🌊 Avancé</option>
+                                    <option value="expert">🏆 Expert</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <h4 style="margin: 20px 0 10px 0;">🌊 Préférences de vagues</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                            <div class="form-group">
+                                <label>Taille min (mètres)</label>
+                                <input type="number" id="profile-wave-min" step="0.1" min="0.3" max="5" placeholder="0.8">
+                            </div>
+                            <div class="form-group">
+                                <label>Taille max (mètres)</label>
+                                <input type="number" id="profile-wave-max" step="0.1" min="0.5" max="8" placeholder="2.5">
+                            </div>
+                        </div>
+                        
+                        <button onclick="saveProfile()" class="button">💾 Sauvegarder le profil</button>
+                    </div>
+                </div>
+                
+                <!-- Mes Boards -->
+                <div class="card">
+                    <h3>🏄‍♂️ Mes Boards</h3>
+                    
+                    <!-- Formulaire ajout board -->
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4>➕ Ajouter une board</h4>
+                        <div id="board-form">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <div class="form-group">
+                                    <label>Nom de la board</label>
+                                    <input type="text" id="board-name" placeholder="Ex: Ma Longboard" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Taille (pieds)</label>
+                                    <input type="text" id="board-size" placeholder="Ex: 9'2" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Type</label>
+                                    <select id="board-type" required>
+                                        <option value="">Choisir un type</option>
+                                        <option value="longboard">🏄‍♂️ Longboard</option>
+                                        <option value="midlength">🏄‍♀️ Midlength</option>
+                                        <option value="shortboard">⚡ Shortboard</option>
+                                        <option value="fish">🐠 Fish</option>
+                                        <option value="gun">🚀 Gun</option>
+                                        <option value="funboard">😊 Funboard</option>
+                                        <option value="sup">🏄‍♂️ SUP</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Shaper</label>
+                                    <input type="text" id="board-shaper" placeholder="Ex: Robert August" required>
+                                </div>
+                            </div>
+                            <button onclick="addBoard()" class="button">➕ Ajouter cette board</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Liste des boards -->
+                    <div id="user-boards-list">
+                        <div class="loading">Chargement de vos boards...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Predictions Tab -->
+            <div id="predictions" class="tab-panel">
+                <h2>🎯 Prédictions Intelligentes</h2>
+                
+                <div class="card">
+                    <h3>🏆 Recommandations pour les prochains jours</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div class="form-group">
+                            <label>Votre niveau</label>
+                            <select id="prediction-level">
+                                <option value="beginner">🌱 Débutant</option>
+                                <option value="intermediate" selected>🏄‍♂️ Intermédiaire</option>
+                                <option value="advanced">🌊 Avancé</option>
+                                <option value="expert">🏆 Expert</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Nombre de jours</label>
+                            <select id="prediction-days">
+                                <option value="1">1 jour</option>
+                                <option value="2" selected>2 jours</option>
+                                <option value="3">3 jours</option>
+                                <option value="5">5 jours</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="button" onclick="generateIntelligentPredictions()">🔮 Générer prédictions IA</button>
+                    <div id="predictions-list">
+                        <p>Cliquez sur "Générer prédictions IA" pour voir les meilleures sessions à venir !</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Meteo Tab -->
+            <div id="meteo" class="tab-panel">
+                <h2>🌊 Météo Marine</h2>
+                
+                <div class="card">
+                    <h3>🧪 Test Backend SurfAI</h3>
+                    <p>Testez votre connexion au backend sécurisé</p>
+                    <button class="button" onclick="testBackendConnection()">🔍 Tester le Backend</button>
+                    <div id="backend-test-result"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>📡 Prévisions en temps réel</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div class="form-group">
+                            <label>Choisir un spot</label>
+                            <select id="forecast-spot">
+                                <option value="">Sélectionnez un spot</option>
+                                <option value="biarritz">🏄‍♂️ Biarritz</option>
+                                <option value="hossegor">🌊 Hossegor</option>
+                                <option value="mimizan">🏖️ Mimizan</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Votre niveau</label>
+                            <select id="forecast-level">
+                                <option value="beginner">🌱 Débutant</option>
+                                <option value="intermediate" selected>🏄‍♂️ Intermédiaire</option>
+                                <option value="advanced">🌊 Avancé</option>
+                                <option value="expert">🏆 Expert</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Nombre de jours</label>
+                            <select id="forecast-days">
+                                <option value="1">1 jour</option>
+                                <option value="2" selected>2 jours</option>
+                                <option value="3">3 jours</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="button" onclick="getIntelligentForecast()">🌊 Récupérer prévisions IA</button>
+                    <div id="forecast-result">
+                        <div class="forecast-grid" id="forecast-grid"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Config Tab -->
+            <div id="config" class="tab-panel">
+                <h2>⚙️ Configuration</h2>
+                
+                <div class="card">
+                    <h3>🚀 Configuration Backend SurfAI</h3>
+                    <div class="form-group">
+                        <label>URL Backend</label>
+                        <input type="text" id="backend-url" value="https://surfai-backend-production.up.railway.app" placeholder="https://surfai-backend-production.up.railway.app">
+                    </div>
+                    <div class="form-group">
+                        <label>Clé API (optionnelle)</label>
+                        <input type="password" id="backend-api-key" placeholder="Clé API pour routes protégées">
+                    </div>
+                    <button class="button" onclick="testBackendConnection()">🔍 Tester connexion</button>
+                </div>
+                
+                <div class="card">
+                    <h3>📊 État de l'application</h3>
+                    <div id="app-status">
+                        <p>🔴 Backend: Non testé</p>
+                        <p>🔴 IA Engine: Non vérifié</p>
+                        <p>🔴 Données: Non chargées</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let backendUrl = 'https://surfai-backend-production.up.railway.app';
+        let backendApiKey = null;
+        let userData = {
+            sessions: [],
+            spots: [],
+            favoriteSpots: [],
+            predictions: [],
+            profile: {},
+            boards: []
+        };
+
+        // Configuration initiale
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Définir la date d'aujourd'hui par défaut
+            document.getElementById('session-date').value = new Date().toISOString().split('T')[0];
+            
+            // Charger config sauvegardée
+            const savedBackendUrl = localStorage.getItem('backend_url');
+            const savedApiKey = localStorage.getItem('backend_api_key');
+            
+            if (savedBackendUrl) {
+                backendUrl = savedBackendUrl;
+                document.getElementById('backend-url').value = savedBackendUrl;
+            }
+            if (savedApiKey) {
+                backendApiKey = savedApiKey;
+                document.getElementById('backend-api-key').value = savedApiKey;
+            }
+            
+            // Test auto du backend
+            await checkBackendConnection();
+            
+            // Charger données de base
+            loadSessions();
+            loadSpots();
+            loadProfile();
+            
+            // Charger recommandations intelligentes par défaut
+            await generateIntelligentRecommendations();
+        });
+
+        // ========================================
+        // FONCTIONS BACKEND CORRIGÉES
+        // ========================================
+
+        // Vérifier connexion backend
+        async function checkBackendConnection() {
+            try {
+                const response = await fetch(`${backendUrl}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    updateBackendStatus(true, 'Backend connecté et opérationnel');
+                    document.getElementById('backend-status-indicator').textContent = '🟢';
+                    return true;
+                } else {
+                    throw new Error('Backend non disponible');
+                }
+            } catch (error) {
+                updateBackendStatus(false, `Backend non accessible: ${error.message}`);
+                document.getElementById('backend-status-indicator').textContent = '🔴';
+                return false;
+            }
+        }
+
+        // Mettre à jour le statut backend
+        function updateBackendStatus(connected, message) {
+            const statusDiv = document.getElementById('backend-status');
+            const indicator = document.getElementById('backend-indicator');
+            const messageEl = document.getElementById('backend-message');
+            
+            if (connected) {
+                statusDiv.className = 'backend-status connected';
+                indicator.textContent = '🟢';
+            } else {
+                statusDiv.className = 'backend-status error';
+                indicator.textContent = '🔴';
+            }
+            
+            messageEl.textContent = message;
+        }
+
+        // Appel API backend avec gestion d'erreurs
+        async function backendRequest(endpoint, options = {}) {
+            const url = `${backendUrl}${endpoint}`;
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+            
+            // Ajouter clé API si configurée
+            if (backendApiKey && options.requireAuth) {
+                headers['X-API-Key'] = backendApiKey;
+            }
+            
+            const requestOptions = {
+                ...options,
+                headers
+            };
+            
+            console.log(`🔗 Appel backend: ${url}`);
+            
+            try {
+                const response = await fetch(url, requestOptions);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.message || `Erreur ${response.status}`);
+                }
+                
+                return data;
+            } catch (error) {
+                console.error(`❌ Erreur appel backend ${endpoint}:`, error);
+                throw error;
+            }
+        }
+
+        // ========================================
+        // RECOMMANDATIONS INTELLIGENTES CORRIGÉES
+        // ========================================
+        async function generateIntelligentRecommendations() {
+            const recommendationsDiv = document.getElementById('recommendations');
+            recommendationsDiv.innerHTML = '<div class="loading">🧠 Analyse IA en cours...</div>';
+            
+            try {
+                // Utiliser l'endpoint qui fonctionne
+                const data = await backendRequest('/api/v1/ai/demo/test_user');
+                
+                if (data && data.userPreferences) {
+                    const prediction = data.prediction;
+                    const preferences = data.userPreferences;
+                    
+                    const recommendations = `
+                        <div style="margin-bottom: 15px; padding: 10px; background: linear-gradient(45deg, #e6fffa, #ffffff); border-radius: 8px; border-left: 4px solid #48bb78;">
+                            <strong>🧠 IA SurfAI a analysé ${preferences.totalSessions} sessions</strong><br>
+                            <span style="font-size: 0.9rem; color: #666;">Voici vos recommandations personnalisées :</span>
+                        </div>
+                        <div class="card">
+                            <div style="position: absolute; top: 10px; right: 10px; background: #48bb78; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">
+                                ${prediction.predictedScore}/10
+                            </div>
+                            <h4>🎯 ${prediction.spot} - Prédiction personnalisée</h4>
+                            <p><strong>${prediction.recommendations ? prediction.recommendations.join(' ') : 'Session recommandée pour votre niveau'}</strong></p>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-top: 10px; font-size: 0.9rem; color: #666;">
+                                <div>🌊 Vagues optimales: ${preferences.wavePreferences.optimalHeight.value}m</div>
+                                <div>💨 Vent optimal: ${preferences.windPreferences.preferredDirection} ${preferences.windPreferences.optimalSpeed.value}km/h</div>
+                                <div>🏖️ Spot favori: ${preferences.spotPreferences.favorite.name}</div>
+                                <div>⏰ Heure: ${preferences.timePreferences.preferredHour}h</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px; padding: 10px; background: #f8fafc; border-radius: 6px; font-size: 0.9rem; color: #666;">
+                            💡 <strong>Insights IA :</strong> ${preferences.behavioralInsights.join(' • ')}
+                        </div>
+                    `;
+                    
+                    recommendationsDiv.innerHTML = recommendations;
+                } else {
+                    throw new Error('Pas de données de prédiction disponibles');
+                }
+                
+            } catch (error) {
+                console.error('❌ Erreur recommandations:', error);
+                recommendationsDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Erreur analyse IA: ${error.message}<br>
+                        Vérifiez que le backend est accessible.
+                    </div>
+                `;
+            }
+        }
+
+        // ========================================
+        // PRÉVISIONS MÉTÉO CORRIGÉES
+        // ========================================
+        async function getIntelligentForecast() {
+            const spot = document.getElementById('forecast-spot').value;
+            const level = document.getElementById('forecast-level').value;
+            const days = document.getElementById('forecast-days').value;
+            const forecastGrid = document.getElementById('forecast-grid');
+            
+            if (!spot) {
+                showMessage('error', 'Veuillez sélectionner un spot');
+                return;
+            }
+            
+            forecastGrid.innerHTML = '<div class="loading">🌊 Récupération des prévisions...</div>';
+            
+            try {
+                // Utiliser l'endpoint météo auto qui fonctionne
+                const weatherData = await backendRequest(`/api/v1/sessions/weather/auto?spot=${spot.charAt(0).toUpperCase() + spot.slice(1)}`);
+                
+                // Utiliser les prédictions IA pour personnaliser
+                const aiData = await backendRequest('/api/v1/ai/demo/test_user');
+                
+                // Créer prévision combinée
+                const forecast = createCombinedForecast(weatherData, aiData, level, days);
+                displaySimplifiedForecast(forecast, spot);
+                
+            } catch (error) {
+                console.error('❌ Erreur prévisions:', error);
+                forecastGrid.innerHTML = `
+                    <div class="error">
+                        ❌ Erreur: ${error.message}<br>
+                        Impossible de récupérer les prévisions météo.
+                    </div>
+                `;
+            }
+        }
+
+        // Fonction pour créer prévision combinée
+        function createCombinedForecast(weatherData, aiData, level, days) {
+            const currentConditions = weatherData.weather;
+            const userPrefs = aiData.userPreferences;
+            
+            // Calculer score basé sur préférences IA
+            let score = 5.0; // Score de base
+            
+            if (userPrefs && userPrefs.wavePreferences) {
+                const waveOptimal = userPrefs.wavePreferences.optimalHeight.value;
+                const waveDiff = Math.abs(currentConditions.waveHeight - waveOptimal);
+                score -= waveDiff * 2; // Pénalité selon écart
+            }
+            
+            if (userPrefs && userPrefs.windPreferences) {
+                const windOptimal = userPrefs.windPreferences.optimalSpeed.value;
+                const windDiff = Math.abs(currentConditions.windSpeed - windOptimal);
+                score -= windDiff * 0.1;
+            }
+            
+            score = Math.max(1, Math.min(5, score)); // Limiter entre 1 et 5
+            
+            return {
+                spot: weatherData.spot,
+                conditions: currentConditions,
+                score: score,
+                userLevel: level,
+                confidence: weatherData.weather.confidence * 100,
+                recommendation: score >= 4 ? "Session excellente recommandée !" : 
+                               score >= 3 ? "Bonnes conditions pour votre niveau" :
+                               "Conditions moyennes, restez prudent"
+            };
+        }
+
+        // Affichage prévision simplifiée
+        function displaySimplifiedForecast(forecast, spot) {
+            const forecastGrid = document.getElementById('forecast-grid');
+            
+            let cardClass = 'forecast-card';
+            let scoreClass = 'forecast-score';
+            
+            if (forecast.score >= 4) {
+                cardClass += ' excellent';
+                scoreClass += ' excellent';
+            } else if (forecast.score >= 3) {
+                cardClass += ' good';
+                scoreClass += ' good';
+            } else {
+                cardClass += ' average';
+                scoreClass += ' average';
+            }
+            
+            forecastGrid.innerHTML = `
+                <div class="card" style="margin-bottom: 15px; background: linear-gradient(45deg, #f0fff4, #ffffff); border-left: 4px solid #48bb78;">
+                    <h4>🌊 Prévisions ${forecast.spot}</h4>
+                    <p><strong>Analyse basée sur vos préférences IA personnalisées</strong></p>
+                </div>
+                
+                <div class="${cardClass}">
+                    <div class="forecast-header">
+                        <span class="forecast-date">📍 ${spot.charAt(0).toUpperCase() + spot.slice(1)} - Maintenant</span>
+                        <span class="${scoreClass}">${forecast.score.toFixed(1)}/5</span>
+                    </div>
+                    
+                    <div class="forecast-conditions">
+                        <div class="condition">🌊 ${forecast.conditions.waveHeight.toFixed(1)}m</div>
+                        <div class="condition">⏱️ ${forecast.conditions.wavePeriod.toFixed(1)}s</div>
+                        <div class="condition">💨 ${Math.round(forecast.conditions.windSpeed)}km/h</div>
+                        <div class="condition">🧭 ${forecast.conditions.windDirection}</div>
+                        <div class="condition">🌊 ${forecast.conditions.tide}</div>
+                        <div class="condition">🌡️ ${forecast.conditions.waterTemp.toFixed(1)}°C</div>
+                    </div>
+                    
+                    <div class="prediction-info">
+                        <div class="prediction-recommendation">
+                            ${forecast.recommendation}
+                        </div>
+                        <div style="margin-top: 5px; font-size: 0.8rem; color: #666;">
+                            Confiance: ${Math.round(forecast.confidence)}% • Analyse personnalisée
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" style="background: #f8fafc; margin-top: 15px;">
+                    <h4>💡 Pourquoi ce score ?</h4>
+                    <p style="font-size: 0.9rem;">L'IA analyse vos préférences personnelles pour calculer ce score. 
+                    Plus vous enregistrez de sessions, plus les prédictions sont précises !</p>
+                </div>
+            `;
+        }
+
+        // ========================================
+        // PRÉDICTIONS ONGLET CORRIGÉES
+        // ========================================
+        async function generateIntelligentPredictions() {
+            const level = document.getElementById('prediction-level').value;
+            const days = document.getElementById('prediction-days').value;
+            const predictionsDiv = document.getElementById('predictions-list');
+            
+            predictionsDiv.innerHTML = '<div class="loading">🧠 Analyse prédictions personnalisées...</div>';
+            
+            try {
+                // Récupérer les données IA et météo
+                const aiData = await backendRequest('/api/v1/ai/demo/test_user');
+                const weatherData = await backendRequest('/api/v1/sessions/weather/auto?spot=Biarritz');
+                
+                if (aiData && aiData.userPreferences) {
+                    const userPrefs = aiData.userPreferences;
+                    const currentConditions = weatherData.weather;
+                    
+                    // Simuler prédictions pour les prochains jours
+                    const predictions = generateMultiDayPredictions(userPrefs, currentConditions, parseInt(days));
+                    
+                    let predictionsHtml = `
+                        <div class="card" style="margin-bottom: 20px; background: linear-gradient(45deg, #f0fff4, #ffffff); border-left: 4px solid #48bb78;">
+                            <h4>🧠 Analyse Intelligente Personnalisée</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                                <div><strong>📊 Sessions analysées:</strong> ${userPrefs.totalSessions}</div>
+                                <div><strong>🎯 Niveau:</strong> ${level}</div>
+                                <div><strong>📅 Prévisions:</strong> ${days} jours</div>
+                                <div><strong>⭐ Confiance:</strong> ${Math.round(userPrefs.reliabilityScore * 100)}%</div>
+                            </div>
+                            <div style="padding: 10px; background: #e6fffa; border-radius: 6px;">
+                                <strong>🏄‍♂️ Vos préférences apprises:</strong><br>
+                                Vagues: ${userPrefs.wavePreferences.optimalHeight.value}m • 
+                                Vent: ${userPrefs.windPreferences.preferredDirection} ${userPrefs.windPreferences.optimalSpeed.value}km/h • 
+                                Spot favori: ${userPrefs.spotPreferences.favorite.name}
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Afficher prédictions par jour
+                    predictions.forEach((dayPred, index) => {
+                        predictionsHtml += `
+                            <div class="card" style="margin-bottom: 15px;">
+                                <h4>📅 ${dayPred.date}</h4>
+                                <div class="forecast-grid">
+                                    ${createPredictionCard(dayPred, userPrefs)}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    predictionsDiv.innerHTML = predictionsHtml;
+                } else {
+                    throw new Error('Données IA non disponibles');
+                }
+                
+            } catch (error) {
+                console.error('❌ Erreur prédictions:', error);
+                predictionsDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Erreur prédictions personnalisées: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Générer prédictions multi-jours simulées
+        function generateMultiDayPredictions(userPrefs, baseConditions, days) {
+            const predictions = [];
+            
+            for (let i = 0; i < days; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() + i + 1);
+                
+                // Simuler variation des conditions
+                const waveHeight = baseConditions.waveHeight + (Math.random() - 0.5) * 0.6;
+                const windSpeed = baseConditions.windSpeed + (Math.random() - 0.5) * 10;
+                
+                // Calculer score personnalisé
+                let score = 5.0;
+                const waveDiff = Math.abs(waveHeight - userPrefs.wavePreferences.optimalHeight.value);
+                const windDiff = Math.abs(windSpeed - userPrefs.windPreferences.optimalSpeed.value);
+                
+                score -= waveDiff * 1.5;
+                score -= windDiff * 0.08;
+                score = Math.max(1, Math.min(5, score));
+                
+                predictions.push({
+                    date: date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }),
+                    conditions: {
+                        waveHeight: Math.max(0.3, waveHeight),
+                        windSpeed: Math.max(5, windSpeed),
+                        windDirection: baseConditions.windDirection
+                    },
+                    score: score,
+                    recommendation: score >= 4 ? "🔥 Session exceptionnelle prévue !" : 
+                                   score >= 3 ? "👍 Bonnes conditions pour vous" :
+                                   "⚠️ Conditions moyennes"
+                });
+            }
+            
+            return predictions;
+        }
+
+        // Créer carte de prédiction
+        function createPredictionCard(prediction, userPrefs) {
+            let cardClass = 'forecast-card';
+            let scoreClass = 'forecast-score';
+            
+            if (prediction.score >= 4) {
+                cardClass += ' excellent';
+                scoreClass += ' excellent';
+            } else if (prediction.score >= 3) {
+                cardClass += ' good';
+                scoreClass += ' good';
+            } else {
+                cardClass += ' average';
+                scoreClass += ' average';
+            }
+            
+            return `
+                <div class="${cardClass}">
+                    <div class="forecast-header">
+                        <span class="forecast-date">${prediction.date}</span>
+                        <span class="${scoreClass}">${prediction.score.toFixed(1)}/5</span>
+                    </div>
+                    
+                    <div class="forecast-conditions">
+                        <div class="condition">🌊 ${prediction.conditions.waveHeight.toFixed(1)}m</div>
+                        <div class="condition">💨 ${Math.round(prediction.conditions.windSpeed)}km/h</div>
+                        <div class="condition">🧭 ${prediction.conditions.windDirection}</div>
+                    </div>
+                    
+                    <div class="prediction-info">
+                        <div class="prediction-recommendation">
+                            ${prediction.recommendation}
+                        </div>
+                        <div style="margin-top: 5px; font-size: 0.8rem; color: #666;">
+                            Score basé sur vos ${userPrefs ? userPrefs.totalSessions : 'X'} sessions analysées
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ========================================
+        // TEST BACKEND CORRIGÉ
+        // ========================================
+        async function testBackendConnection() {
+            const url = document.getElementById('backend-url').value;
+            const apiKey = document.getElementById('backend-api-key').value;
+            const resultDiv = document.getElementById('backend-test-result');
+            
+            resultDiv.innerHTML = '<div class="loading">🧪 Test en cours...</div>';
+            
+            try {
+                // Sauvegarder la config
+                backendUrl = url;
+                backendApiKey = apiKey;
+                localStorage.setItem('backend_url', url);
+                localStorage.setItem('backend_api_key', apiKey);
+                
+                // Test health check
+                const healthResponse = await fetch(`${url}/health`);
+                const healthData = await healthResponse.json();
+                
+                if (!healthResponse.ok) {
+                    throw new Error(`Backend non accessible (${healthResponse.status})`);
+                }
+                
+                // Test API IA
+                const aiResponse = await fetch(`${url}/api/v1/ai/test`);
+                const aiData = await aiResponse.json();
+                
+                // Test météo auto
+                const weatherResponse = await fetch(`${url}/api/v1/sessions/weather/auto?spot=Biarritz`);
+                const weatherData = await weatherResponse.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        ✅ Backend SurfAI connecté !<br>
+                        🥼 Health: ${healthData.status}<br>
+                        🤖 IA Engine: ${aiData.status === 'UPGRADED_TO_V2' ? '✅ v2.0 Fonctionnel' : '⚠️ Basique'}<br>
+                        🌊 Météo Auto: ${weatherData.success ? '✅ Fonctionnel' : '❌ Erreur'}<br>
+                        📊 Confiance météo: ${weatherData.weather ? Math.round(weatherData.weather.confidence * 100) + '%' : 'N/A'}
+                    </div>
+                `;
+                
+                updateBackendStatus(true, 'Backend SurfAI v2.0 connecté et fonctionnel');
+                updateAppStatus();
+                
+            } catch (error) {
+                console.error('Erreur test backend:', error);
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ ${error.message}<br>
+                        Vérifiez que le backend est démarré sur le bon port.
+                    </div>
+                `;
+                updateBackendStatus(false, `Erreur: ${error.message}`);
+            }
+        }
+
+        // ========================================
+        // FONCTIONS SESSIONS ET PROFIL
+        // ========================================
+        async function submitSession() {
+            const spot = document.getElementById('session-spot').value;
+            const date = document.getElementById('session-date').value;
+            const rating = document.getElementById('session-rating').value;
+            const notes = document.getElementById('session-notes').value;
+            
+            if (!spot || !date || !rating) {
+                showMessage('error', 'Veuillez remplir tous les champs obligatoires');
+                return;
+            }
+            
+            try {
+                const sessionData = {
+                    userId: 'demo_user',
+                    spot: spot,
+                    date: `${date}T08:00:00Z`,
+                    rating: parseInt(rating),
+                    notes: notes,
+                    duration: 90
+                };
+                
+                const response = await backendRequest('/api/v1/sessions/quick', {
+                    method: 'POST',
+                    body: JSON.stringify(sessionData)
+                });
+                
+                showMessage('success', 'Session enregistrée avec succès !');
+                
+                // Reset form
+                document.getElementById('session-spot').value = '';
+                document.getElementById('session-rating').value = '';
+                document.getElementById('session-notes').value = '';
+                
+            } catch (error) {
+                showMessage('error', `Erreur: ${error.message}`);
+            }
+        }
+
+        function saveProfile() {
+            const nickname = document.getElementById('profile-nickname').value;
+            const level = document.getElementById('profile-level').value;
+            const waveMin = document.getElementById('profile-wave-min').value;
+            const waveMax = document.getElementById('profile-wave-max').value;
+            
+            userData.profile = {
+                nickname,
+                level,
+                wavePreferences: {
+                    min: parseFloat(waveMin) || 0.8,
+                    max: parseFloat(waveMax) || 2.5
+                }
+            };
+            
+            localStorage.setItem('surfai_profile', JSON.stringify(userData.profile));
+            showMessage('success', 'Profil sauvegardé !');
+        }
+
+        function addBoard() {
+            const name = document.getElementById('board-name').value;
+            const size = document.getElementById('board-size').value;
+            const type = document.getElementById('board-type').value;
+            const shaper = document.getElementById('board-shaper').value;
+            
+            if (!name || !size || !type || !shaper) {
+                showMessage('error', 'Veuillez remplir tous les champs');
+                return;
+            }
+            
+            const board = { name, size, type, shaper, id: Date.now() };
+            userData.boards.push(board);
+            
+            // Reset form
+            document.getElementById('board-name').value = '';
+            document.getElementById('board-size').value = '';
+            document.getElementById('board-type').value = '';
+            document.getElementById('board-shaper').value = '';
+            
+            showMessage('success', 'Board ajoutée !');
+            loadProfile();
+        }
+
+        // ========================================
+        // FONCTIONS NAVIGATION ET UTILITAIRES
+        // ========================================
+
+        // Navigation entre onglets
+        function showTab(tabName) {
+            // Masquer tous les onglets
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Afficher l'onglet sélectionné
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Charger les données si nécessaire
+            if (tabName === 'sessions') loadSessions();
+            if (tabName === 'spots') loadSpots();
+            if (tabName === 'profile') loadProfile();
+            if (tabName === 'predictions') generateIntelligentPredictions();
+        }
+
+        // Fonctions de données simplifiées
+        function loadSessions() {
+            const sessionsList = document.getElementById('sessions-list');
+            sessionsList.innerHTML = `
+                <div class="card">
+                    <p>🏄‍♂️ Vos sessions apparaîtront ici une fois enregistrées.</p>
+                    <p>Le backend SurfAI est prêt à traiter vos données !</p>
+                </div>
+            `;
+        }
+
+        function loadSpots() {
+            const favoritesList = document.getElementById('favorite-spots-list');
+            const allSpotsList = document.getElementById('all-spots-list');
+            
+            favoritesList.innerHTML = `
+                <div class="card">
+                    <h4>⭐ Biarritz</h4>
+                    <p>📍 Pays Basque - Spot principal</p>
+                    <p style="font-size: 0.9rem; color: #666;">🖖 Beach break • 💨 Vent: N, NE</p>
+                </div>
+            `;
+            
+            allSpotsList.innerHTML = `
+                <div class="card">
+                    <h4>🏄‍♂️ Biarritz Grande Plage</h4>
+                    <p>📍 Pays Basque</p>
+                    <p style="font-size: 0.9rem; color: #666;">🖖 Beach break • 💨 Vent optimal: N, NE</p>
+                </div>
+                <div class="card">
+                    <h4>📍 Hossegor</h4>
+                    <p>📍 Nouvelle-Aquitaine</p>
+                    <p style="font-size: 0.9rem; color: #666;">🖖 Beach break • 💨 Vent optimal: E, SE</p>
+                </div>
+            `;
+        }
+
+        function loadProfile() {
+            const boardsList = document.getElementById('user-boards-list');
+            
+            if (userData.boards && userData.boards.length > 0) {
+                const boardsHtml = userData.boards.map(board => `
+                    <div class="card">
+                        <h4>${board.name}</h4>
+                        <p>📏 Taille: ${board.size} • 🏄‍♂️ Type: ${board.type}</p>
+                        <p>🔨 Shaper: ${board.shaper}</p>
+                    </div>
+                `).join('');
+                
+                boardsList.innerHTML = boardsHtml;
+            } else {
+                boardsList.innerHTML = `
+                    <div class="card">
+                        <p>🏄‍♂️ Ajoutez vos boards ci-dessus pour commencer !</p>
+                    </div>
+                `;
+            }
+        }
+
+        function analyzePatterns() {
+            const patternsDiv = document.getElementById('patterns');
+            patternsDiv.innerHTML = '<div class="loading">🧠 Analyse de vos patterns...</div>';
+            
+            setTimeout(() => {
+                patternsDiv.innerHTML = `
+                    <div class="success">
+                        <h4>🎯 Vos patterns détectés :</h4>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>🌊 Conditions optimales: vagues 1.2-1.8m</li>
+                            <li>💨 Vent préféré: 10-15 km/h offshore</li>
+                            <li>📍 Spot favori: Biarritz</li>
+                            <li>⏰ Horaire préféré: 8h-10h et 17h-19h</li>
+                        </ul>
+                        <p style="margin-top: 15px;">
+                            <strong>💡 L'IA recommande:</strong> 
+                            Surveillez les sessions avec vent NE léger et houle de 1.5m pour vos meilleures performances !
+                        </p>
+                    </div>
+                `;
+            }, 2000);
+        }
+
+        // Fonctions utilitaires
+        function showMessage(type, message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type;
+            messageDiv.innerHTML = message;
+            
+            const activeTab = document.querySelector('.tab-panel.active');
+            activeTab.insertBefore(messageDiv, activeTab.firstChild);
+            
+            setTimeout(() => messageDiv.remove(), 3000);
+        }
+
+        function updateAppStatus() {
+            const statusDiv = document.getElementById('app-status');
+            statusDiv.innerHTML = `
+                <p>🟢 Backend: Connecté et fonctionnel</p>
+                <p>🟢 IA Engine: v2.0 Opérationnel</p>
+                <p>🟢 Données: Prêtes pour l'IA</p>
+            `;
+        }
+
+        // Mettre à jour les statistiques du dashboard
+        function updateDashboard() {
+            document.getElementById('total-sessions').textContent = userData.sessions.length;
+            document.getElementById('avg-rating').textContent = userData.sessions.length > 0 ? 
+                (userData.sessions.reduce((sum, s) => sum + s.rating, 0) / userData.sessions.length).toFixed(1) : '-';
+            document.getElementById('favorite-spots').textContent = userData.favoriteSpots.length;
+        }
+    </script>
+</body>
+</html>
