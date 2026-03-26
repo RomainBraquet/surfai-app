@@ -514,6 +514,11 @@ select option { background: #0d2137; color: #f0f4ff; }
 
     <!-- ===== SPOTS ===== -->
     <div id="tab-spots" class="tab-panel">
+      <!-- Bandeau mode sélection -->
+      <div id="spot-pick-banner" style="display:none;padding:10px 14px;background:rgba(0,207,255,0.12);border-bottom:1px solid rgba(0,207,255,0.3);display:none;align-items:center;justify-content:space-between">
+        <div style="color:#00cfff;font-size:0.85rem;font-weight:600">Sélectionne un spot pour ta session</div>
+        <div onclick="cancelSpotPick()" style="color:rgba(255,255,255,0.5);cursor:pointer;font-size:0.8rem;padding:4px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:6px">Annuler</div>
+      </div>
       <div class="spot-list-view" id="spots-list-view">
         <!-- Favoris toujours visibles -->
         <div id="spots-favs-section"></div>
@@ -560,7 +565,7 @@ select option { background: #0d2137; color: #f0f4ff; }
           <div class="card">
             <span class="section-label">📍 Spot</span>
             <input type="hidden" id="session-spot" required>
-            <div id="session-spot-display" onclick="openSpotPicker('session-spot','session-spot-display')"
+            <div id="session-spot-display" onclick="enterSpotPickMode()"
                  style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);font-size:0.9rem;cursor:pointer">
               Choisir un spot...
             </div>
@@ -1640,6 +1645,8 @@ select option { background: #0d2137; color: #f0f4ff; }
         const SPOTS_PAGE_SIZE = 30;
 
         let _spotsCurrentTab = 'nearby';
+        let _spotPickMode = false;
+        let _spotPickCallback = null;
 
         async function loadSpotsTab() {
             _spotsPage = 0;
@@ -2220,7 +2227,58 @@ select option { background: #0d2137; color: #f0f4ff; }
           } catch (e) { /* silencieux */ }
         }
 
+        // ========================================
+        // SPOT PICK MODE (sélection depuis Session)
+        // ========================================
+
+        function enterSpotPickMode() {
+            _spotPickMode = true;
+            // Afficher le bandeau
+            const banner = document.getElementById('spot-pick-banner');
+            if (banner) banner.style.display = 'flex';
+            // Basculer sur l'onglet Spots
+            const spotsBtn = document.querySelectorAll('.nav-tab')[1];
+            showTab('spots', spotsBtn);
+        }
+
+        function cancelSpotPick() {
+            _spotPickMode = false;
+            const banner = document.getElementById('spot-pick-banner');
+            if (banner) banner.style.display = 'none';
+            // Revenir à l'onglet Session
+            const sessionBtn = document.querySelectorAll('.nav-tab')[2];
+            showTab('session', sessionBtn);
+        }
+
+        async function selectSpotFromPick(spotId) {
+            if (!_spotPickMode) return;
+            _spotPickMode = false;
+            const banner = document.getElementById('spot-pick-banner');
+            if (banner) banner.style.display = 'none';
+
+            // Récupérer le nom du spot
+            let spotName = '';
+            try {
+                const { data } = await supabaseClient.from('spots').select('name').eq('id', spotId).single();
+                spotName = data?.name || 'Spot sélectionné';
+            } catch(e) { spotName = 'Spot sélectionné'; }
+
+            // Remplir le formulaire Session
+            document.getElementById('session-spot').value = spotId;
+            const display = document.getElementById('session-spot-display');
+            if (display) { display.textContent = spotName; display.style.color = '#f0f4ff'; }
+
+            // Revenir à l'onglet Session
+            const sessionBtn = document.querySelectorAll('.nav-tab')[2];
+            showTab('session', sessionBtn);
+        }
+
         async function showSpotDetail(spotId) {
+            // Intercepter en mode sélection
+            if (_spotPickMode) {
+                selectSpotFromPick(spotId);
+                return;
+            }
             const detailEl = document.getElementById('spot-detail');
             const listView = document.querySelector('.spot-list-view');
             if (!detailEl || !listView) return;
@@ -3096,6 +3154,10 @@ select option { background: #0d2137; color: #f0f4ff; }
           document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
           document.getElementById('tab-' + tabName).classList.add('active');
           if (btn) btn.classList.add('active');
+          // Afficher/masquer le bandeau pick mode
+          const banner = document.getElementById('spot-pick-banner');
+          if (banner) banner.style.display = (_spotPickMode && tabName === 'spots') ? 'flex' : 'none';
+          if (tabName !== 'spots' && tabName !== 'session') { _spotPickMode = false; }
           if (tabName === 'spots')   loadSpotsTab();
           if (tabName === 'session') loadSessionTab();
           if (tabName === 'profil')  loadProfilTab();
