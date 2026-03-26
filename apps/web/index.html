@@ -623,6 +623,13 @@ select option { background: #0d2137; color: #f0f4ff; }
       </div>
     </div>
 
+    <!-- ===== MES BOARDS ===== -->
+    <div id="tab-boards" class="tab-panel">
+      <div id="boards-content">
+        <div class="loading">Chargement...</div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Navigation bas -->
@@ -638,6 +645,9 @@ select option { background: #0d2137; color: #f0f4ff; }
     </button>
     <button class="nav-tab" onclick="showTab('profil', this)">
       <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
+    </button>
+    <button class="nav-tab" onclick="showTab('boards', this)" style="display:none" id="nav-boards">
+      <span class="nav-icon">🏄</span><span class="nav-label">Boards</span>
     </button>
   </nav>
 </div>
@@ -845,19 +855,35 @@ select option { background: #0d2137; color: #f0f4ff; }
             }
 
             async saveUserBoard(userId, board) {
+                const row = {
+                    user_id: userId,
+                    name: board.name || board.nickname,
+                    nickname: board.nickname || board.name,
+                    size: board.length_ft || board.size,
+                    type: board.type,
+                    shaper: board.shaper || null,
+                    brand: board.brand || null,
+                    length_ft: board.length_ft || board.size,
+                    width_in: board.width_in || null,
+                    thickness_in: board.thickness_in || null,
+                    volume_l: board.volume_l ? parseFloat(board.volume_l) : null,
+                    tail_shape: board.tail_shape || null,
+                    fins_setup: board.fins_setup || null,
+                    year_made: board.year_made ? parseInt(board.year_made) : null,
+                    condition: board.condition || 'bon',
+                    photo_url: board.photo_url || null,
+                    sweet_spot_wave_min: board.sweet_spot_wave_min ? parseFloat(board.sweet_spot_wave_min) : null,
+                    sweet_spot_wave_max: board.sweet_spot_wave_max ? parseFloat(board.sweet_spot_wave_max) : null,
+                    sweet_spot_wind: board.sweet_spot_wind || 'any',
+                    sweet_spot_tide: board.sweet_spot_tide || 'any'
+                };
+
                 if (this.supabase) {
                     try {
                         const { data, error } = await this.supabase
                             .from('boards')
-                            .insert([{
-                                user_id: userId,
-                                name: board.name,
-                                size: board.size,
-                                type: board.type,
-                                shaper: board.shaper
-                            }])
+                            .insert([row])
                             .select();
-
                         if (error) throw error;
                         this.cache.boards = null;
                         return data;
@@ -868,7 +894,7 @@ select option { background: #0d2137; color: #f0f4ff; }
 
                 // Fallback localStorage
                 const boards = JSON.parse(localStorage.getItem('surfai_boards') || '[]');
-                const newBoard = { ...board, id: Date.now() };
+                const newBoard = { ...row, id: Date.now() };
                 boards.push(newBoard);
                 localStorage.setItem('surfai_boards', JSON.stringify(boards));
                 this.cache.boards = null;
@@ -1416,10 +1442,15 @@ select option { background: #0d2137; color: #f0f4ff; }
             : null;
           const lastSpot = lastSession?.spots?.name || lastSession?.spot_id || '';
 
+          const avatarUrl = profile.avatar_url || localStorage.getItem('surfai_avatar') || '';
+          const heroAvatarHtml = avatarUrl
+            ? `<img src="${avatarUrl}" style="width:40px;height:40px;border-radius:50%;object-fit:cover">`
+            : `<div class="avatar">🏄</div>`;
+
           const heroHtml = `
             <div class="hero">
               <div class="hero-top">
-                <div class="avatar">🏄</div>
+                ${heroAvatarHtml}
                 <div>
                   <div class="hero-name">${nickname} · ${level}</div>
                   <div class="hero-sub">${sessions.length} session${sessions.length !== 1 ? 's' : ''}${lastDate ? ' · dernière le ' + lastDate : ''}${lastSpot ? ' · ' + lastSpot : ''}</div>
@@ -2242,35 +2273,56 @@ select option { background: #0d2137; color: #f0f4ff; }
         }
 
         function cancelSpotPick() {
+            const callback = _spotPickCallback;
             _spotPickMode = false;
+            _spotPickCallback = null;
             const banner = document.getElementById('spot-pick-banner');
             if (banner) banner.style.display = 'none';
-            // Revenir à l'onglet Session
-            const sessionBtn = document.querySelectorAll('.nav-tab')[2];
-            showTab('session', sessionBtn);
+            if (callback === 'home') {
+                const profilBtn = document.querySelectorAll('.nav-tab')[3];
+                showTab('profil', profilBtn);
+            } else {
+                const sessionBtn = document.querySelectorAll('.nav-tab')[2];
+                showTab('session', sessionBtn);
+            }
         }
 
         async function selectSpotFromPick(spotId) {
             if (!_spotPickMode) return;
+            const callback = _spotPickCallback;
             _spotPickMode = false;
+            _spotPickCallback = null;
             const banner = document.getElementById('spot-pick-banner');
             if (banner) banner.style.display = 'none';
 
-            // Récupérer le nom du spot
+            // Récupérer le nom et les coords du spot
             let spotName = '';
+            let spotLat = 0, spotLng = 0;
             try {
-                const { data } = await supabaseClient.from('spots').select('name').eq('id', spotId).single();
+                const { data } = await supabaseClient.from('spots').select('name, lat, lng').eq('id', spotId).single();
                 spotName = data?.name || 'Spot sélectionné';
+                spotLat = data?.lat || 0;
+                spotLng = data?.lng || 0;
             } catch(e) { spotName = 'Spot sélectionné'; }
 
-            // Remplir le formulaire Session
-            document.getElementById('session-spot').value = spotId;
-            const display = document.getElementById('session-spot-display');
-            if (display) { display.textContent = spotName; display.style.color = '#f0f4ff'; }
-
-            // Revenir à l'onglet Session
-            const sessionBtn = document.querySelectorAll('.nav-tab')[2];
-            showTab('session', sessionBtn);
+            if (callback === 'home') {
+                // Home spot pour le profil
+                document.getElementById('profile-home-spot').value = spotId;
+                const display = document.getElementById('profile-home-spot-display');
+                if (display) { display.textContent = spotName; display.style.color = '#f0f4ff'; }
+                // Sauvegarder immédiatement
+                localStorage.setItem('home_spot', JSON.stringify({ id: spotId, name: spotName, lat: spotLat, lng: spotLng }));
+                // Revenir au profil
+                const profilBtn = document.querySelectorAll('.nav-tab')[3];
+                showTab('profil', profilBtn);
+            } else {
+                // Session spot
+                document.getElementById('session-spot').value = spotId;
+                const display = document.getElementById('session-spot-display');
+                if (display) { display.textContent = spotName; display.style.color = '#f0f4ff'; }
+                const sessionBtn = document.querySelectorAll('.nav-tab')[2];
+                showTab('session', sessionBtn);
+            }
         }
 
         async function showSpotDetail(spotId) {
@@ -2727,9 +2779,16 @@ select option { background: #0d2137; color: #f0f4ff; }
           // Charger la liste des spots pour le dropdown "spot de base"
           const savedHomeSpot = JSON.parse(localStorage.getItem('home_spot') || 'null');
 
+          const avatarUrl = profile.avatar_url || localStorage.getItem('surfai_avatar') || '';
+          const avatarHtml = avatarUrl
+            ? `<img src="${avatarUrl}" style="width:70px;height:70px;border-radius:50%;object-fit:cover;cursor:pointer" onclick="document.getElementById('avatar-upload').click()">`
+            : `<div class="profil-avatar" style="cursor:pointer" onclick="document.getElementById('avatar-upload').click()">${initials}</div>`;
+
           const identiteHtml = `
             <div class="card" style="text-align:center;padding-bottom:18px">
-              <div class="profil-avatar">${initials}</div>
+              ${avatarHtml}
+              <input type="file" id="avatar-upload" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+              <div style="color:rgba(255,255,255,0.3);font-size:0.7rem;margin-top:4px;margin-bottom:10px">Appuie pour changer la photo</div>
               <div class="form-group" style="margin-bottom:10px">
                 <label>Pseudo</label>
                 <input type="text" id="profile-nickname" value="${nickname}" placeholder="Votre pseudo">
@@ -2744,21 +2803,24 @@ select option { background: #0d2137; color: #f0f4ff; }
                 </select>
               </div>
               <div class="form-group" style="margin-bottom:10px">
-                <label>📍 Spot de base (météo accueil)</label>
+                <label>📍 Mon home spot</label>
                 <input type="hidden" id="profile-home-spot">
-                <div id="profile-home-spot-display" onclick="openSpotPicker('profile-home-spot','profile-home-spot-display')"
+                <div id="profile-home-spot-display" onclick="enterHomeSpotPickMode()"
                      style="width:100%;box-sizing:border-box;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);font-size:0.85rem;cursor:pointer">
                   ${savedHomeSpot?.name || '— Choisir un spot —'}
                 </div>
               </div>
-              <div class="datetime-row" style="margin-bottom:10px">
-                <div class="form-group" style="margin:0">
-                  <label>Vagues min (m)</label>
-                  <input type="number" id="profile-wave-min" step="0.1" min="0.3" max="5" value="${profile.min_wave_height || 0.5}" placeholder="0.5">
-                </div>
-                <div class="form-group" style="margin:0">
-                  <label>Vagues max (m)</label>
-                  <input type="number" id="profile-wave-max" step="0.1" min="0.5" max="8" value="${profile.max_wave_height || 2.5}" placeholder="2.5">
+              <div style="margin-bottom:10px">
+                <span class="section-label">Les vagues que je surfe</span>
+                <div class="datetime-row" style="margin-top:6px">
+                  <div style="display:flex;align-items:center;gap:6px;flex:1">
+                    <span style="color:rgba(255,255,255,0.5);font-size:0.8rem;white-space:nowrap">Min (m)</span>
+                    <input type="number" id="profile-wave-min" step="0.1" min="0.3" max="5" value="${profile.min_wave_height || 0.5}" style="flex:1">
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;flex:1">
+                    <span style="color:rgba(255,255,255,0.5);font-size:0.8rem;white-space:nowrap">Max (m)</span>
+                    <input type="number" id="profile-wave-max" step="0.1" min="0.5" max="8" value="${profile.max_wave_height || 2.5}" style="flex:1">
+                  </div>
                 </div>
               </div>
               <button class="btn-primary" onclick="saveProfile()">Sauvegarder</button>
@@ -2769,43 +2831,36 @@ select option { background: #0d2137; color: #f0f4ff; }
               </button>
             </div>`;
 
-          const boardsListHtml = boards.length
-            ? boards.map(b => `
-      <div class="board-row" id="board-row-${b.id}">
-        <div>
-          <div class="board-name">${b.name}</div>
-          <div class="board-meta">${b.size || ''} · ${b.type || ''} · ${b.shaper || ''}</div>
-        </div>
-        <button onclick="editBoard(${b.id})" style="background:none;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:3px 8px;color:rgba(255,255,255,0.5);font-size:0.75rem;cursor:pointer">✏️</button>
-      </div>`).join('')
-            : '<div class="empty">Aucune board enregistrée.</div>';
+          const boardsDropdownHtml = boards.length
+            ? boards.map(b => {
+              const miniPhoto = b.photo_url
+                ? `<img src="${b.photo_url}" style="width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0">`
+                : `<div style="width:36px;height:36px;border-radius:6px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0">${getBoardTypeIcon(b.type)}</div>`;
+              return `
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,0.05)">
+                ${miniPhoto}
+                <div style="flex:1;min-width:0">
+                  <div style="color:#f0f4ff;font-size:0.85rem;font-weight:500">${b.nickname || b.name}</div>
+                  <div style="color:rgba(255,255,255,0.4);font-size:0.7rem">${[b.length_ft || b.size, b.type, b.volume_l ? b.volume_l+'L' : ''].filter(Boolean).join(' · ')}</div>
+                </div>
+              </div>`;
+            }).join('')
+            : '<div style="color:rgba(255,255,255,0.4);font-size:0.8rem;padding:10px 4px">Aucune board enregistrée</div>';
 
           const boardsHtml = `
-            <div class="card">
-              <span class="section-label">🏄 Mes boards</span>
-              <div id="user-boards-list">${boardsListHtml}</div>
-              <details style="margin-top:12px">
-                <summary style="cursor:pointer;font-size:0.78rem;color:#4dff91;list-style:none">+ Ajouter une board</summary>
-                <div style="padding-top:12px">
-                  <div class="form-group"><label>Nom</label><input type="text" id="board-name" placeholder="Ma longboard"></div>
-                  <div class="form-group"><label>Taille</label><input type="text" id="board-size" placeholder="9'2"></div>
-                  <div class="form-group">
-                    <label>Type</label>
-                    <select id="board-type">
-                      <option value="">Choisir</option>
-                      <option value="longboard">Longboard</option>
-                      <option value="midlength">Midlength</option>
-                      <option value="shortboard">Shortboard</option>
-                      <option value="fish">Fish</option>
-                      <option value="gun">Gun</option>
-                      <option value="funboard">Funboard</option>
-                      <option value="sup">SUP</option>
-                    </select>
-                  </div>
-                  <div class="form-group"><label>Shaper</label><input type="text" id="board-shaper" placeholder="Robert August"></div>
-                  <button class="btn-primary" onclick="addBoard()">Ajouter cette board</button>
+            <div style="margin-bottom:12px">
+              <div onclick="toggleProfilBoards()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer;background:rgba(0,207,255,0.08);border:1px solid rgba(0,207,255,0.2);border-radius:10px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:1.1rem">🏄</span>
+                  <span style="color:#00cfff;font-size:0.9rem;font-weight:600">Mes boards</span>
+                  <span style="background:rgba(0,207,255,0.2);color:#00cfff;border-radius:12px;padding:1px 8px;font-size:0.7rem;font-weight:700">${boards.length}</span>
                 </div>
-              </details>
+                <div id="profil-boards-arrow" style="color:#00cfff;font-size:0.8rem;transition:transform 0.2s">▾</div>
+              </div>
+              <div id="profil-boards-list" style="display:none;padding:0 4px">
+                ${boardsDropdownHtml}
+                <div onclick="showTab('boards', document.querySelectorAll('.nav-tab')[4])" style="padding:10px 4px;cursor:pointer;color:#4dff91;font-size:0.8rem;text-align:center;border-top:1px solid rgba(255,255,255,0.06)">Gérer mes boards</div>
+              </div>
             </div>`;
 
           const configHtml = `
@@ -2833,6 +2888,235 @@ select option { background: #0d2137; color: #f0f4ff; }
           if (savedHomeSpot?.id) {
               document.getElementById('profile-home-spot').value = savedHomeSpot.id;
           }
+        }
+
+        function toggleProfilBoards() {
+            const list = document.getElementById('profil-boards-list');
+            const arrow = document.getElementById('profil-boards-arrow');
+            if (!list) return;
+            const isOpen = list.style.display !== 'none';
+            list.style.display = isOpen ? 'none' : 'block';
+            if (arrow) arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+
+        function getBoardTypeIcon(type) {
+          const icons = { shortboard:'🏄', fish:'🐟', midlength:'🌊', longboard:'🛹', gun:'🎯', funboard:'😎', hybrid:'⚡', foil:'🪁', sup:'🚣' };
+          return icons[type] || '🏄';
+        }
+
+        function getBoardSessionStats(boardId) {
+          const sessions = (userData.sessions || []).filter(s => s.board_id == boardId);
+          if (!sessions.length) return { count: 0, lastDate: null };
+          const sorted = sessions.sort((a,b) => new Date(b.date) - new Date(a.date));
+          const last = new Date(sorted[0].date);
+          const diffDays = Math.round((Date.now() - last) / 86400000);
+          const lastTxt = diffDays === 0 ? "aujourd'hui" : diffDays === 1 ? 'hier' : `il y a ${diffDays}j`;
+          return { count: sessions.length, lastDate: lastTxt };
+        }
+
+        function formatSweetSpot(b) {
+          const parts = [];
+          if (b.sweet_spot_wave_min || b.sweet_spot_wave_max) {
+            const min = b.sweet_spot_wave_min || '?';
+            const max = b.sweet_spot_wave_max || '?';
+            parts.push(`${min}-${max}m`);
+          }
+          if (b.sweet_spot_wind && b.sweet_spot_wind !== 'any') parts.push(b.sweet_spot_wind);
+          if (b.sweet_spot_tide && b.sweet_spot_tide !== 'any') parts.push('marée ' + b.sweet_spot_tide);
+          return parts.length ? parts.join(' · ') : null;
+        }
+
+        function loadBoardsTab() {
+          const container = document.getElementById('boards-content');
+          if (!container) return;
+          const boards = userData.boards || [];
+
+          const boardsList = boards.length
+            ? boards.map(b => {
+              const stats = getBoardSessionStats(b.id);
+              const sweetSpot = formatSweetSpot(b);
+              const photoHtml = b.photo_url
+                ? `<img src="${b.photo_url}" style="width:80px;height:80px;border-radius:10px;object-fit:cover;flex-shrink:0">`
+                : `<div style="width:80px;height:80px;border-radius:10px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0">${getBoardTypeIcon(b.type)}</div>`;
+              const dims = [b.length_ft || b.size, b.width_in ? b.width_in + '"' : '', b.thickness_in ? b.thickness_in + '"' : ''].filter(Boolean).join(' × ');
+              const volTxt = b.volume_l ? b.volume_l + 'L' : '';
+              const typeTxt = b.type ? b.type.charAt(0).toUpperCase() + b.type.slice(1) : '';
+              const setupParts = [b.fins_setup, b.tail_shape].filter(Boolean).join(' · ');
+              const shaperTxt = [b.shaper, b.brand].filter(Boolean).join(' — ');
+
+              return `
+              <div class="card" id="board-row-${b.id}" style="margin-bottom:10px;padding:12px">
+                <div style="display:flex;gap:12px">
+                  ${photoHtml}
+                  <div style="flex:1;min-width:0">
+                    <div style="color:#f0f4ff;font-size:0.95rem;font-weight:600">${b.nickname || b.name}</div>
+                    <div style="color:rgba(255,255,255,0.5);font-size:0.78rem;margin-top:2px">${[dims, volTxt, typeTxt].filter(Boolean).join(' · ')}</div>
+                    ${shaperTxt ? `<div style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:2px">🔨 ${shaperTxt}</div>` : ''}
+                    ${setupParts ? `<div style="color:rgba(255,255,255,0.35);font-size:0.72rem;margin-top:1px">${setupParts}</div>` : ''}
+                  </div>
+                </div>
+                ${sweetSpot ? `<div style="margin-top:8px;padding:6px 10px;background:rgba(77,255,145,0.06);border:1px solid rgba(77,255,145,0.15);border-radius:6px;font-size:0.75rem;color:#4dff91">★ Sweet spot : ${sweetSpot}</div>` : ''}
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+                  <div style="color:rgba(255,255,255,0.35);font-size:0.72rem">${stats.count ? `📊 ${stats.count} session${stats.count > 1 ? 's' : ''} · ${stats.lastDate}` : 'Pas encore de session'}</div>
+                  <div style="display:flex;gap:6px">
+                    <button onclick="editBoard(${b.id})" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:4px 8px;color:rgba(255,255,255,0.5);font-size:0.75rem;cursor:pointer">✏️</button>
+                    <button onclick="openBoardShareOverlay(${b.id})" style="background:none;border:1px solid rgba(0,207,255,0.2);border-radius:6px;padding:4px 8px;color:#00cfff;font-size:0.75rem;cursor:pointer">📤</button>
+                    <button onclick="deleteBoard(${b.id})" style="background:none;border:1px solid rgba(255,77,77,0.15);border-radius:6px;padding:4px 8px;color:rgba(255,77,77,0.4);font-size:0.75rem;cursor:pointer">🗑️</button>
+                  </div>
+                </div>
+              </div>`;
+            }).join('')
+            : '<div class="card"><div class="empty">Aucune board dans ton quiver</div></div>';
+
+          container.innerHTML = `
+            <div style="padding:12px 14px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                <div style="color:#f0f4ff;font-size:1.1rem;font-weight:700">Mon Quiver <span style="color:rgba(255,255,255,0.3);font-size:0.8rem;font-weight:400">${boards.length} board${boards.length !== 1 ? 's' : ''}</span></div>
+                <div onclick="showTab('profil', document.querySelectorAll('.nav-tab')[3])" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:0.8rem;padding:4px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:6px">← Profil</div>
+              </div>
+              ${boardsList}
+              <div class="card" style="margin-top:14px;padding:14px">
+                <span class="section-label" style="margin-bottom:12px;display:block">Ajouter une board</span>
+
+                <!-- Section 1 : L'essentiel -->
+                <div style="color:#4dff91;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">L'essentiel</div>
+                <div class="form-group"><label>Nom</label><input type="text" id="board-name" placeholder="La Bleue, Mon fish..."></div>
+                <div class="form-group">
+                  <label>Photo</label>
+                  <div id="board-photo-preview" style="display:none;margin-bottom:8px"></div>
+                  <input type="file" id="board-photo-input" accept="image/*" onchange="previewBoardPhoto(this)" style="font-size:0.8rem;color:rgba(255,255,255,0.5)">
+                </div>
+                <div class="datetime-row">
+                  <div class="form-group" style="margin:0;flex:1">
+                    <label>Type</label>
+                    <select id="board-type">
+                      <option value="">Choisir</option>
+                      <option value="shortboard">Shortboard</option>
+                      <option value="fish">Fish</option>
+                      <option value="midlength">Midlength</option>
+                      <option value="longboard">Longboard</option>
+                      <option value="gun">Gun</option>
+                      <option value="funboard">Funboard</option>
+                      <option value="hybrid">Hybrid</option>
+                      <option value="foil">Foil</option>
+                      <option value="sup">SUP</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin:0;flex:1">
+                    <label>Taille</label>
+                    <input type="text" id="board-size" placeholder="6'2">
+                  </div>
+                </div>
+
+                <!-- Section 2 : Les détails -->
+                <div style="color:#00cfff;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px">Les détails</div>
+                <div class="datetime-row">
+                  <div class="form-group" style="margin:0;flex:1"><label>Volume (L)</label><input type="number" id="board-volume" step="0.1" placeholder="32"></div>
+                  <div class="form-group" style="margin:0;flex:1"><label>Largeur (")</label><input type="text" id="board-width" placeholder="20.5"></div>
+                  <div class="form-group" style="margin:0;flex:1"><label>Épaisseur (")</label><input type="text" id="board-thickness" placeholder="2.5"></div>
+                </div>
+                <div class="datetime-row">
+                  <div class="form-group" style="margin:0;flex:1">
+                    <label>Fins</label>
+                    <select id="board-fins">
+                      <option value="">—</option>
+                      <option value="thruster">Thruster</option>
+                      <option value="twin">Twin</option>
+                      <option value="quad">Quad</option>
+                      <option value="single">Single</option>
+                      <option value="2+1">2+1</option>
+                      <option value="5-box">5-box</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin:0;flex:1">
+                    <label>Tail</label>
+                    <select id="board-tail">
+                      <option value="">—</option>
+                      <option value="squash">Squash</option>
+                      <option value="swallow">Swallow</option>
+                      <option value="pin">Pin</option>
+                      <option value="round">Round</option>
+                      <option value="diamond">Diamond</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="datetime-row">
+                  <div class="form-group" style="margin:0;flex:1"><label>Shaper</label><input type="text" id="board-shaper" placeholder="Pukas"></div>
+                  <div class="form-group" style="margin:0;flex:1"><label>Marque</label><input type="text" id="board-brand" placeholder="Channel Islands"></div>
+                </div>
+                <div class="datetime-row">
+                  <div class="form-group" style="margin:0;flex:1"><label>Année</label><input type="number" id="board-year" placeholder="2024"></div>
+                  <div class="form-group" style="margin:0;flex:1">
+                    <label>État</label>
+                    <select id="board-condition">
+                      <option value="neuf">Neuf</option>
+                      <option value="bon" selected>Bon</option>
+                      <option value="use">Usé</option>
+                      <option value="reparer">À réparer</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Section 3 : Sweet spot -->
+                <div style="color:#ed8936;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px">Dans quelles conditions tu la sors ?</div>
+                <div class="datetime-row">
+                  <div class="form-group" style="margin:0;flex:1"><label>Houle min (m)</label><input type="number" id="board-wave-min" step="0.1" placeholder="0.5"></div>
+                  <div class="form-group" style="margin:0;flex:1"><label>Houle max (m)</label><input type="number" id="board-wave-max" step="0.1" placeholder="2.0"></div>
+                </div>
+                <div class="form-group">
+                  <label>Vent</label>
+                  <div id="board-wind-chips" style="display:flex;gap:6px;flex-wrap:wrap">
+                    <div onclick="selectChip(this,'board-wind')" data-value="offshore" class="chip-option chip-selected" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(77,255,145,0.3);background:rgba(77,255,145,0.1);color:#4dff91">Offshore</div>
+                    <div onclick="selectChip(this,'board-wind')" data-value="onshore" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)">Onshore</div>
+                    <div onclick="selectChip(this,'board-wind')" data-value="any" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)">Peu importe</div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Marée</label>
+                  <div id="board-tide-chips" style="display:flex;gap:6px;flex-wrap:wrap">
+                    <div onclick="selectChip(this,'board-tide')" data-value="haute" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)">Haute</div>
+                    <div onclick="selectChip(this,'board-tide')" data-value="basse" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)">Basse</div>
+                    <div onclick="selectChip(this,'board-tide')" data-value="mi-maree" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)">Mi-marée</div>
+                    <div onclick="selectChip(this,'board-tide')" data-value="any" class="chip-option chip-selected" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(77,255,145,0.3);background:rgba(77,255,145,0.1);color:#4dff91">Peu importe</div>
+                  </div>
+                </div>
+
+                <button class="btn-primary" onclick="addBoard()" style="margin-top:8px">Ajouter cette board</button>
+              </div>
+            </div>`;
+        }
+
+        function selectChip(el, group) {
+          const parent = el.parentElement;
+          parent.querySelectorAll('.chip-option').forEach(c => {
+            c.classList.remove('chip-selected');
+            c.style.border = '1px solid rgba(255,255,255,0.15)';
+            c.style.background = 'rgba(255,255,255,0.06)';
+            c.style.color = 'rgba(255,255,255,0.5)';
+          });
+          el.classList.add('chip-selected');
+          el.style.border = '1px solid rgba(77,255,145,0.3)';
+          el.style.background = 'rgba(77,255,145,0.1)';
+          el.style.color = '#4dff91';
+        }
+
+        function getSelectedChip(group) {
+          const container = document.getElementById(group + '-chips');
+          if (!container) return 'any';
+          const selected = container.querySelector('.chip-selected');
+          return selected ? selected.dataset.value : 'any';
+        }
+
+        function previewBoardPhoto(input) {
+          const file = input.files[0];
+          const preview = document.getElementById('board-photo-preview');
+          if (!file || !preview) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            preview.innerHTML = `<img src="${reader.result}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px">`;
+            preview.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
         }
 
         function toggleConfig(btn) {
@@ -2896,31 +3180,51 @@ select option { background: #0d2137; color: #f0f4ff; }
         // ========================================
         
         async function addBoard() {
-            const name = document.getElementById('board-name').value;
-            const size = document.getElementById('board-size').value;
-            const type = document.getElementById('board-type').value;
-            const shaper = document.getElementById('board-shaper').value;
-            
-            if (!name || !size || !type || !shaper) {
-                showMessage('error', 'Veuillez remplir tous les champs');
+            const name = document.getElementById('board-name')?.value;
+            const type = document.getElementById('board-type')?.value;
+            const size = document.getElementById('board-size')?.value;
+
+            if (!name || !type) {
+                showMessage('error', 'Le nom et le type sont requis');
                 return;
             }
-            
+
             try {
-                const board = { name, size, type, shaper };
+                // Upload photo si présente
+                let photoUrl = null;
+                const photoInput = document.getElementById('board-photo-input');
+                if (photoInput?.files[0]) {
+                    photoUrl = await uploadBoardPhotoFile(photoInput.files[0]);
+                }
+
+                const board = {
+                    nickname: name,
+                    name: name,
+                    type,
+                    length_ft: size,
+                    size: size,
+                    volume_l: document.getElementById('board-volume')?.value || null,
+                    width_in: document.getElementById('board-width')?.value || null,
+                    thickness_in: document.getElementById('board-thickness')?.value || null,
+                    fins_setup: document.getElementById('board-fins')?.value || null,
+                    tail_shape: document.getElementById('board-tail')?.value || null,
+                    shaper: document.getElementById('board-shaper')?.value || null,
+                    brand: document.getElementById('board-brand')?.value || null,
+                    year_made: document.getElementById('board-year')?.value || null,
+                    condition: document.getElementById('board-condition')?.value || 'bon',
+                    photo_url: photoUrl,
+                    sweet_spot_wave_min: document.getElementById('board-wave-min')?.value || null,
+                    sweet_spot_wave_max: document.getElementById('board-wave-max')?.value || null,
+                    sweet_spot_wind: getSelectedChip('board-wind'),
+                    sweet_spot_tide: getSelectedChip('board-tide')
+                };
+
                 await dataManager.saveUserBoard(dataManager.currentUserId, board);
-                
-                // Reset form
-                document.getElementById('board-name').value = '';
-                document.getElementById('board-size').value = '';
-                document.getElementById('board-type').value = '';
-                document.getElementById('board-shaper').value = '';
-                
-                showMessage('success', 'Board ajoutée avec succès !');
-                
-                // Recharger boards dans tous les sélecteurs
+                showMessage('success', 'Board ajoutée !');
+
+                // Recharger
                 await loadUserBoards();
-                await loadProfile();
+                loadBoardsTab();
                 
             } catch (error) {
                 showMessage('error', `Erreur: ${error.message}`);
@@ -2928,56 +3232,556 @@ select option { background: #0d2137; color: #f0f4ff; }
         }
 
         function editBoard(boardId) {
-          const board = (userData.boards || []).find(b => b.id == boardId);
-          if (!board) return;
+          const b = (userData.boards || []).find(b => b.id == boardId);
+          if (!b) return;
           const row = document.getElementById(`board-row-${boardId}`);
           if (!row) return;
+          const typeOptions = ['shortboard','fish','midlength','longboard','gun','funboard','hybrid','foil','sup'].map(t =>
+            `<option value="${t}" ${b.type === t ? 'selected' : ''}>${t}</option>`).join('');
+          const finsOptions = ['','thruster','twin','quad','single','2+1','5-box'].map(t =>
+            `<option value="${t}" ${b.fins_setup === t ? 'selected' : ''}>${t || '—'}</option>`).join('');
+          const tailOptions = ['','squash','swallow','pin','round','diamond'].map(t =>
+            `<option value="${t}" ${b.tail_shape === t ? 'selected' : ''}>${t || '—'}</option>`).join('');
+          const condOptions = ['neuf','bon','use','reparer'].map(t =>
+            `<option value="${t}" ${(b.condition || 'bon') === t ? 'selected' : ''}>${t === 'reparer' ? 'À réparer' : t.charAt(0).toUpperCase()+t.slice(1)}</option>`).join('');
+          const photoPreview = b.photo_url ? `<img src="${b.photo_url}" style="width:100%;max-height:150px;object-fit:cover;border-radius:8px;margin-bottom:6px">` : '';
+
+          function windChip(val, label) {
+            const sel = (b.sweet_spot_wind || 'any') === val;
+            return `<div onclick="selectChip(this,'edit-wind-${boardId}')" data-value="${val}" class="chip-option ${sel?'chip-selected':''}" style="padding:5px 12px;border-radius:18px;font-size:0.78rem;cursor:pointer;border:1px solid ${sel?'rgba(77,255,145,0.3)':'rgba(255,255,255,0.15)'};background:${sel?'rgba(77,255,145,0.1)':'rgba(255,255,255,0.06)'};color:${sel?'#4dff91':'rgba(255,255,255,0.5)'}">${label}</div>`;
+          }
+          function tideChip(val, label) {
+            const sel = (b.sweet_spot_tide || 'any') === val;
+            return `<div onclick="selectChip(this,'edit-tide-${boardId}')" data-value="${val}" class="chip-option ${sel?'chip-selected':''}" style="padding:5px 12px;border-radius:18px;font-size:0.78rem;cursor:pointer;border:1px solid ${sel?'rgba(77,255,145,0.3)':'rgba(255,255,255,0.15)'};background:${sel?'rgba(77,255,145,0.1)':'rgba(255,255,255,0.06)'};color:${sel?'#4dff91':'rgba(255,255,255,0.5)'}">${label}</div>`;
+          }
+
           row.innerHTML = `
-            <div style="width:100%">
-              <div class="form-group" style="margin-bottom:6px">
-                <input type="text" id="edit-board-name-${boardId}" value="${board.name || ''}" placeholder="Nom">
+            <div style="width:100%;padding:4px">
+              ${photoPreview}
+              <input type="file" id="edit-board-photo-${boardId}" accept="image/*" style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-bottom:8px">
+              <div class="form-group" style="margin-bottom:6px"><input type="text" id="edit-board-name-${boardId}" value="${b.nickname || b.name || ''}" placeholder="Nom"></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+                <select id="edit-board-type-${boardId}">${typeOptions}</select>
+                <input type="text" id="edit-board-size-${boardId}" value="${b.length_ft || b.size || ''}" placeholder="Taille">
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">
+                <input type="number" id="edit-board-volume-${boardId}" value="${b.volume_l || ''}" placeholder="Volume L" step="0.1" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem;outline:none">
+                <input type="text" id="edit-board-width-${boardId}" value="${b.width_in || ''}" placeholder="Larg." style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem;outline:none">
+                <input type="text" id="edit-board-thick-${boardId}" value="${b.thickness_in || ''}" placeholder="Épais." style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem;outline:none">
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
-                <input type="text" id="edit-board-size-${boardId}" value="${board.size || ''}" placeholder="Taille (ex: 9'2)">
-                <select id="edit-board-type-${boardId}">
-                  <option value="">Type</option>
-                  ${['longboard','midlength','shortboard','fish','gun','funboard','sup'].map(t =>
-                    `<option value="${t}" ${board.type === t ? 'selected' : ''}>${t}</option>`
-                  ).join('')}
-                </select>
+                <select id="edit-board-fins-${boardId}" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem">${finsOptions}</select>
+                <select id="edit-board-tail-${boardId}" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem">${tailOptions}</select>
               </div>
-              <input type="text" id="edit-board-shaper-${boardId}" value="${board.shaper || ''}" placeholder="Shaper"
-                style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:9px 12px;font-size:0.85rem;outline:none;margin-bottom:8px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+                <input type="text" id="edit-board-shaper-${boardId}" value="${b.shaper || ''}" placeholder="Shaper" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem;outline:none">
+                <input type="text" id="edit-board-brand-${boardId}" value="${b.brand || ''}" placeholder="Marque" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem;outline:none">
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+                <input type="number" id="edit-board-year-${boardId}" value="${b.year_made || ''}" placeholder="Année" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem;outline:none">
+                <select id="edit-board-cond-${boardId}" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem">${condOptions}</select>
+              </div>
+              <div style="color:#ed8936;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;margin:8px 0 6px">Sweet spot</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+                <input type="number" id="edit-board-wmin-${boardId}" value="${b.sweet_spot_wave_min || ''}" placeholder="Houle min" step="0.1" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem;outline:none">
+                <input type="number" id="edit-board-wmax-${boardId}" value="${b.sweet_spot_wave_max || ''}" placeholder="Houle max" step="0.1" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem;outline:none">
+              </div>
+              <div style="margin-bottom:6px"><div id="edit-wind-${boardId}-chips" style="display:flex;gap:4px;flex-wrap:wrap">${windChip('offshore','Offshore')}${windChip('onshore','Onshore')}${windChip('any','Peu importe')}</div></div>
+              <div style="margin-bottom:8px"><div id="edit-tide-${boardId}-chips" style="display:flex;gap:4px;flex-wrap:wrap">${tideChip('haute','Haute')}${tideChip('basse','Basse')}${tideChip('mi-maree','Mi-marée')}${tideChip('any','Peu importe')}</div></div>
               <div style="display:flex;gap:6px">
                 <button class="btn-primary" style="margin:0;padding:8px;font-size:0.82rem" onclick="saveBoard(${boardId})">Sauvegarder</button>
-                <button onclick="loadProfilTab()" style="flex:0.5;padding:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f0f4ff;cursor:pointer;font-size:0.82rem">Annuler</button>
+                <button onclick="loadBoardsTab()" style="flex:0.5;padding:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f0f4ff;cursor:pointer;font-size:0.82rem">Annuler</button>
               </div>
             </div>`;
         }
 
-        async function saveBoard(boardId) {
-          const name   = document.getElementById(`edit-board-name-${boardId}`)?.value;
-          const size   = document.getElementById(`edit-board-size-${boardId}`)?.value;
-          const type   = document.getElementById(`edit-board-type-${boardId}`)?.value;
-          const shaper = document.getElementById(`edit-board-shaper-${boardId}`)?.value;
-          if (!name) { showMessage('error', 'Le nom est requis'); return; }
+        async function deleteBoard(boardId) {
+          if (!confirm('Supprimer cette board ?')) return;
           try {
             if (dataManager.supabase) {
               const { error } = await dataManager.supabase
                 .from('boards')
-                .update({ name, size, type, shaper })
+                .delete()
+                .eq('id', boardId)
+                .eq('user_id', dataManager.currentUserId);
+              if (error) throw new Error(error.message);
+            } else {
+              const boards = JSON.parse(localStorage.getItem('surfai_boards') || '[]');
+              localStorage.setItem('surfai_boards', JSON.stringify(boards.filter(b => b.id != boardId)));
+            }
+            dataManager.cache.boards = null;
+            await loadUserBoards();
+            loadBoardsTab();
+          } catch(e) {
+            showMessage('error', 'Erreur suppression : ' + e.message);
+          }
+        }
+
+        async function uploadAvatar(input) {
+          const file = input.files[0];
+          if (!file) return;
+          // Vérifier taille (max 2MB)
+          if (file.size > 2 * 1024 * 1024) {
+            showMessage('error', 'Image trop lourde (max 2 MB)');
+            return;
+          }
+          try {
+            if (supabaseClient) {
+              const userId = dataManager.currentUserId;
+              const ext = file.name.split('.').pop();
+              const path = `avatars/${userId}.${ext}`;
+              const { error: uploadError } = await supabaseClient.storage
+                .from('avatars')
+                .upload(path, file, { upsert: true });
+              if (uploadError) throw uploadError;
+              const { data: urlData } = supabaseClient.storage.from('avatars').getPublicUrl(path);
+              const avatarUrl = urlData.publicUrl + '?t=' + Date.now();
+              userData.profile.avatar_url = avatarUrl;
+              localStorage.setItem('surfai_avatar', avatarUrl);
+              loadProfilTab();
+            } else {
+              // Fallback localStorage avec base64
+              const reader = new FileReader();
+              reader.onload = () => {
+                localStorage.setItem('surfai_avatar', reader.result);
+                userData.profile.avatar_url = reader.result;
+                loadProfilTab();
+              };
+              reader.readAsDataURL(file);
+            }
+          } catch(e) {
+            // Fallback base64 si storage pas configuré
+            const reader = new FileReader();
+            reader.onload = () => {
+              localStorage.setItem('surfai_avatar', reader.result);
+              userData.profile.avatar_url = reader.result;
+              loadProfilTab();
+            };
+            reader.readAsDataURL(file);
+          }
+        }
+
+        // ========================================
+        // PARTAGE BOARD — 3 MODES INSTAGRAM
+        // ========================================
+
+        function openBoardShareOverlay(boardId) {
+          const b = (userData.boards || []).find(x => x.id == boardId);
+          if (!b) return;
+          let overlay = document.getElementById('board-share-overlay');
+          if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'board-share-overlay';
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:1002;background:rgba(10,14,39,0.97);display:flex;flex-direction:column;padding:20px;overflow-y:auto';
+            document.body.appendChild(overlay);
+          }
+          overlay.style.display = 'flex';
+          overlay.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+              <div style="color:#f0f4ff;font-size:1rem;font-weight:600">Partager "${b.nickname || b.name}"</div>
+              <div onclick="document.getElementById('board-share-overlay').style.display='none'" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:1.2rem;padding:4px 8px">✕</div>
+            </div>
+            <div onclick="shareBoardFlex(${boardId})" style="padding:16px;margin-bottom:10px;background:rgba(77,255,145,0.06);border:1px solid rgba(77,255,145,0.2);border-radius:12px;cursor:pointer">
+              <div style="font-size:1.2rem;margin-bottom:4px">📸</div>
+              <div style="color:#4dff91;font-size:0.9rem;font-weight:600">Montrer ma board</div>
+              <div style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin-top:2px">Partage lifestyle — montre ton quiver</div>
+            </div>
+            <div onclick="shareBoardSellForm(${boardId})" style="padding:16px;margin-bottom:10px;background:rgba(237,137,54,0.06);border:1px solid rgba(237,137,54,0.2);border-radius:12px;cursor:pointer">
+              <div style="font-size:1.2rem;margin-bottom:4px">💰</div>
+              <div style="color:#ed8936;font-size:0.9rem;font-weight:600">Vendre ma board</div>
+              <div style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin-top:2px">Crée une annonce pour Instagram</div>
+            </div>
+            <div onclick="shareBoardRepairForm(${boardId})" style="padding:16px;margin-bottom:10px;background:rgba(0,207,255,0.06);border:1px solid rgba(0,207,255,0.2);border-radius:12px;cursor:pointer">
+              <div style="font-size:1.2rem;margin-bottom:4px">🔧</div>
+              <div style="color:#00cfff;font-size:0.9rem;font-weight:600">Réparer ma board</div>
+              <div style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin-top:2px">Trouve un réparateur via ton réseau</div>
+            </div>`;
+        }
+
+        async function shareBoardFlex(boardId) {
+          const b = (userData.boards || []).find(x => x.id == boardId);
+          if (!b) return;
+          const stats = getBoardSessionStats(boardId);
+          const sweetSpot = formatSweetSpot(b);
+          await generateBoardCard(b, 'flex', { stats, sweetSpot });
+        }
+
+        function shareBoardSellForm(boardId) {
+          const overlay = document.getElementById('board-share-overlay');
+          if (!overlay) return;
+          overlay.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <div style="color:#ed8936;font-size:1rem;font-weight:600">Vendre ma board</div>
+              <div onclick="openBoardShareOverlay(${boardId})" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:0.8rem;padding:4px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:6px">← Retour</div>
+            </div>
+            <div class="form-group"><label>Prix (€)</label><input type="number" id="sell-price" placeholder="350"></div>
+            <div class="form-group"><label>Localisation</label><input type="text" id="sell-location" placeholder="Biarritz"></div>
+            <div class="form-group"><label>Message (optionnel)</label><textarea id="sell-message" rows="2" placeholder="Vendue car j'ai changé de niveau"></textarea></div>
+            <button class="btn-primary" onclick="shareBoardSell(${boardId})" style="background:#ed8936">Générer la card Instagram</button>`;
+        }
+
+        async function shareBoardSell(boardId) {
+          const b = (userData.boards || []).find(x => x.id == boardId);
+          if (!b) return;
+          const extras = {
+            price: document.getElementById('sell-price')?.value || '',
+            location: document.getElementById('sell-location')?.value || '',
+            message: document.getElementById('sell-message')?.value || ''
+          };
+          await generateBoardCard(b, 'sell', extras);
+        }
+
+        function shareBoardRepairForm(boardId) {
+          const overlay = document.getElementById('board-share-overlay');
+          if (!overlay) return;
+          overlay.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <div style="color:#00cfff;font-size:1rem;font-weight:600">Réparer ma board</div>
+              <div onclick="openBoardShareOverlay(${boardId})" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:0.8rem;padding:4px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:6px">← Retour</div>
+            </div>
+            <div class="form-group"><label>Description du problème</label><textarea id="repair-desc" rows="3" placeholder="Ding sur le nose, fissure rail droit..."></textarea></div>
+            <div class="form-group"><label>Localisation</label><input type="text" id="repair-location" placeholder="Biarritz"></div>
+            <div class="form-group">
+              <label>Urgence</label>
+              <div id="repair-urgency-chips" style="display:flex;gap:6px">
+                <div onclick="selectChip(this,'repair-urgency')" data-value="tranquille" class="chip-option chip-selected" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(77,255,145,0.3);background:rgba(77,255,145,0.1);color:#4dff91">Tranquille</div>
+                <div onclick="selectChip(this,'repair-urgency')" data-value="rapide" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)">Rapide</div>
+                <div onclick="selectChip(this,'repair-urgency')" data-value="urgent" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)">Urgent</div>
+              </div>
+            </div>
+            <button class="btn-primary" onclick="shareBoardRepair(${boardId})" style="background:#00cfff;color:#0a0e27">Générer la card Instagram</button>`;
+        }
+
+        async function shareBoardRepair(boardId) {
+          const b = (userData.boards || []).find(x => x.id == boardId);
+          if (!b) return;
+          const extras = {
+            description: document.getElementById('repair-desc')?.value || '',
+            location: document.getElementById('repair-location')?.value || '',
+            urgency: getSelectedChip('repair-urgency')
+          };
+          await generateBoardCard(b, 'repair', extras);
+        }
+
+        async function generateBoardCard(board, mode, extras) {
+          const canvas = document.createElement('canvas');
+          canvas.width = 1080;
+          canvas.height = 1920;
+          const ctx = canvas.getContext('2d');
+
+          // Fond dégradé
+          const grad = ctx.createLinearGradient(0, 0, 0, 1920);
+          grad.addColorStop(0, '#0a0e27');
+          grad.addColorStop(1, '#1a1e3a');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, 1080, 1920);
+
+          // Couleur accent selon le mode
+          const accentColors = { flex: '#4dff91', sell: '#ed8936', repair: '#00cfff' };
+          const accent = accentColors[mode];
+
+          let y = 80;
+
+          // Badge mode
+          if (mode === 'sell') {
+            ctx.fillStyle = '#ed8936';
+            ctx.font = 'bold 42px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('À VENDRE', 540, y);
+            y += 60;
+          } else if (mode === 'repair') {
+            ctx.fillStyle = '#00cfff';
+            ctx.font = 'bold 42px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('🔧 BESOIN DE RÉPARATION', 540, y);
+            y += 60;
+          }
+
+          // Photo de la board
+          if (board.photo_url) {
+            try {
+              const img = new Image();
+              img.crossOrigin = 'anonymous';
+              await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+                img.src = board.photo_url;
+              });
+              const imgH = 600;
+              const imgW = 1080;
+              const ratio = Math.min(imgW / img.width, imgH / img.height);
+              const drawW = img.width * ratio;
+              const drawH = img.height * ratio;
+              ctx.drawImage(img, (1080 - drawW) / 2, y, drawW, drawH);
+              y += drawH + 40;
+            } catch(e) {
+              // Placeholder si image ne charge pas
+              ctx.fillStyle = 'rgba(255,255,255,0.05)';
+              ctx.fillRect(90, y, 900, 500);
+              ctx.fillStyle = 'rgba(255,255,255,0.2)';
+              ctx.font = '120px sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillText(getBoardTypeIcon(board.type), 540, y + 300);
+              y += 560;
+            }
+          } else {
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            roundRect(ctx, 90, y, 900, 400, 20);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(255,255,255,0.15)';
+            ctx.font = '120px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(getBoardTypeIcon(board.type), 540, y + 260);
+            y += 440;
+          }
+
+          // Nom
+          ctx.fillStyle = '#f0f4ff';
+          ctx.font = 'bold 52px -apple-system, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(`"${board.nickname || board.name}"`, 540, y);
+          y += 30;
+
+          // Dims + type
+          const dims = [board.length_ft || board.size, board.type ? board.type.charAt(0).toUpperCase() + board.type.slice(1) : ''].filter(Boolean).join(' · ');
+          ctx.fillStyle = 'rgba(255,255,255,0.5)';
+          ctx.font = '36px -apple-system, sans-serif';
+          ctx.fillText(dims, 540, y + 30);
+          y += 70;
+
+          // Shaper
+          const shaperLine = [board.shaper, board.brand].filter(Boolean).join(' — ');
+          if (shaperLine) {
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.font = '32px -apple-system, sans-serif';
+            ctx.fillText('🔨 ' + shaperLine, 540, y);
+            y += 50;
+          }
+
+          // Volume + setup
+          const techLine = [board.volume_l ? board.volume_l + 'L' : '', board.fins_setup, board.tail_shape].filter(Boolean).join(' · ');
+          if (techLine) {
+            ctx.fillStyle = 'rgba(255,255,255,0.35)';
+            ctx.font = '30px -apple-system, sans-serif';
+            ctx.fillText(techLine, 540, y);
+            y += 50;
+          }
+
+          // Contenu spécifique au mode
+          if (mode === 'flex') {
+            // Stats sessions
+            if (extras.stats?.count) {
+              ctx.fillStyle = accent;
+              ctx.font = '30px -apple-system, sans-serif';
+              ctx.fillText(`📊 ${extras.stats.count} sessions · ${extras.stats.lastDate}`, 540, y);
+              y += 45;
+            }
+            if (extras.sweetSpot) {
+              ctx.fillStyle = accent;
+              ctx.font = '30px -apple-system, sans-serif';
+              ctx.fillText('🌊 Sweet spot : ' + extras.sweetSpot, 540, y);
+              y += 45;
+            }
+          } else if (mode === 'sell') {
+            if (board.condition) {
+              ctx.fillStyle = 'rgba(255,255,255,0.4)';
+              ctx.font = '30px -apple-system, sans-serif';
+              ctx.fillText('État : ' + board.condition, 540, y);
+              y += 45;
+            }
+            if (extras.price) {
+              ctx.fillStyle = '#ed8936';
+              ctx.font = 'bold 56px -apple-system, sans-serif';
+              ctx.fillText(extras.price + ' €', 540, y + 10);
+              y += 70;
+            }
+            if (extras.location) {
+              ctx.fillStyle = 'rgba(255,255,255,0.5)';
+              ctx.font = '30px -apple-system, sans-serif';
+              ctx.fillText('📍 ' + extras.location, 540, y);
+              y += 45;
+            }
+            if (extras.message) {
+              ctx.fillStyle = 'rgba(255,255,255,0.35)';
+              ctx.font = 'italic 28px -apple-system, sans-serif';
+              ctx.fillText('"' + extras.message + '"', 540, y);
+              y += 45;
+            }
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.font = '28px -apple-system, sans-serif';
+            ctx.fillText('💬 Me contacter sur SurfAI', 540, y + 20);
+          } else if (mode === 'repair') {
+            if (extras.location) {
+              ctx.fillStyle = 'rgba(255,255,255,0.5)';
+              ctx.font = '30px -apple-system, sans-serif';
+              ctx.fillText('📍 ' + extras.location, 540, y);
+              y += 45;
+            }
+            if (extras.description) {
+              ctx.fillStyle = 'rgba(255,255,255,0.4)';
+              ctx.font = 'italic 28px -apple-system, sans-serif';
+              // Wrap text
+              const words = extras.description.split(' ');
+              let line = '"';
+              for (const word of words) {
+                if (ctx.measureText(line + word).width > 900) {
+                  ctx.fillText(line, 540, y);
+                  y += 36;
+                  line = word + ' ';
+                } else {
+                  line += word + ' ';
+                }
+              }
+              ctx.fillText(line.trim() + '"', 540, y);
+              y += 45;
+            }
+            if (extras.urgency && extras.urgency !== 'tranquille') {
+              const urgColor = extras.urgency === 'urgent' ? '#ff4d4d' : '#ed8936';
+              ctx.fillStyle = urgColor;
+              ctx.font = 'bold 30px -apple-system, sans-serif';
+              ctx.fillText('⚡ ' + extras.urgency.toUpperCase(), 540, y);
+              y += 45;
+            }
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.font = '28px -apple-system, sans-serif';
+            ctx.fillText('💬 Contactez-moi sur SurfAI', 540, y + 20);
+          }
+
+          // Logo SurfAI en bas
+          ctx.fillStyle = accent;
+          ctx.font = 'bold 36px -apple-system, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('SurfAI 🏄', 540, 1850);
+
+          // Afficher preview + bouton download
+          showBoardCardPreview(canvas);
+        }
+
+        function roundRect(ctx, x, y, w, h, r) {
+          ctx.beginPath();
+          ctx.moveTo(x + r, y);
+          ctx.lineTo(x + w - r, y);
+          ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+          ctx.lineTo(x + w, y + h - r);
+          ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+          ctx.lineTo(x + r, y + h);
+          ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+          ctx.lineTo(x, y + r);
+          ctx.quadraticCurveTo(x, y, x + r, y);
+          ctx.closePath();
+        }
+
+        function showBoardCardPreview(canvas) {
+          const overlay = document.getElementById('board-share-overlay');
+          if (!overlay) return;
+          overlay.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div style="color:#f0f4ff;font-size:1rem;font-weight:600">Aperçu Instagram Story</div>
+              <div onclick="document.getElementById('board-share-overlay').style.display='none'" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:1.2rem;padding:4px 8px">✕</div>
+            </div>
+            <div style="flex:1;overflow-y:auto;display:flex;justify-content:center">
+              <div id="card-preview-container" style="width:100%;max-width:300px"></div>
+            </div>
+            <button id="btn-download-card" class="btn-primary" style="margin-top:12px">Télécharger pour Instagram</button>`;
+
+          const previewContainer = document.getElementById('card-preview-container');
+          const previewCanvas = canvas;
+          previewCanvas.style.width = '100%';
+          previewCanvas.style.borderRadius = '12px';
+          previewContainer.appendChild(previewCanvas);
+
+          document.getElementById('btn-download-card').onclick = () => {
+            canvas.toBlob(blob => {
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'surfai-board.png';
+              a.click();
+              URL.revokeObjectURL(url);
+            }, 'image/png');
+          };
+        }
+
+        async function uploadBoardPhotoFile(file) {
+          if (file.size > 2 * 1024 * 1024) { showMessage('error', 'Image trop lourde (max 2 MB)'); return null; }
+          try {
+            if (supabaseClient) {
+              const userId = dataManager.currentUserId;
+              const ext = file.name.split('.').pop();
+              const path = `boards/${userId}/${Date.now()}.${ext}`;
+              const { error } = await supabaseClient.storage.from('avatars').upload(path, file, { upsert: true });
+              if (error) throw error;
+              const { data: urlData } = supabaseClient.storage.from('avatars').getPublicUrl(path);
+              return urlData.publicUrl + '?t=' + Date.now();
+            }
+          } catch(e) { /* fallback */ }
+          // Fallback base64
+          return new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(file);
+          });
+        }
+
+        function enterHomeSpotPickMode() {
+            _spotPickMode = true;
+            _spotPickCallback = 'home';
+            const banner = document.getElementById('spot-pick-banner');
+            if (banner) banner.style.display = 'flex';
+            const spotsBtn = document.querySelectorAll('.nav-tab')[1];
+            showTab('spots', spotsBtn);
+        }
+
+        async function saveBoard(boardId) {
+          const name = document.getElementById(`edit-board-name-${boardId}`)?.value;
+          if (!name) { showMessage('error', 'Le nom est requis'); return; }
+
+          // Upload nouvelle photo si changée
+          let photoUrl = null;
+          const photoInput = document.getElementById(`edit-board-photo-${boardId}`);
+          if (photoInput?.files[0]) {
+            photoUrl = await uploadBoardPhotoFile(photoInput.files[0]);
+          }
+
+          const updates = {
+            name,
+            nickname: name,
+            size: document.getElementById(`edit-board-size-${boardId}`)?.value || null,
+            length_ft: document.getElementById(`edit-board-size-${boardId}`)?.value || null,
+            type: document.getElementById(`edit-board-type-${boardId}`)?.value || null,
+            shaper: document.getElementById(`edit-board-shaper-${boardId}`)?.value || null,
+            brand: document.getElementById(`edit-board-brand-${boardId}`)?.value || null,
+            volume_l: document.getElementById(`edit-board-volume-${boardId}`)?.value ? parseFloat(document.getElementById(`edit-board-volume-${boardId}`).value) : null,
+            width_in: document.getElementById(`edit-board-width-${boardId}`)?.value || null,
+            thickness_in: document.getElementById(`edit-board-thick-${boardId}`)?.value || null,
+            fins_setup: document.getElementById(`edit-board-fins-${boardId}`)?.value || null,
+            tail_shape: document.getElementById(`edit-board-tail-${boardId}`)?.value || null,
+            year_made: document.getElementById(`edit-board-year-${boardId}`)?.value ? parseInt(document.getElementById(`edit-board-year-${boardId}`).value) : null,
+            condition: document.getElementById(`edit-board-cond-${boardId}`)?.value || 'bon',
+            sweet_spot_wave_min: document.getElementById(`edit-board-wmin-${boardId}`)?.value ? parseFloat(document.getElementById(`edit-board-wmin-${boardId}`).value) : null,
+            sweet_spot_wave_max: document.getElementById(`edit-board-wmax-${boardId}`)?.value ? parseFloat(document.getElementById(`edit-board-wmax-${boardId}`).value) : null,
+            sweet_spot_wind: getSelectedChip(`edit-wind-${boardId}`),
+            sweet_spot_tide: getSelectedChip(`edit-tide-${boardId}`)
+          };
+          if (photoUrl) updates.photo_url = photoUrl;
+
+          try {
+            if (dataManager.supabase) {
+              const { error } = await dataManager.supabase
+                .from('boards')
+                .update(updates)
                 .eq('id', boardId)
                 .eq('user_id', dataManager.currentUserId);
               if (error) throw new Error(error.message);
             } else {
               const boards = JSON.parse(localStorage.getItem('surfai_boards') || '[]');
               const idx = boards.findIndex(b => b.id == boardId);
-              if (idx !== -1) boards[idx] = { ...boards[idx], name, size, type, shaper };
+              if (idx !== -1) boards[idx] = { ...boards[idx], ...updates };
               localStorage.setItem('surfai_boards', JSON.stringify(boards));
             }
             dataManager.cache.boards = null;
             await loadUserBoards();
-            await loadProfilTab();
+            loadBoardsTab();
           } catch (e) {
             showMessage('error', 'Erreur sauvegarde : ' + e.message);
           }
@@ -3161,6 +3965,7 @@ select option { background: #0d2137; color: #f0f4ff; }
           if (tabName === 'spots')   loadSpotsTab();
           if (tabName === 'session') loadSessionTab();
           if (tabName === 'profil')  loadProfilTab();
+          if (tabName === 'boards')  loadBoardsTab();
         }
 
         async function loadSessions() {
@@ -3245,17 +4050,8 @@ select option { background: #0d2137; color: #f0f4ff; }
             const waveMin = document.getElementById('profile-wave-min').value;
             const waveMax = document.getElementById('profile-wave-max').value;
 
-            // Spot de base pour la météo accueil
-            const homeSpotHidden = document.getElementById('profile-home-spot');
-            const homeSpotName = document.getElementById('profile-home-spot-search')?.value;
-            if (homeSpotHidden?.value) {
-                localStorage.setItem('home_spot', JSON.stringify({
-                    id:   homeSpotHidden.value,
-                    name: homeSpotName || '',
-                    lat:  parseFloat(homeSpotHidden.dataset.lat) || 0,
-                    lng:  parseFloat(homeSpotHidden.dataset.lng) || 0
-                }));
-            }
+            // Home spot — déjà sauvé au moment de la sélection via selectSpotFromPick
+            // On ne touche pas au localStorage ici, c'est déjà fait
 
             userData.profile = {
                 nickname,
