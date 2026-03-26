@@ -1558,22 +1558,44 @@ select option { background: #0d2137; color: #f0f4ff; }
             return data.success ? data.weather : null;
           };
 
+          // Trouver le nom de la ville la plus proche via la base de spots
+          const findNearestCity = async (lat, lng) => {
+            try {
+              const { data } = await supabaseClient
+                .from('spots')
+                .select('city, lat, lng')
+                .not('lat', 'is', null)
+                .limit(200);
+              if (!data?.length) return 'Position actuelle';
+              let best = null, bestDist = Infinity;
+              for (const s of data) {
+                const d = Math.sqrt(Math.pow(s.lat - lat, 2) + Math.pow(s.lng - lng, 2));
+                if (d < bestDist) { bestDist = d; best = s; }
+              }
+              return best?.city || 'Position actuelle';
+            } catch(e) { return 'Position actuelle'; }
+          };
+
+          const loadWeatherWithCity = async (lat, lng) => {
+            const [weather, city] = await Promise.all([
+              fetchWeatherCoords(lat, lng),
+              findNearestCity(lat, lng)
+            ]);
+            if (weather) updateMeteo(weather, `📍 ${city} · maintenant`);
+            else loadGeoWeatherFallback(fetchWeatherCoords, updateMeteo);
+          };
+
           // Si géoloc déjà connue (via onglet Spots), l'utiliser directement
           if (_userLat != null) {
-            try {
-              const weather = await fetchWeatherCoords(_userLat, _userLng);
-              if (weather) updateMeteo(weather, '📍 Position actuelle · maintenant');
-              else loadGeoWeatherFallback(fetchWeatherCoords, updateMeteo);
-            } catch(e) { loadGeoWeatherFallback(fetchWeatherCoords, updateMeteo); }
+            try { await loadWeatherWithCity(_userLat, _userLng); }
+            catch(e) { loadGeoWeatherFallback(fetchWeatherCoords, updateMeteo); }
           } else if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
               async (pos) => {
                 try {
-                  const { latitude, longitude } = pos.coords;
-                  _userLat = latitude;
-                  _userLng = longitude;
-                  const weather = await fetchWeatherCoords(latitude, longitude);
-                  if (weather) updateMeteo(weather, '📍 Position actuelle · maintenant');
+                  _userLat = pos.coords.latitude;
+                  _userLng = pos.coords.longitude;
+                  await loadWeatherWithCity(_userLat, _userLng);
                 } catch (e) {
                   loadGeoWeatherFallback(fetchWeatherCoords, updateMeteo);
                 }
