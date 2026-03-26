@@ -646,7 +646,7 @@ select option { background: #0d2137; color: #f0f4ff; }
     <button class="nav-tab" onclick="showTab('profil', this)">
       <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
     </button>
-    <button class="nav-tab" onclick="showTab('boards', this)" style="display:none" id="nav-boards">
+    <button class="nav-tab" onclick="showTab('boards', this)" id="nav-boards">
       <span class="nav-icon">🏄</span><span class="nav-label">Boards</span>
     </button>
   </nav>
@@ -840,7 +840,8 @@ select option { background: #0d2137; color: #f0f4ff; }
                             .order('created_at', { ascending: false });
 
                         if (error) throw error;
-                        this.cache.boards = boards || [];
+                        // Mapper board_type → type pour compatibilité JS
+                        this.cache.boards = (boards || []).map(b => ({ ...b, type: b.board_type || b.type }));
                         this.cache.lastUpdate.set('boards', Date.now());
                         return this.cache.boards;
                     } catch (error) {
@@ -860,7 +861,7 @@ select option { background: #0d2137; color: #f0f4ff; }
                     name: board.name || board.nickname,
                     nickname: board.nickname || board.name,
                     size: board.length_ft || board.size,
-                    type: board.type,
+                    board_type: board.type || board.board_type,
                     shaper: board.shaper || null,
                     brand: board.brand || null,
                     length_ft: board.length_ft || board.size,
@@ -2926,9 +2927,25 @@ select option { background: #0d2137; color: #f0f4ff; }
           return parts.length ? parts.join(' · ') : null;
         }
 
-        function loadBoardsTab() {
+        async function loadBoardsTab() {
           const container = document.getElementById('boards-content');
           if (!container) return;
+
+          // Toujours charger les boards fraîches depuis Supabase
+          if (supabaseClient && dataManager.currentUserId) {
+            try {
+              const { data, error } = await supabaseClient
+                .from('boards')
+                .select('*')
+                .eq('user_id', dataManager.currentUserId)
+                .order('created_at', { ascending: false });
+              if (!error && data) {
+                const mapped = data.map(b => ({ ...b, type: b.board_type || b.type }));
+                userData.boards = mapped;
+                dataManager.cache.boards = mapped;
+              }
+            } catch(e) { console.warn('Erreur chargement boards:', e); }
+          }
           const boards = userData.boards || [];
 
           const boardsList = boards.length
@@ -2945,7 +2962,7 @@ select option { background: #0d2137; color: #f0f4ff; }
               const shaperTxt = [b.shaper, b.brand].filter(Boolean).join(' — ');
 
               return `
-              <div class="card" id="board-row-${b.id}" style="margin-bottom:10px;padding:12px">
+              <div class="card" id="board-row-${b.id}" data-board-id="${b.id}" style="margin-bottom:10px;padding:12px">
                 <div style="display:flex;gap:12px">
                   ${photoHtml}
                   <div style="flex:1;min-width:0">
@@ -2959,9 +2976,9 @@ select option { background: #0d2137; color: #f0f4ff; }
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
                   <div style="color:rgba(255,255,255,0.35);font-size:0.72rem">${stats.count ? `📊 ${stats.count} session${stats.count > 1 ? 's' : ''} · ${stats.lastDate}` : 'Pas encore de session'}</div>
                   <div style="display:flex;gap:6px">
-                    <button onclick="editBoard(${b.id})" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:4px 8px;color:rgba(255,255,255,0.5);font-size:0.75rem;cursor:pointer">✏️</button>
-                    <button onclick="openBoardShareOverlay(${b.id})" style="background:none;border:1px solid rgba(0,207,255,0.2);border-radius:6px;padding:4px 8px;color:#00cfff;font-size:0.75rem;cursor:pointer">📤</button>
-                    <button onclick="deleteBoard(${b.id})" style="background:none;border:1px solid rgba(255,77,77,0.15);border-radius:6px;padding:4px 8px;color:rgba(255,77,77,0.4);font-size:0.75rem;cursor:pointer">🗑️</button>
+                    <button onclick="editBoard('${b.id}')" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:4px 8px;color:rgba(255,255,255,0.5);font-size:0.75rem;cursor:pointer">✏️</button>
+                    <button onclick="openBoardShareOverlay('${b.id}')" style="background:none;border:1px solid rgba(0,207,255,0.2);border-radius:6px;padding:4px 8px;color:#00cfff;font-size:0.75rem;cursor:pointer">📤</button>
+                    <button onclick="deleteBoard('${b.id}')" style="background:none;border:1px solid rgba(255,77,77,0.15);border-radius:6px;padding:4px 8px;color:rgba(255,77,77,0.4);font-size:0.75rem;cursor:pointer">🗑️</button>
                   </div>
                 </div>
               </div>`;
@@ -3220,11 +3237,10 @@ select option { background: #0d2137; color: #f0f4ff; }
                 };
 
                 await dataManager.saveUserBoard(dataManager.currentUserId, board);
-                showMessage('success', 'Board ajoutée !');
 
-                // Recharger
-                await loadUserBoards();
-                loadBoardsTab();
+                // Recharger depuis Supabase
+                dataManager.cache.boards = null;
+                await loadBoardsTab();
                 
             } catch (error) {
                 showMessage('error', `Erreur: ${error.message}`);
@@ -3289,7 +3305,7 @@ select option { background: #0d2137; color: #f0f4ff; }
               <div style="margin-bottom:6px"><div id="edit-wind-${boardId}-chips" style="display:flex;gap:4px;flex-wrap:wrap">${windChip('offshore','Offshore')}${windChip('onshore','Onshore')}${windChip('any','Peu importe')}</div></div>
               <div style="margin-bottom:8px"><div id="edit-tide-${boardId}-chips" style="display:flex;gap:4px;flex-wrap:wrap">${tideChip('haute','Haute')}${tideChip('basse','Basse')}${tideChip('mi-maree','Mi-marée')}${tideChip('any','Peu importe')}</div></div>
               <div style="display:flex;gap:6px">
-                <button class="btn-primary" style="margin:0;padding:8px;font-size:0.82rem" onclick="saveBoard(${boardId})">Sauvegarder</button>
+                <button class="btn-primary" style="margin:0;padding:8px;font-size:0.82rem" onclick="saveBoard('${boardId}')">Sauvegarder</button>
                 <button onclick="loadBoardsTab()" style="flex:0.5;padding:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f0f4ff;cursor:pointer;font-size:0.82rem">Annuler</button>
               </div>
             </div>`;
@@ -3299,6 +3315,12 @@ select option { background: #0d2137; color: #f0f4ff; }
           if (!confirm('Supprimer cette board ?')) return;
           try {
             if (dataManager.supabase) {
+              // Détacher les sessions liées à cette board
+              await dataManager.supabase
+                .from('sessions')
+                .update({ board_id: null })
+                .eq('board_id', boardId);
+              // Puis supprimer la board
               const { error } = await dataManager.supabase
                 .from('boards')
                 .delete()
@@ -3310,8 +3332,7 @@ select option { background: #0d2137; color: #f0f4ff; }
               localStorage.setItem('surfai_boards', JSON.stringify(boards.filter(b => b.id != boardId)));
             }
             dataManager.cache.boards = null;
-            await loadUserBoards();
-            loadBoardsTab();
+            await loadBoardsTab();
           } catch(e) {
             showMessage('error', 'Erreur suppression : ' + e.message);
           }
@@ -3369,41 +3390,38 @@ select option { background: #0d2137; color: #f0f4ff; }
           const b = (userData.boards || []).find(x => x.id == boardId);
           if (!b) return;
           let overlay = document.getElementById('board-share-overlay');
-          if (!overlay) {
-            overlay = document.createElement('div');
-            overlay.id = 'board-share-overlay';
-            overlay.style.cssText = 'position:fixed;inset:0;z-index:1002;background:rgba(10,14,39,0.97);display:flex;flex-direction:column;padding:20px;overflow-y:auto';
-            document.body.appendChild(overlay);
-          }
-          overlay.style.display = 'flex';
+          if (overlay) overlay.remove();
+          overlay = document.createElement('div');
+          overlay.id = 'board-share-overlay';
+          overlay.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;z-index:999;background:#0a0e27;display:flex;flex-direction:column;padding:20px;overflow-y:auto';
+          document.querySelector('.app').appendChild(overlay);
           overlay.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
               <div style="color:#f0f4ff;font-size:1rem;font-weight:600">Partager "${b.nickname || b.name}"</div>
-              <div onclick="document.getElementById('board-share-overlay').style.display='none'" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:1.2rem;padding:4px 8px">✕</div>
+              <div onclick="document.getElementById('board-share-overlay')?.remove()" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:1.2rem;padding:4px 8px">✕</div>
             </div>
-            <div onclick="shareBoardFlex(${boardId})" style="padding:16px;margin-bottom:10px;background:rgba(77,255,145,0.06);border:1px solid rgba(77,255,145,0.2);border-radius:12px;cursor:pointer">
+            <div onclick="shareBoardFlex('${boardId}')" style="padding:16px;margin-bottom:10px;background:rgba(77,255,145,0.06);border:1px solid rgba(77,255,145,0.2);border-radius:12px;cursor:pointer">
               <div style="font-size:1.2rem;margin-bottom:4px">📸</div>
               <div style="color:#4dff91;font-size:0.9rem;font-weight:600">Montrer ma board</div>
               <div style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin-top:2px">Partage lifestyle — montre ton quiver</div>
             </div>
-            <div onclick="shareBoardSellForm(${boardId})" style="padding:16px;margin-bottom:10px;background:rgba(237,137,54,0.06);border:1px solid rgba(237,137,54,0.2);border-radius:12px;cursor:pointer">
+            <div onclick="shareBoardSellForm('${boardId}')" style="padding:16px;margin-bottom:10px;background:rgba(237,137,54,0.06);border:1px solid rgba(237,137,54,0.2);border-radius:12px;cursor:pointer">
               <div style="font-size:1.2rem;margin-bottom:4px">💰</div>
               <div style="color:#ed8936;font-size:0.9rem;font-weight:600">Vendre ma board</div>
               <div style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin-top:2px">Crée une annonce pour Instagram</div>
             </div>
-            <div onclick="shareBoardRepairForm(${boardId})" style="padding:16px;margin-bottom:10px;background:rgba(0,207,255,0.06);border:1px solid rgba(0,207,255,0.2);border-radius:12px;cursor:pointer">
+            <div onclick="shareBoardRepairForm('${boardId}')" style="padding:16px;margin-bottom:10px;background:rgba(0,207,255,0.06);border:1px solid rgba(0,207,255,0.2);border-radius:12px;cursor:pointer">
               <div style="font-size:1.2rem;margin-bottom:4px">🔧</div>
               <div style="color:#00cfff;font-size:0.9rem;font-weight:600">Réparer ma board</div>
               <div style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin-top:2px">Trouve un réparateur via ton réseau</div>
             </div>`;
         }
 
-        async function shareBoardFlex(boardId) {
-          const b = (userData.boards || []).find(x => x.id == boardId);
-          if (!b) return;
-          const stats = getBoardSessionStats(boardId);
-          const sweetSpot = formatSweetSpot(b);
-          await generateBoardCard(b, 'flex', { stats, sweetSpot });
+        function shareBoardFlex(boardId) {
+          _boardShareMode = 'flex';
+          _boardShareId = boardId;
+          _boardShareExtras = {};
+          showBoardPhotoPickStep();
         }
 
         function shareBoardSellForm(boardId) {
@@ -3412,23 +3430,23 @@ select option { background: #0d2137; color: #f0f4ff; }
           overlay.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
               <div style="color:#ed8936;font-size:1rem;font-weight:600">Vendre ma board</div>
-              <div onclick="openBoardShareOverlay(${boardId})" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:0.8rem;padding:4px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:6px">← Retour</div>
+              <div onclick="openBoardShareOverlay('${boardId}')" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:0.8rem;padding:4px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:6px">← Retour</div>
             </div>
             <div class="form-group"><label>Prix (€)</label><input type="number" id="sell-price" placeholder="350"></div>
             <div class="form-group"><label>Localisation</label><input type="text" id="sell-location" placeholder="Biarritz"></div>
             <div class="form-group"><label>Message (optionnel)</label><textarea id="sell-message" rows="2" placeholder="Vendue car j'ai changé de niveau"></textarea></div>
-            <button class="btn-primary" onclick="shareBoardSell(${boardId})" style="background:#ed8936">Générer la card Instagram</button>`;
+            <button class="btn-primary" onclick="prepareBoardSell('${boardId}')" style="background:#ed8936">Suivant — choisir une photo</button>`;
         }
 
-        async function shareBoardSell(boardId) {
-          const b = (userData.boards || []).find(x => x.id == boardId);
-          if (!b) return;
-          const extras = {
+        function prepareBoardSell(boardId) {
+          _boardShareMode = 'sell';
+          _boardShareId = boardId;
+          _boardShareExtras = {
             price: document.getElementById('sell-price')?.value || '',
             location: document.getElementById('sell-location')?.value || '',
             message: document.getElementById('sell-message')?.value || ''
           };
-          await generateBoardCard(b, 'sell', extras);
+          showBoardPhotoPickStep();
         }
 
         function shareBoardRepairForm(boardId) {
@@ -3437,7 +3455,7 @@ select option { background: #0d2137; color: #f0f4ff; }
           overlay.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
               <div style="color:#00cfff;font-size:1rem;font-weight:600">Réparer ma board</div>
-              <div onclick="openBoardShareOverlay(${boardId})" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:0.8rem;padding:4px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:6px">← Retour</div>
+              <div onclick="openBoardShareOverlay('${boardId}')" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:0.8rem;padding:4px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:6px">← Retour</div>
             </div>
             <div class="form-group"><label>Description du problème</label><textarea id="repair-desc" rows="3" placeholder="Ding sur le nose, fissure rail droit..."></textarea></div>
             <div class="form-group"><label>Localisation</label><input type="text" id="repair-location" placeholder="Biarritz"></div>
@@ -3449,20 +3467,208 @@ select option { background: #0d2137; color: #f0f4ff; }
                 <div onclick="selectChip(this,'repair-urgency')" data-value="urgent" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)">Urgent</div>
               </div>
             </div>
-            <button class="btn-primary" onclick="shareBoardRepair(${boardId})" style="background:#00cfff;color:#0a0e27">Générer la card Instagram</button>`;
+            <button class="btn-primary" onclick="prepareBoardRepair('${boardId}')" style="background:#00cfff;color:#0a0e27">Suivant — choisir une photo</button>`;
         }
 
-        async function shareBoardRepair(boardId) {
-          const b = (userData.boards || []).find(x => x.id == boardId);
-          if (!b) return;
-          const extras = {
+        function prepareBoardRepair(boardId) {
+          _boardShareMode = 'repair';
+          _boardShareId = boardId;
+          _boardShareExtras = {
             description: document.getElementById('repair-desc')?.value || '',
             location: document.getElementById('repair-location')?.value || '',
             urgency: getSelectedChip('repair-urgency')
           };
-          await generateBoardCard(b, 'repair', extras);
+          showBoardPhotoPickStep();
         }
 
+        let _boardShareMode = '';
+        let _boardShareId = null;
+        let _boardShareExtras = {};
+
+        function showBoardPhotoPickStep() {
+          const overlay = document.getElementById('board-share-overlay');
+          if (!overlay) return;
+          const b = (userData.boards || []).find(x => x.id == _boardShareId);
+          const boardName = b?.nickname || b?.name || 'Board';
+          overlay.innerHTML = `
+            <div class="share-card" style="text-align:center;padding:30px 16px">
+              <div class="share-check">📸</div>
+              <h2 style="color:#f0f4ff;font-size:1rem;margin:12px 0">${boardName}</h2>
+              <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-bottom:20px">Choisis une photo pour ta story Instagram</p>
+              <button class="share-btn-primary" id="board-share-pick-photo">Choisir une photo</button>
+              <input type="file" accept="image/*" id="board-share-file-input" style="display:none">
+              <button class="share-btn-skip" onclick="document.getElementById('board-share-overlay')?.remove()">Annuler</button>
+            </div>`;
+
+          const fileInput = document.getElementById('board-share-file-input');
+          document.getElementById('board-share-pick-photo').addEventListener('click', () => fileInput.click());
+          fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            await generateBoardShareCard(file);
+          });
+        }
+
+        async function generateBoardShareCard(photoFile) {
+          const overlay = document.getElementById('board-share-overlay');
+          if (!overlay) return;
+          overlay.innerHTML = '<div style="text-align:center;padding:40px"><p style="color:rgba(255,255,255,0.6)">Generation en cours...</p></div>';
+
+          const b = (userData.boards || []).find(x => x.id == _boardShareId);
+          if (!b) return;
+
+          const mode = _boardShareMode;
+          const extras = _boardShareExtras;
+          const stats = getBoardSessionStats(b.id);
+          const sweetSpot = formatSweetSpot(b);
+
+          // Construire sessionData compatible avec generateShareCard
+          const dims = [b.length_ft || b.size, b.type ? b.type.charAt(0).toUpperCase() + b.type.slice(1) : ''].filter(Boolean).join(' · ');
+          const shaperLine = [b.shaper, b.brand].filter(Boolean).join(' — ');
+
+          let title = b.nickname || b.name;
+          let subtitle = dims;
+          let accentLine = '';
+          let detailLine = '';
+          let bottomLine = 'SurfAI';
+
+          if (mode === 'flex') {
+            accentLine = sweetSpot ? '🌊 ' + sweetSpot : '';
+            detailLine = stats.count ? '📊 ' + stats.count + ' sessions' : '';
+          } else if (mode === 'sell') {
+            title = 'À VENDRE · ' + title;
+            accentLine = extras.price ? extras.price + ' €' : '';
+            detailLine = [extras.location ? '📍 ' + extras.location : '', b.condition ? 'État : ' + b.condition : ''].filter(Boolean).join(' · ');
+            bottomLine = extras.message ? '"' + extras.message + '"' : 'SurfAI';
+          } else if (mode === 'repair') {
+            title = '🔧 ' + title;
+            accentLine = extras.description ? '"' + extras.description + '"' : '';
+            detailLine = extras.location ? '📍 ' + extras.location : '';
+            if (extras.urgency && extras.urgency !== 'tranquille') bottomLine = '⚡ ' + extras.urgency.toUpperCase();
+          }
+
+          // Réutiliser generateShareCard avec un sessionData mappé
+          const boardSessionData = {
+            spotName: title,
+            spotCity: subtitle,
+            date: shaperLine ? '🔨 ' + shaperLine : '',
+            rating: null,
+            nickname: '',
+            meteo: accentLine ? { custom: true, line: accentLine } : null
+          };
+
+          try {
+            const canvas = await generateBoardShareCanvas(photoFile, boardSessionData, detailLine, bottomLine, mode);
+            const previewUrl = canvas.toDataURL('image/png');
+
+            overlay.innerHTML = `
+              <div class="share-card" style="padding:12px">
+                <img src="${previewUrl}" style="width:100%;border-radius:12px;margin-bottom:12px" alt="Preview">
+                <div class="share-btn-row">
+                  <button class="share-btn-save" id="board-save-btn">Enregistrer</button>
+                  <button class="share-btn-share" id="board-share-btn">Partager</button>
+                </div>
+                <button class="share-btn-skip" onclick="document.getElementById('board-share-overlay')?.remove()">Fermer</button>
+              </div>`;
+
+            document.getElementById('board-save-btn').addEventListener('click', () => {
+              canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = 'surfai-board.png'; a.click();
+                URL.revokeObjectURL(url);
+              }, 'image/png');
+            });
+
+            document.getElementById('board-share-btn').addEventListener('click', () => {
+              shareCard(canvas, { spotName: b.nickname || b.name });
+            });
+          } catch(err) {
+            console.error('Board share card error:', err);
+            overlay.innerHTML = '<div style="text-align:center;padding:40px"><p style="color:#ff6b6b">Erreur generation</p><button class="share-btn-skip" onclick="document.getElementById(\'board-share-overlay\')?.remove()">Fermer</button></div>';
+          }
+        }
+
+        async function generateBoardShareCanvas(photoFile, data, detailLine, bottomLine, mode) {
+          const canvas = document.createElement('canvas');
+          canvas.width = 1080;
+          canvas.height = 1350;
+          const ctx = canvas.getContext('2d');
+
+          // Photo en fond
+          const img = await loadImage(photoFile);
+          drawImageCover(ctx, img, 0, 0, 1080, 1350);
+
+          // Gradient overlay
+          const grad = ctx.createLinearGradient(0, 500, 0, 1350);
+          grad.addColorStop(0, 'rgba(10,14,39,0)');
+          grad.addColorStop(0.4, 'rgba(10,14,39,0.6)');
+          grad.addColorStop(1, 'rgba(10,14,39,0.92)');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 500, 1080, 850);
+
+          ctx.textAlign = 'center';
+          const cx = 540;
+          let curY = 1290;
+
+          // Accent couleur selon mode
+          const accentColors = { flex: '#4dff91', sell: '#ed8936', repair: '#00cfff' };
+          const accent = accentColors[mode] || '#4dff91';
+
+          // Bottom line (SurfAI ou message)
+          ctx.font = '22px -apple-system, BlinkMacSystemFont, sans-serif';
+          ctx.fillStyle = 'rgba(255,255,255,0.5)';
+          ctx.fillText(bottomLine, cx, curY);
+          curY -= 50;
+
+          // Detail line
+          if (detailLine) {
+            ctx.font = '24px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillStyle = '#f0f4ff';
+            ctx.fillText(detailLine, cx, curY);
+            curY -= 50;
+          }
+
+          // Accent line (conditions / prix / description)
+          if (data.meteo?.line) {
+            ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillStyle = accent;
+            ctx.fillText(data.meteo.line, cx, curY);
+            curY -= 55;
+          }
+
+          // Date/shaper
+          if (data.date) {
+            ctx.font = '28px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.fillText(data.date, cx, curY);
+            curY -= 45;
+          }
+
+          // Subtitle (dims)
+          if (data.spotCity) {
+            ctx.font = '28px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.fillText(data.spotCity, cx, curY);
+            curY -= 45;
+          }
+
+          // Title (board name)
+          ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, sans-serif';
+          ctx.fillStyle = '#f0f4ff';
+          ctx.fillText(data.spotName, cx, curY);
+          curY -= 55;
+
+          // Logo SurfAI en haut
+          ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, sans-serif';
+          ctx.fillStyle = 'rgba(255,255,255,0.3)';
+          ctx.fillText('SurfAI', cx, 40);
+
+          return canvas;
+        }
+
+        /* --- anciennes fonctions de partage board supprimées --- */
+        function _deprecated_generateBoardCard(board, mode, extras) { /* removed */ }
         async function generateBoardCard(board, mode, extras) {
           const canvas = document.createElement('canvas');
           canvas.width = 1080;
@@ -3677,7 +3883,7 @@ select option { background: #0d2137; color: #f0f4ff; }
           overlay.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
               <div style="color:#f0f4ff;font-size:1rem;font-weight:600">Aperçu Instagram Story</div>
-              <div onclick="document.getElementById('board-share-overlay').style.display='none'" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:1.2rem;padding:4px 8px">✕</div>
+              <div onclick="document.getElementById('board-share-overlay')?.remove()" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:1.2rem;padding:4px 8px">✕</div>
             </div>
             <div style="flex:1;overflow-y:auto;display:flex;justify-content:center">
               <div id="card-preview-container" style="width:100%;max-width:300px"></div>
@@ -3748,7 +3954,7 @@ select option { background: #0d2137; color: #f0f4ff; }
             nickname: name,
             size: document.getElementById(`edit-board-size-${boardId}`)?.value || null,
             length_ft: document.getElementById(`edit-board-size-${boardId}`)?.value || null,
-            type: document.getElementById(`edit-board-type-${boardId}`)?.value || null,
+            board_type: document.getElementById(`edit-board-type-${boardId}`)?.value || null,
             shaper: document.getElementById(`edit-board-shaper-${boardId}`)?.value || null,
             brand: document.getElementById(`edit-board-brand-${boardId}`)?.value || null,
             volume_l: document.getElementById(`edit-board-volume-${boardId}`)?.value ? parseFloat(document.getElementById(`edit-board-volume-${boardId}`).value) : null,
@@ -3766,12 +3972,15 @@ select option { background: #0d2137; color: #f0f4ff; }
           if (photoUrl) updates.photo_url = photoUrl;
 
           try {
+            console.log('saveBoard updates:', updates);
             if (dataManager.supabase) {
-              const { error } = await dataManager.supabase
+              const { data, error } = await dataManager.supabase
                 .from('boards')
                 .update(updates)
                 .eq('id', boardId)
-                .eq('user_id', dataManager.currentUserId);
+                .eq('user_id', dataManager.currentUserId)
+                .select();
+              console.log('saveBoard result:', { data, error });
               if (error) throw new Error(error.message);
             } else {
               const boards = JSON.parse(localStorage.getItem('surfai_boards') || '[]');
@@ -3780,9 +3989,9 @@ select option { background: #0d2137; color: #f0f4ff; }
               localStorage.setItem('surfai_boards', JSON.stringify(boards));
             }
             dataManager.cache.boards = null;
-            await loadUserBoards();
-            loadBoardsTab();
+            await loadBoardsTab();
           } catch (e) {
+            console.error('saveBoard error:', e);
             showMessage('error', 'Erreur sauvegarde : ' + e.message);
           }
         }
