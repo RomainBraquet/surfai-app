@@ -1653,6 +1653,8 @@ select option { background: #0d2137; color: #f0f4ff; }
               const date = new Date(w.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
               const board = w.boardSuggestion?.board?.name ? '🏄 ' + w.boardSuggestion.board.name : '';
               if (isBig) {
+                const whyHtml = (w.whyGood || []).map(r => `<div style="color:#4dff91;font-size:0.75rem;margin-top:3px">✅ ${r}</div>`).join('')
+                  + (w.whyNotPerfect || []).map(r => `<div style="color:#ed8936;font-size:0.75rem;margin-top:3px">⚠️ ${r}</div>`).join('');
                 return `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:10px">
                   <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
                     <div style="background:${scoreColor};color:#0a0e27;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;flex-shrink:0">${w.score}</div>
@@ -1661,8 +1663,9 @@ select option { background: #0d2137; color: #f0f4ff; }
                       <div style="color:rgba(255,255,255,0.5);font-size:0.85rem">${date} · ${w.timeWindow || ''}</div>
                     </div>
                   </div>
-                  <div style="color:rgba(255,255,255,0.5);font-size:0.8rem">🌊 ${(w.conditions?.waveHeight || 0).toFixed(1)}m · 💨 ${Math.round(w.conditions?.windSpeed || 0)}km/h ${w.conditions?.windDirection || ''} ${board}</div>
-                  ${w.narrative ? '<div style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:6px;font-style:italic">' + w.narrative + '</div>' : ''}
+                  <div style="color:rgba(255,255,255,0.5);font-size:0.8rem">🌊 ${(w.conditions?.waveHeight || 0).toFixed(1)}m · 💨 ${Math.round(w.conditions?.windSpeed || 0)}km/h · 🧭 ${typeof w.conditions?.windDirection === 'number' ? ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(w.conditions.windDirection / 22.5) % 16] : (w.conditions?.windDirection || '')} ${board}</div>
+                  ${whyHtml}
+                  ${w.narrative ? '<div style="color:rgba(255,255,255,0.35);font-size:0.72rem;margin-top:6px;font-style:italic">' + w.narrative + '</div>' : ''}
                 </div>`;
               }
               return `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px;flex:1;min-width:0">
