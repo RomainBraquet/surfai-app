@@ -85,22 +85,30 @@ function scorePeriod(period) {
 
 // ─── Facteur Historique (0-10) ──────────────────────────
 function scoreHistory(slot, pastSessions) {
-  const goodSessions = pastSessions.filter(s => s.rating >= 4 && s.meteo);
-  if (goodSessions.length === 0) return 5; // neutre si pas de données
+  // Inclure TOUTES les sessions notées (pas seulement 4+) → apprendre aussi des mauvaises
+  const ratedSessions = pastSessions.filter(s => s.rating >= 1 && s.meteo);
+  if (ratedSessions.length < 3) return 5; // neutre si pas assez de données
 
-  // Distance euclidienne normalisée sur 3 dimensions
   function similarity(s) {
     const dWave = Math.abs((s.meteo.waveHeight || 0) - (slot.waveHeight || 0)) / 3;
     const dWind = Math.abs((s.meteo.windSpeed || 0) - (slot.windSpeed || 0)) / 40;
     const dPeriod = Math.abs((s.meteo.wavePeriod || 0) - (slot.wavePeriod || 0)) / 15;
-    return 1 / (1 + Math.sqrt(dWave ** 2 + dWind ** 2 + dPeriod ** 2));
+
+    // Décroissance temporelle : sessions récentes comptent plus (demi-vie 6 mois)
+    const ageInDays = (Date.now() - new Date(s.date).getTime()) / 86400000;
+    const recencyWeight = Math.exp(-ageInDays / 180);
+
+    // Bonus si même spot : 30% plus pertinent
+    const spotBonus = s.spot_id === slot.spotId ? 1.3 : 1.0;
+
+    return spotBonus * recencyWeight / (1 + Math.sqrt(dWave ** 2 + dWind ** 2 + dPeriod ** 2));
   }
 
-  // Top 5 sessions les plus similaires
-  const ranked = goodSessions
+  // Top 7 sessions les plus similaires (plus stable que 5)
+  const ranked = ratedSessions
     .map(s => ({ session: s, sim: similarity(s) }))
     .sort((a, b) => b.sim - a.sim)
-    .slice(0, 5);
+    .slice(0, 7);
 
   const weightedRating = ranked.reduce((sum, { session, sim }) => sum + session.rating * sim, 0);
   const totalSim = ranked.reduce((sum, { sim }) => sum + sim, 0);
@@ -160,36 +168,93 @@ function tideBonus(tidePhase, idealTide, spot) {
 }
 
 // ─── Board Suggestion ───────────────────────────────────
+// Attention : beaucoup de surfeurs n'ont qu'une board et surfent tout avec.
+// La suggestion doit être utile, pas culpabilisante.
 function suggestBoard(slot, pastSessions, boards) {
   if (!boards?.length) return null;
-  const goodSessions = pastSessions.filter(s => s.rating >= 4 && s.meteo && s.board_id);
-  if (goodSessions.length < 2) return null; // pas assez de données
+  const waveH = Math.max(slot.waveHeight || 0, slot.swellHeight || 0);
 
-  function similarity(s) {
-    const dWave = Math.abs((s.meteo.waveHeight || 0) - (slot.waveHeight || 0)) / 3;
-    const dWind = Math.abs((s.meteo.windSpeed || 0) - (slot.windSpeed || 0)) / 40;
-    return 1 / (1 + Math.sqrt(dWave ** 2 + dWind ** 2));
+  // Cas 1 : Une seule board → pas besoin de suggérer, c'est évident
+  if (boards.length === 1) {
+    return {
+      board: boards[0],
+      confidence: 1.0,
+      method: 'only_board',
+      reason: 'Ta fidèle compagne',
+      basedOnSessions: 0,
+    };
   }
 
-  const similar = goodSessions
-    .map(s => ({ board_id: s.board_id, sim: similarity(s) }))
-    .sort((a, b) => b.sim - a.sim)
-    .slice(0, 5);
+  // Cas 2 : Plusieurs boards — regarder d'abord l'historique réel
+  // (ce que le surfeur FAIT est plus important que ce qu'il a déclaré)
+  const goodSessions = pastSessions.filter(s => s.rating >= 4 && s.meteo && s.board_id);
+  if (goodSessions.length >= 3) {
+    function similarity(s) {
+      const dWave = Math.abs((s.meteo.waveHeight || 0) - waveH) / 3;
+      const dWind = Math.abs((s.meteo.windSpeed || 0) - (slot.windSpeed || 0)) / 40;
+      // Décroissance temporelle aussi ici
+      const ageInDays = (Date.now() - new Date(s.date).getTime()) / 86400000;
+      const recency = Math.exp(-ageInDays / 180);
+      return recency / (1 + Math.sqrt(dWave ** 2 + dWind ** 2));
+    }
 
-  // Board la plus fréquente parmi les sessions similaires
-  const boardCounts = {};
-  similar.forEach(({ board_id }) => {
-    boardCounts[board_id] = (boardCounts[board_id] || 0) + 1;
-  });
-  const topBoardId = Object.entries(boardCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
-  const board = boards.find(b => b.id === topBoardId);
-  if (!board) return null;
+    const similar = goodSessions
+      .map(s => ({ board_id: s.board_id, sim: similarity(s) }))
+      .sort((a, b) => b.sim - a.sim)
+      .slice(0, 7);
 
-  return {
-    board,
-    confidence: Math.round((boardCounts[topBoardId] / similar.length) * 100) / 100,
-    basedOnSessions: similar.length,
-  };
+    const boardCounts = {};
+    similar.forEach(({ board_id }) => {
+      boardCounts[board_id] = (boardCounts[board_id] || 0) + 1;
+    });
+    const topBoardId = Object.entries(boardCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+    const board = boards.find(b => String(b.id) === String(topBoardId));
+
+    if (board) {
+      // Vérifier si le surfeur utilise toujours la même board (mono-board de fait)
+      const uniqueBoards = new Set(goodSessions.map(s => s.board_id));
+      if (uniqueBoards.size === 1) {
+        return {
+          board,
+          confidence: 1.0,
+          method: 'always_same',
+          reason: 'Ta board de toutes les sessions',
+          basedOnSessions: goodSessions.length,
+        };
+      }
+
+      return {
+        board,
+        confidence: Math.round((boardCounts[topBoardId] / similar.length) * 100) / 100,
+        method: 'history',
+        reason: 'Celle que tu prends dans ces conditions',
+        basedOnSessions: similar.length,
+      };
+    }
+  }
+
+  // Cas 3 : Pas assez de sessions — utiliser le sweet spot déclaré
+  const matchingBoards = boards
+    .filter(b => b.sweet_spot_wave_min && b.sweet_spot_wave_max)
+    .filter(b => waveH >= b.sweet_spot_wave_min && waveH <= b.sweet_spot_wave_max)
+    .sort((a, b) => {
+      const centerA = (a.sweet_spot_wave_min + a.sweet_spot_wave_max) / 2;
+      const centerB = (b.sweet_spot_wave_min + b.sweet_spot_wave_max) / 2;
+      return Math.abs(centerA - waveH) - Math.abs(centerB - waveH);
+    });
+
+  if (matchingBoards.length > 0) {
+    return {
+      board: matchingBoards[0],
+      confidence: 0.7,
+      method: 'sweet_spot',
+      reason: `Dans son sweet spot (${waveH.toFixed(1)}m)`,
+      basedOnSessions: 0,
+    };
+  }
+
+  // Cas 4 : Aucun match — ne rien suggérer plutôt que suggérer n'importe quoi
+  return null;
 }
 
 // ─── Utilitaires ────────────────────────────────────────
