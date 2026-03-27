@@ -329,9 +329,54 @@ function buildWhyGood(slot, windScore, wavesScore, periodScore, tideAdj, spotSco
   return { whyGood: reasons, whyNotPerfect: caveats };
 }
 
+// ─── Bonus Communautaire ─────────────────────────────────
+// S'active automatiquement quand le profil communautaire du spot a assez de data
+function scoreCommunity(slot, communityProfile) {
+  if (!communityProfile || communityProfile.confidence < 0.3) return { bonus: 0, active: false };
+
+  const waveH = Math.max(slot.waveHeight || 0, slot.swellHeight || 0);
+  let bonus = 0;
+
+  // Les conditions matchent le sweet spot communautaire ?
+  if (communityProfile.wave_sweet_min && communityProfile.wave_sweet_max) {
+    if (waveH >= communityProfile.wave_sweet_min && waveH <= communityProfile.wave_sweet_max) {
+      bonus += 0.8 * communityProfile.confidence;
+    } else if (waveH < communityProfile.wave_sweet_min * 0.7 || waveH > communityProfile.wave_sweet_max * 1.3) {
+      bonus -= 0.5 * communityProfile.confidence;
+    }
+  }
+
+  // Le vent est dans les bonnes directions communautaires ?
+  if (communityProfile.best_wind_dirs?.length > 0 && slot.windDirection != null) {
+    const dir = degreesToCardinal(slot.windDirection);
+    if (communityProfile.best_wind_dirs.includes(dir)) {
+      bonus += 0.4 * communityProfile.confidence;
+    }
+  }
+
+  // La marée communautaire
+  if (communityProfile.tide_good?.length > 0 && slot.tidePhase) {
+    const phaseMap = { low: 'low', high: 'high', rising: 'mid', falling: 'mid' };
+    const category = phaseMap[slot.tidePhase];
+    if (communityProfile.tide_good.includes(slot.tidePhase) || communityProfile.tide_good.includes(category)) {
+      bonus += 0.3 * communityProfile.confidence;
+    }
+    if (communityProfile.tide_bad?.includes(slot.tidePhase)) {
+      bonus -= 0.5 * communityProfile.confidence;
+    }
+  }
+
+  return {
+    bonus: Math.round(Math.min(1.5, Math.max(-1.0, bonus)) * 10) / 10,
+    active: true,
+    confidence: communityProfile.confidence,
+    sessionCount: communityProfile.session_count,
+  };
+}
+
 // ─── Fonction principale ─────────────────────────────────
 function scoreSlot(slot, context) {
-  const { profile, spot, pastSessions = [], boards = [] } = context;
+  const { profile, spot, pastSessions = [], boards = [], communityProfile = null } = context;
   const sessionsWithMeteo = pastSessions.filter(s => s.meteo).length;
   const weights = computeWeights(sessionsWithMeteo);
 
@@ -342,13 +387,16 @@ function scoreSlot(slot, context) {
   const spotScore    = scoreSpot(slot, spot);
   const tideAdj      = tideBonus(slot.tidePhase, spot.ideal_tide, spot);
 
+  const community = scoreCommunity(slot, communityProfile);
+
   const rawScore =
     windScore    * weights.wind   +
     wavesScore   * weights.waves  +
     periodScore  * weights.period +
     historyScore * weights.history +
     spotScore    * weights.spot   +
-    tideAdj;
+    tideAdj +
+    community.bonus;
 
   const score = Math.round(Math.min(10, Math.max(0, rawScore)) * 10) / 10;
 
@@ -376,9 +424,14 @@ function scoreSlot(slot, context) {
       history: { score: Math.round(historyScore * 10) / 10, weight: weights.history, basedOnSessions: sessionsWithMeteo },
       spot:    { score: Math.round(spotScore * 10) / 10,     weight: weights.spot },
       tide:    { bonus: tideAdj },
+      community: community,
     },
-    whyGood: why.whyGood,
-    whyNotPerfect: why.whyNotPerfect,
+    whyGood: community.active && community.bonus > 0
+      ? [...why.whyGood, `👥 Confirmé par ${community.sessionCount} sessions terrain (confiance ${Math.round(community.confidence * 100)}%)`]
+      : why.whyGood,
+    whyNotPerfect: community.active && community.bonus < 0
+      ? [...why.whyNotPerfect, `👥 Retours terrain mitigés sur ce spot dans ces conditions`]
+      : why.whyNotPerfect,
     boardSuggestion,
     similarSession,
     calibrationLevel: Math.round(weights.history * 100) / 100,
