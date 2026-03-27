@@ -1621,6 +1621,116 @@ select option { background: #0d2137; color: #f0f4ff; }
           }
         }
 
+        function showSpotPredictionDetail(resultIdx) {
+          const result = window._predictionResults?.[resultIdx];
+          if (!result) return;
+          const container = document.getElementById('accueil-windows');
+          if (!container) return;
+
+          const spot = result.spot;
+          const bestWindow = result.windows?.[0];
+          const hourly = result.hourlyScores || [];
+
+          // Grouper par jour
+          const days = {};
+          hourly.forEach(h => {
+            if (!days[h.date]) days[h.date] = [];
+            days[h.date].push(h);
+          });
+
+          function scoreColor(s) { return s >= 8 ? '#4dff91' : s >= 6 ? '#00cfff' : s >= 4 ? '#ed8936' : 'rgba(255,255,255,0.2)'; }
+          function dirToCard(d) {
+            if (typeof d !== 'number') return d || '';
+            return ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(d / 22.5) % 16];
+          }
+
+          let daysHtml = Object.entries(days).map(([date, hours]) => {
+            const dayLabel = new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
+
+            // Détecter les heures de pleine haute / pleine basse
+            const tideExtremes = [];
+            // Méthode 1 : transitions entre phases
+            hours.forEach((h, i) => {
+              if (i === 0) return;
+              const prev = hours[i - 1]?.conditions?.tidePhase;
+              const curr = h.conditions?.tidePhase;
+              if ((prev === 'rising' && (curr === 'falling' || curr === 'high')) || curr === 'high') {
+                if (!tideExtremes.find(t => t.type === 'haute' && Math.abs(t.hour - h.hour) < 3)) {
+                  tideExtremes.push({ hour: h.hour, type: 'haute' });
+                }
+              }
+              if ((prev === 'falling' && (curr === 'rising' || curr === 'low')) || curr === 'low') {
+                if (!tideExtremes.find(t => t.type === 'basse' && Math.abs(t.hour - h.hour) < 3)) {
+                  tideExtremes.push({ hour: h.hour, type: 'basse' });
+                }
+              }
+            });
+            // Méthode 2 (fallback aujourd'hui) : estimer depuis la première phase connue
+            if (tideExtremes.length === 0 && hours.length >= 2) {
+              const firstPhase = hours.find(h => h.conditions?.tidePhase && h.conditions.tidePhase !== 'unknown');
+              if (firstPhase) {
+                const fp = firstPhase.conditions.tidePhase;
+                const fh = firstPhase.hour;
+                if (fp === 'rising') tideExtremes.push({ hour: Math.min(21, fh + 3), type: 'haute' });
+                if (fp === 'falling') tideExtremes.push({ hour: Math.min(21, fh + 3), type: 'basse' });
+                if (fp === 'high') tideExtremes.push({ hour: fh, type: 'haute' });
+                if (fp === 'low') tideExtremes.push({ hour: fh, type: 'basse' });
+              }
+            }
+            const tidesSummary = tideExtremes.length
+              ? tideExtremes.sort((a,b) => a.hour - b.hour).map(t => `${t.type === 'haute' ? '⬆' : '⬇'} ${t.type} ~${t.hour}h`).join(' · ')
+              : '';
+
+            const hoursHtml = hours.map(h => {
+              const sc = scoreColor(h.score);
+              const isBest = bestWindow && h.hour === parseInt(bestWindow.peakHour) && h.date === bestWindow.date;
+              const border = isBest ? `border:2px solid ${sc}` : 'border:1px solid rgba(255,255,255,0.06)';
+              const tideLabels = {low:'Basse',high:'Haute',rising:'Montante',falling:'Descendante'};
+              const tideIcons = {low:'↓',high:'↑',rising:'↗',falling:'↘'};
+              const tp = h.conditions?.tidePhase || '';
+              const tideText = tp ? `🌙 ${tideIcons[tp] || ''} ${tideLabels[tp] || tp}` : '';
+              return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;${border};margin-bottom:3px;background:rgba(255,255,255,0.02)">
+                <div style="width:32px;text-align:center;color:rgba(255,255,255,0.5);font-size:0.75rem;font-weight:600;flex-shrink:0">${h.hour}h</div>
+                <div style="background:${sc};color:#0a0e27;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.72rem;flex-shrink:0">${h.score}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="color:rgba(255,255,255,0.5);font-size:0.72rem">🌊 ${(h.conditions?.waveHeight || 0).toFixed(1)}m · 💨 ${Math.round(h.conditions?.windSpeed || 0)}km/h ${dirToCard(h.conditions?.windDirection)}${h.conditions?.wavePeriod ? ' · ' + Math.round(h.conditions.wavePeriod) + 's' : ''}</div>
+                  ${tideText ? `<div style="color:rgba(255,255,255,0.35);font-size:0.65rem">${tideText}</div>` : ''}
+                </div>
+                ${isBest ? '<div style="color:#4dff91;font-size:0.65rem;font-weight:600;flex-shrink:0">BEST</div>' : ''}
+              </div>`;
+            }).join('');
+            return `<div style="margin-bottom:12px">
+              <div style="color:rgba(255,255,255,0.4);font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">${dayLabel}</div>
+              ${tidesSummary ? `<div style="color:rgba(255,255,255,0.3);font-size:0.68rem;margin-bottom:6px">🌙 ${tidesSummary}</div>` : ''}
+              ${hoursHtml}
+            </div>`;
+          }).join('');
+
+          // whyGood du meilleur créneau
+          const whyHtml = bestWindow
+            ? (bestWindow.whyGood || []).map(r => `<div style="color:#4dff91;font-size:0.75rem;margin-top:3px">✅ ${r}</div>`).join('')
+              + (bestWindow.whyNotPerfect || []).map(r => `<div style="color:#ed8936;font-size:0.75rem;margin-top:3px">⚠️ ${r}</div>`).join('')
+            : '';
+          const boardHtml = bestWindow?.boardSuggestion?.board ? `<div style="color:#00cfff;font-size:0.75rem;margin-top:6px;padding:6px 10px;background:rgba(0,207,255,0.08);border:1px solid rgba(0,207,255,0.15);border-radius:6px">🏄 Prends ta <strong>${bestWindow.boardSuggestion.board.nickname || bestWindow.boardSuggestion.board.name}</strong> — ${bestWindow.boardSuggestion.reason || ''}</div>` : '';
+
+          container.innerHTML = `
+            <div style="margin-bottom:12px">
+              <div onclick="loadAccueilWindows('${dataManager.currentUserId}')" style="display:inline-block;color:rgba(255,255,255,0.5);font-size:0.8rem;cursor:pointer;margin-bottom:10px;padding:6px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:6px">← Tous les spots</div>
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+                <div style="background:${scoreColor(bestWindow?.score || 0)};color:#0a0e27;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;flex-shrink:0">${bestWindow?.score || '?'}</div>
+                <div>
+                  <div style="color:#f0f4ff;font-size:1.1rem;font-weight:700">${spot.name}</div>
+                  <div style="color:rgba(255,255,255,0.5);font-size:0.8rem">${spot.city || ''} · Meilleur créneau : ${bestWindow?.timeWindow || ''}</div>
+                </div>
+              </div>
+              ${whyHtml}
+              ${bestWindow?.narrative ? `<div style="margin-top:8px;padding:8px 12px;background:linear-gradient(135deg, rgba(77,255,145,0.1), rgba(0,207,255,0.08));border:1px solid rgba(77,255,145,0.2);border-radius:8px;color:#4dff91;font-size:0.82rem;font-weight:600;text-align:center">${bestWindow.narrative}</div>` : ''}
+              ${boardHtml}
+            </div>
+            <div style="color:rgba(255,255,255,0.4);font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Score heure par heure</div>
+            ${daysHtml}`;
+        }
+
         async function loadAccueilWindows(userId) {
           const container = document.getElementById('accueil-windows');
           if (!container) return;
@@ -1633,20 +1743,21 @@ select option { background: #0d2137; color: #f0f4ff; }
               return;
             }
 
+            // Stocker les résultats pour accès au clic
+            window._predictionResults = data.results;
+
             // Organiser par spot : le meilleur créneau de chaque spot favori
-            // Trier par score MAIS pénaliser les spots lointains
             const userLat = _userLat || JSON.parse(localStorage.getItem('home_spot') || '{}').lat || 43.48;
             const userLng = _userLng || JSON.parse(localStorage.getItem('home_spot') || '{}').lng || -1.56;
 
             const spotCards = data.results
               .filter(r => r.windows?.length > 0)
-              .map(r => {
+              .map((r, idx) => {
                 const spotLat = r.spot?.lat || 0;
                 const spotLng = r.spot?.lng || 0;
                 const distKm = spotLat ? haversineKm(spotLat, spotLng, userLat, userLng) : 0;
-                // Score ajusté : pénalité de 0.1 point par 10km de distance
                 const adjustedScore = r.windows[0].score - (distKm / 100);
-                return { spot: r.spot, best: r.windows[0], distKm, adjustedScore };
+                return { spot: r.spot, best: r.windows[0], distKm, adjustedScore, resultIdx: idx };
               })
               .sort((a, b) => b.adjustedScore - a.adjustedScore);
 
@@ -1673,7 +1784,7 @@ select option { background: #0d2137; color: #f0f4ff; }
                 const whyHtml = (w.whyGood || []).map(r => `<div style="color:#4dff91;font-size:0.75rem;margin-top:3px">✅ ${r}</div>`).join('')
                   + (w.whyNotPerfect || []).map(r => `<div style="color:#ed8936;font-size:0.75rem;margin-top:3px">⚠️ ${r}</div>`).join('');
                 const boardHtml = w.boardSuggestion?.board ? `<div style="color:#00cfff;font-size:0.75rem;margin-top:6px;padding:6px 10px;background:rgba(0,207,255,0.08);border:1px solid rgba(0,207,255,0.15);border-radius:6px">🏄 Prends ta <strong>${w.boardSuggestion.board.nickname || w.boardSuggestion.board.name}</strong> — ${w.boardSuggestion.reason || ''}</div>` : '';
-                return `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:10px">
+                return `<div onclick="showSpotPredictionDetail(${item.resultIdx})" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:10px;cursor:pointer">
                   <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
                     <div style="background:${scoreColor};color:#0a0e27;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;flex-shrink:0">${w.score}</div>
                     <div>
@@ -1688,8 +1799,8 @@ select option { background: #0d2137; color: #f0f4ff; }
                 </div>`;
               }
 
-              // Autres spots = cards compactes mais informatives
-              return `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;margin-bottom:8px">
+              // Autres spots = cards compactes mais informatives — cliquables
+              return `<div onclick="showSpotPredictionDetail(${item.resultIdx})" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer">
                 <div style="display:flex;align-items:center;gap:10px">
                   <div style="background:${scoreColor};color:#0a0e27;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.9rem;flex-shrink:0">${w.score}</div>
                   <div style="flex:1;min-width:0">
