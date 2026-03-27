@@ -1651,10 +1651,11 @@ select option { background: #0d2137; color: #f0f4ff; }
             function renderWindow(w, isBig) {
               const scoreColor = w.score >= 8 ? '#4dff91' : w.score >= 6 ? '#00cfff' : '#ed8936';
               const date = new Date(w.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-              const board = w.boardSuggestion?.board?.name ? '🏄 ' + w.boardSuggestion.board.name : '';
               if (isBig) {
                 const whyHtml = (w.whyGood || []).map(r => `<div style="color:#4dff91;font-size:0.75rem;margin-top:3px">✅ ${r}</div>`).join('')
                   + (w.whyNotPerfect || []).map(r => `<div style="color:#ed8936;font-size:0.75rem;margin-top:3px">⚠️ ${r}</div>`).join('');
+                const boardHtml = w.boardSuggestion?.board ? `<div style="color:#00cfff;font-size:0.75rem;margin-top:6px;padding:6px 10px;background:rgba(0,207,255,0.08);border:1px solid rgba(0,207,255,0.15);border-radius:6px">🏄 Prends ta <strong>${w.boardSuggestion.board.nickname || w.boardSuggestion.board.name}</strong> — ${w.boardSuggestion.reason || ''}</div>` : '';
+                const windDir = typeof w.conditions?.windDirection === 'number' ? ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(w.conditions.windDirection / 22.5) % 16] : (w.conditions?.windDirection || '');
                 return `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:10px">
                   <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
                     <div style="background:${scoreColor};color:#0a0e27;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;flex-shrink:0">${w.score}</div>
@@ -1663,9 +1664,10 @@ select option { background: #0d2137; color: #f0f4ff; }
                       <div style="color:rgba(255,255,255,0.5);font-size:0.85rem">${date} · ${w.timeWindow || ''}</div>
                     </div>
                   </div>
-                  <div style="color:rgba(255,255,255,0.5);font-size:0.8rem">🌊 ${(w.conditions?.waveHeight || 0).toFixed(1)}m · 💨 ${Math.round(w.conditions?.windSpeed || 0)}km/h · 🧭 ${typeof w.conditions?.windDirection === 'number' ? ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(w.conditions.windDirection / 22.5) % 16] : (w.conditions?.windDirection || '')} ${board}</div>
+                  <div style="color:rgba(255,255,255,0.5);font-size:0.8rem">🌊 ${(w.conditions?.waveHeight || 0).toFixed(1)}m · 💨 ${Math.round(w.conditions?.windSpeed || 0)}km/h · 🧭 ${windDir}</div>
                   ${whyHtml}
-                  ${w.narrative ? '<div style="color:rgba(255,255,255,0.35);font-size:0.72rem;margin-top:6px;font-style:italic">' + w.narrative + '</div>' : ''}
+                  ${w.narrative ? `<div style="margin-top:8px;padding:8px 12px;background:linear-gradient(135deg, rgba(77,255,145,0.1), rgba(0,207,255,0.08));border:1px solid rgba(77,255,145,0.2);border-radius:8px;color:#4dff91;font-size:0.82rem;font-weight:600;text-align:center">${w.narrative}</div>` : ''}
+                  ${boardHtml}
                 </div>`;
               }
               return `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px;flex:1;min-width:0">
