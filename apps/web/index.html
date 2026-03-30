@@ -366,39 +366,177 @@ select option { background: #0d2137; color: #f0f4ff; }
   border-color: rgba(77,255,145,0.4);
   color: #4dff91;
 }
-/* ===== AUTH OVERLAY ===== */
-#auth-overlay {
+/* ===== ONBOARDING OVERLAY ===== */
+#onboarding-overlay {
   position: fixed; inset: 0; z-index: 1000;
-  background: rgba(10,14,39,0.92);
-  backdrop-filter: blur(6px);
+  background: #0a0e27;
   display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
 }
-#auth-overlay.hidden { display: none; }
-.auth-card {
-  background: #0d2137;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 16px;
-  padding: 32px 24px;
-  width: 320px;
-  text-align: center;
+.onb-container {
+  max-width: 420px; width: 100%; height: 100vh;
+  margin: 0 auto; overflow: hidden; position: relative;
 }
-.auth-card .auth-logo { font-size: 40px; margin-bottom: 8px; }
-.auth-card h2 { color: #f0f4ff; font-size: 1.2rem; margin: 0 0 4px; }
-.auth-card .auth-sub { color: rgba(255,255,255,0.45); font-size: 0.8rem; margin-bottom: 24px; }
-.auth-card input[type="email"] {
-  width: 100%; box-sizing: border-box; padding: 12px; border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06);
-  color: #f0f4ff; font-size: 0.95rem; margin-bottom: 12px; outline: none;
+.onb-screens-track {
+  display: flex; flex-direction: row;
+  transition: transform 0.4s ease;
 }
-.auth-card input[type="email"]::placeholder { color: rgba(255,255,255,0.3); }
-.auth-card .auth-btn {
-  width: 100%; padding: 12px; background: #4dff91; color: #0a0e27;
-  border: none; border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer;
+.onb-screen {
+  width: 100%; min-width: 100%; min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px 28px; box-sizing: border-box; text-align: center;
 }
-.auth-card .auth-btn:disabled { opacity: 0.5; cursor: default; }
-.auth-card .auth-msg { margin-top: 12px; font-size: 0.82rem; min-height: 20px; }
-.auth-card .auth-msg.success { color: #4dff91; }
-.auth-card .auth-msg.error { color: #fc8181; }
+.onb-emoji {
+  font-size: 64px; margin-bottom: 24px;
+  animation: onbFloat 3s ease-in-out infinite;
+}
+@keyframes onbFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.onb-title {
+  font-size: 1.55rem; font-weight: 800; color: #f0f4ff;
+  line-height: 1.35; margin-bottom: 12px;
+}
+.onb-accent { color: #4dff91; }
+.onb-dim { color: rgba(255,255,255,0.2); }
+.onb-subtitle {
+  font-size: 0.92rem; color: rgba(255,255,255,0.5);
+  line-height: 1.5; margin-bottom: 32px; max-width: 320px;
+}
+.onb-dots { display: flex; gap: 8px; justify-content: center; margin-bottom: 32px; }
+.onb-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); transition: all 0.3s ease;
+}
+.onb-dot.active {
+  background: #4dff91; width: 24px; border-radius: 4px;
+}
+.onb-btn {
+  width: 100%; padding: 14px; background: #4dff91; color: #0a0e27;
+  border: none; border-radius: 12px; font-weight: 700; font-size: 0.95rem;
+  cursor: pointer; margin-bottom: 12px; transition: opacity 0.2s;
+}
+.onb-btn:disabled { opacity: 0.5; cursor: default; }
+.onb-btn-skip {
+  width: 100%; padding: 12px; background: transparent; color: rgba(255,255,255,0.3);
+  border: none; font-size: 0.85rem; cursor: pointer;
+}
+.onb-social-btn {
+  width: 100%; padding: 14px; background: #fff; color: #1a1a1a;
+  border: none; border-radius: 12px; font-weight: 600; font-size: 0.92rem;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  gap: 10px; margin-bottom: 10px; box-sizing: border-box;
+}
+.onb-divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 16px 0; color: rgba(255,255,255,0.25); font-size: 0.8rem;
+}
+.onb-divider::before, .onb-divider::after {
+  content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.1);
+}
+.onb-input {
+  width: 100%; padding: 13px 14px; box-sizing: border-box;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px; color: #f0f4ff; font-size: 0.92rem;
+  outline: none; margin-bottom: 10px;
+}
+.onb-input::placeholder { color: rgba(255,255,255,0.3); }
+.onb-input:focus { border-color: rgba(77,255,145,0.4); }
+.onb-progress-bar {
+  height: 3px; background: rgba(255,255,255,0.06);
+  border-radius: 2px; width: 100%; margin-bottom: 24px;
+}
+.onb-progress-fill {
+  height: 100%; background: #4dff91; border-radius: 2px;
+  transition: width 0.4s ease;
+}
+.onb-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 12px 18px; border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.6); font-size: 0.88rem; cursor: pointer;
+  transition: all 0.2s;
+}
+.onb-chip.selected {
+  border-color: #4dff91; color: #4dff91;
+  background: rgba(77,255,145,0.08);
+}
+.onb-day-chip {
+  padding: 10px 14px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.6); font-size: 0.82rem; cursor: pointer;
+  transition: all 0.2s; text-align: center;
+}
+.onb-day-chip.selected {
+  border-color: #4dff91; color: #4dff91;
+  background: rgba(77,255,145,0.08);
+}
+.onb-slot-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 16px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.6); font-size: 0.82rem; cursor: pointer;
+  transition: all 0.2s;
+}
+.onb-slot-chip.selected {
+  border-color: #4dff91; color: #4dff91;
+  background: rgba(77,255,145,0.08);
+}
+.onb-board-type {
+  padding: 14px 8px; border-radius: 12px; text-align: center;
+  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.6); font-size: 0.82rem; cursor: pointer;
+  transition: all 0.2s;
+}
+.onb-board-type.selected {
+  border-color: #4dff91; color: #4dff91;
+  background: rgba(77,255,145,0.08);
+}
+.onb-photo-zone {
+  border: 2px dashed rgba(255,255,255,0.15); border-radius: 12px;
+  padding: 24px; text-align: center; cursor: pointer; color: rgba(255,255,255,0.3);
+  font-size: 0.82rem; transition: border-color 0.2s;
+}
+.onb-photo-zone:hover { border-color: rgba(77,255,145,0.3); }
+.onb-field-label {
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.35); margin-bottom: 8px; text-align: left; width: 100%;
+}
+.onb-why-text {
+  font-size: 0.82rem; color: rgba(255,255,255,0.4);
+  line-height: 1.5; margin-bottom: 24px; max-width: 320px;
+}
+.onb-switch-link {
+  font-size: 0.82rem; color: rgba(255,255,255,0.4); margin-top: 16px;
+}
+.onb-switch-link a { color: #4dff91; text-decoration: none; cursor: pointer; }
+.onb-terms {
+  font-size: 0.65rem; color: rgba(255,255,255,0.2); margin-top: 16px;
+  line-height: 1.5;
+}
+.onb-tip-box {
+  background: rgba(255,255,255,0.04); border-radius: 10px;
+  padding: 14px 18px; font-size: 0.82rem; color: rgba(255,255,255,0.45);
+  text-align: center; margin-top: 16px;
+}
+.onb-msg {
+  margin-top: 12px; font-size: 0.82rem; min-height: 20px; text-align: center;
+}
+.onb-msg.success { color: #4dff91; }
+.onb-msg.error { color: #fc8181; }
+.onb-avatar-area {
+  display: flex; flex-direction: row; align-items: center; gap: 16px;
+  margin-bottom: 16px; width: 100%;
+}
+.onb-avatar-circle {
+  width: 72px; height: 72px; min-width: 72px; border-radius: 50%;
+  border: 2px dashed rgba(77,255,145,0.4); display: flex;
+  align-items: center; justify-content: center; cursor: pointer;
+  color: rgba(255,255,255,0.3); font-size: 24px; background: rgba(255,255,255,0.04);
+  transition: border-color 0.2s;
+}
+.onb-avatar-circle:hover { border-color: #4dff91; }
 
 /* ===== SPOTS REDESIGN ===== */
 .fav-strip { padding: 0 4px; margin-bottom: 12px; }
@@ -1143,8 +1281,216 @@ select option { background: #0d2137; color: #f0f4ff; }
         // AUTH
         // ========================================
 
+        // ---- Onboarding overlay helpers ----
+
+        function showOnboardingOverlay() {
+            let overlay = document.getElementById('onboarding-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'onboarding-overlay';
+                overlay.innerHTML = '<div class="onb-container"></div>';
+                document.body.appendChild(overlay);
+            }
+            overlay.style.display = 'flex';
+        }
+
+        function hideOnboardingOverlay() {
+            const overlay = document.getElementById('onboarding-overlay');
+            if (overlay) overlay.remove();
+        }
+
+        function showOnbMsg(text, type) {
+            const el = document.querySelector('.onb-msg');
+            if (!el) return;
+            el.textContent = text;
+            el.className = 'onb-msg ' + (type || '');
+        }
+
+        function setOnbBtnLoading(loading) {
+            const btn = document.getElementById('onb-submit-btn');
+            if (!btn) return;
+            btn.disabled = loading;
+            if (loading) btn.dataset.origText = btn.textContent;
+            btn.textContent = loading ? 'Chargement...' : (btn.dataset.origText || 'Valider');
+        }
+
+        // ---- Intro screens (5 swipable) ----
+
+        let currentIntroScreen = 0;
+
+        function goToIntroScreen(n) {
+            const total = 5;
+            if (n < 0 || n >= total) return;
+            currentIntroScreen = n;
+            const track = document.querySelector('.onb-screens-track');
+            if (track) track.style.transform = `translateX(-${n * 100}%)`;
+            document.querySelectorAll('.onb-dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === n);
+            });
+        }
+
+        function showIntroScreens() {
+            showOnboardingOverlay();
+            const container = document.querySelector('.onb-container');
+            if (!container) return;
+            currentIntroScreen = 0;
+
+            const screens = [
+                { emoji: '\u{1F30A}', title: "Une app qui parle de <span class='onb-accent'>ton</span> surf.<br><span class='onb-dim'>Pas de celui des autres.</span>", sub: "SurfAI apprend de toi pour te trouver tes meilleures sessions." },
+                { emoji: '\u{1F4DD}', title: "<span class='onb-accent'>Tes</span> sessions.<br><span class='onb-accent'>Tes</span> conditions.", sub: "Note en quelques secondes. L'app memorise la meteo, la houle et les marees pour toi." },
+                { emoji: '\u{1F3C4}\u{200D}\u{2642}\u{FE0F}', title: "<span class='onb-accent'>Tes</span> boards.<br><span class='onb-accent'>Ton</span> quiver.", sub: "Ajoute tes planches. L'app sait laquelle est faite pour les conditions du jour." },
+                { emoji: '\u{1F3AF}', title: "<span class='onb-accent'>Tes</span> previsions.<br>Rien que <span class='onb-accent'>les tiennes</span>.", sub: "Pas de graphiques illisibles. Juste une reponse claire : quand, ou, avec quelle board." },
+                { emoji: '\u{2728}', title: "Plus tu surfes,<br>plus elle <span class='onb-accent'>te</span> connait.", sub: "Et ca ne fait que commencer." }
+            ];
+
+            const dotsHtml = screens.map((_, i) => `<div class="onb-dot${i === 0 ? ' active' : ''}"></div>`).join('');
+
+            const screensHtml = screens.map((s, i) => {
+                const isLast = i === screens.length - 1;
+                return `<div class="onb-screen">
+                    <div class="onb-emoji">${s.emoji}</div>
+                    <div class="onb-title">${s.title}</div>
+                    <div class="onb-subtitle">${s.sub}</div>
+                    <div class="onb-dots">${dotsHtml.replace(new RegExp(`active`), '').replace(/<div class="onb-dot/g, (m, offset, str) => {
+                        // Rebuild dots per screen — simpler to just redo
+                        return m;
+                    })}</div>
+                    <button class="onb-btn" onclick="${isLast ? 'showSignupScreen()' : `goToIntroScreen(${i + 1})`}">${isLast ? "C'est parti !" : 'Suivant'}</button>
+                    ${!isLast ? '<button class="onb-btn-skip" onclick="showSignupScreen()">Passer</button>' : ''}
+                </div>`;
+            }).join('');
+
+            container.innerHTML = `<div class="onb-screens-track">${screensHtml}</div>`;
+
+            // Fix dots per screen after render
+            const allScreens = container.querySelectorAll('.onb-screen');
+            allScreens.forEach((screen, si) => {
+                const dots = screen.querySelectorAll('.onb-dot');
+                dots.forEach((dot, di) => dot.classList.toggle('active', di === si));
+            });
+
+            // Touch swipe support
+            let touchStartX = 0;
+            const track = container.querySelector('.onb-screens-track');
+            track.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+            track.addEventListener('touchend', e => {
+                const diff = touchStartX - e.changedTouches[0].screenX;
+                if (Math.abs(diff) > 50) {
+                    if (diff > 0 && currentIntroScreen < 4) goToIntroScreen(currentIntroScreen + 1);
+                    else if (diff < 0 && currentIntroScreen > 0) goToIntroScreen(currentIntroScreen - 1);
+                }
+            }, { passive: true });
+        }
+
+        // ---- Signup screen ----
+
+        function showSignupScreen() {
+            showOnboardingOverlay();
+            const container = document.querySelector('.onb-container');
+            if (!container) return;
+
+            const googleSvg = '<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+
+            container.innerHTML = `
+                <div class="onb-screen" style="min-height:100vh">
+                    <div class="onb-emoji">\u{1F30A}</div>
+                    <div class="onb-title">Rejoins SurfAI</div>
+                    <div class="onb-subtitle">Cree ton compte en 10 secondes.</div>
+                    <div style="width:100%">
+                        <button class="onb-social-btn" onclick="signInWithApple()">
+                            <span style="font-size:20px">&#xF8FF;</span> Continuer avec Apple
+                        </button>
+                        <button class="onb-social-btn" onclick="signInWithGoogle()">
+                            ${googleSvg} Continuer avec Google
+                        </button>
+                        <div class="onb-divider">ou par email</div>
+                        <input type="email" class="onb-input" id="onb-email" placeholder="ton@email.com" />
+                        <input type="password" class="onb-input" id="onb-password" placeholder="Mot de passe (6 car. min)" />
+                        <button class="onb-btn" id="onb-submit-btn" onclick="signUpEmail()">Creer mon compte</button>
+                        <div class="onb-switch-link">Deja un compte ? <a onclick="showLoginScreen()">Se connecter</a></div>
+                        <div class="onb-terms">En continuant, tu acceptes les conditions d'utilisation et la politique de confidentialite de SurfAI.</div>
+                        ${window.location.hostname === 'localhost' ? '<button class="onb-btn-skip" style="margin-top:12px" onclick="devSignIn()">\u{1F527} Connexion dev</button>' : ''}
+                        <div class="onb-msg"></div>
+                    </div>
+                </div>`;
+
+            // Enter key on password
+            const pwInput = container.querySelector('#onb-password');
+            if (pwInput) pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') signUpEmail(); });
+        }
+
+        // ---- Login screen ----
+
+        function showLoginScreen() {
+            showOnboardingOverlay();
+            const container = document.querySelector('.onb-container');
+            if (!container) return;
+
+            const googleSvg = '<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+
+            container.innerHTML = `
+                <div class="onb-screen" style="min-height:100vh">
+                    <div class="onb-emoji">\u{1F30A}</div>
+                    <div class="onb-title">Content de te revoir</div>
+                    <div class="onb-subtitle">Connecte-toi pour retrouver tes sessions.</div>
+                    <div style="width:100%">
+                        <button class="onb-social-btn" onclick="signInWithApple()">
+                            <span style="font-size:20px">&#xF8FF;</span> Continuer avec Apple
+                        </button>
+                        <button class="onb-social-btn" onclick="signInWithGoogle()">
+                            ${googleSvg} Continuer avec Google
+                        </button>
+                        <div class="onb-divider">ou par email</div>
+                        <input type="email" class="onb-input" id="onb-email" placeholder="ton@email.com" />
+                        <input type="password" class="onb-input" id="onb-password" placeholder="Mot de passe" />
+                        <button class="onb-btn" id="onb-submit-btn" onclick="signInEmail()">Se connecter</button>
+                        <div class="onb-switch-link">Pas de compte ? <a onclick="showSignupScreen()">S'inscrire</a></div>
+                        ${window.location.hostname === 'localhost' ? '<button class="onb-btn-skip" style="margin-top:12px" onclick="devSignIn()">\u{1F527} Connexion dev</button>' : ''}
+                        <div class="onb-msg"></div>
+                    </div>
+                </div>`;
+
+            const pwInput = container.querySelector('#onb-password');
+            if (pwInput) pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') signInEmail(); });
+        }
+
+        // ---- Auth functions ----
+
+        async function signUpEmail() {
+            const email = document.getElementById('onb-email').value.trim();
+            const password = document.getElementById('onb-password').value;
+            if (!email || !password || password.length < 6) {
+                showOnbMsg('Email et mot de passe requis (6 caracteres min)', 'error');
+                return;
+            }
+            setOnbBtnLoading(true);
+            const { error } = await supabaseClient.auth.signUp({ email, password });
+            setOnbBtnLoading(false);
+            if (error) { showOnbMsg(error.message, 'error'); return; }
+            // signUp with email/password auto-signs in via onAuthStateChange
+        }
+
+        async function signInEmail() {
+            const email = document.getElementById('onb-email').value.trim();
+            const password = document.getElementById('onb-password').value;
+            if (!email || !password) { showOnbMsg('Email et mot de passe requis', 'error'); return; }
+            setOnbBtnLoading(true);
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            setOnbBtnLoading(false);
+            if (error) { showOnbMsg(error.message, 'error'); return; }
+        }
+
+        async function signInWithGoogle() {
+            await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+        }
+
+        async function signInWithApple() {
+            await supabaseClient.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: window.location.origin } });
+        }
+
+        // ---- initAuth ----
+
         async function initAuth() {
-            // Flag pour éviter double-init (onAuthStateChange + getSession)
             let authHandled = false;
 
             async function handleSignIn(session) {
@@ -1155,42 +1501,35 @@ select option { background: #0d2137; color: #f0f4ff; }
                 if (window.location.search.includes('code=')) {
                     window.history.replaceState({}, '', window.location.pathname);
                 }
-                hideLoginOverlay();
+                hideOnboardingOverlay();
                 await checkOnboarding(session.user.id);
             }
 
             supabaseClient.auth.onAuthStateChange((event, session) => {
-                // IMPORTANT : ne pas faire d'await dans ce callback (deadlock SDK v2)
-                // Déférer le travail async hors du callback
                 if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
                     setTimeout(() => handleSignIn(session), 0);
                 } else if (event === 'SIGNED_OUT') {
                     authHandled = false;
                     dataManager.currentUserId = null;
                     userData = { sessions: [], spots: [], favoriteSpots: [], predictions: [], profile: {}, boards: [] };
-                    showLoginOverlay();
+                    showIntroScreens();
                 }
             });
 
-            // Si ?code= dans l'URL, le SDK va l'échanger via onAuthStateChange
-            // On attend un peu pour laisser le callback se déclencher
             if (window.location.search.includes('code=')) {
-                // Le SDK échange le code automatiquement, onAuthStateChange gèrera le SIGNED_IN
-                // Timeout de sécurité : si rien ne se passe en 5s, montrer le login
                 setTimeout(() => {
                     if (!authHandled) {
-                        showLoginOverlay();
+                        showIntroScreens();
                     }
                 }, 5000);
                 return;
             }
 
-            // Pas de code dans l'URL : vérifier session existante
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
                 await handleSignIn(session);
             } else {
-                showLoginOverlay();
+                showIntroScreens();
             }
         }
 
@@ -1211,75 +1550,13 @@ select option { background: #0d2137; color: #f0f4ff; }
             const DEV_USER_ID = '3ba8ad73-e2c6-49fe-ac88-c26b45551f4b';
             dataManager.currentUserId = DEV_USER_ID;
             dataManager.supabase = supabaseClient;
-            hideLoginOverlay();
+            hideOnboardingOverlay();
             await initApp();
         }
 
-        // --- Overlay login ---
-
-        function showLoginOverlay() {
-            let overlay = document.getElementById('auth-overlay');
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.id = 'auth-overlay';
-                overlay.innerHTML = `
-                    <div class="auth-card">
-                        <div class="auth-logo">🏄‍♂️</div>
-                        <h2>SurfAI</h2>
-                        <p class="auth-sub">Ton assistant surf intelligent</p>
-                        <input type="email" id="auth-email" placeholder="ton@email.com" />
-                        <button class="auth-btn" id="auth-btn" onclick="sendMagicLink()">
-                            Recevoir un lien de connexion
-                        </button>
-                        ${window.location.hostname === 'localhost' ? '<button class="auth-btn" style="margin-top:8px;background:rgba(255,255,255,0.1);color:#f0f4ff;font-size:0.8rem" onclick="devSignIn()">🔧 Connexion dev</button>' : ''}
-                        <div class="auth-msg" id="auth-msg"></div>
-                    </div>`;
-                document.body.appendChild(overlay);
-                overlay.querySelector('#auth-email').addEventListener('keydown', e => {
-                    if (e.key === 'Enter') sendMagicLink();
-                });
-            }
-            overlay.classList.remove('hidden');
-        }
-
-        function hideLoginOverlay() {
-            const overlay = document.getElementById('auth-overlay');
-            if (overlay) overlay.classList.add('hidden');
-        }
-
-        async function sendMagicLink() {
-            const emailEl = document.getElementById('auth-email');
-            const btn = document.getElementById('auth-btn');
-            const msg = document.getElementById('auth-msg');
-            const email = emailEl?.value?.trim();
-            if (!email || !email.includes('@')) {
-                msg.textContent = 'Adresse email invalide';
-                msg.className = 'auth-msg error';
-                return;
-            }
-            btn.disabled = true;
-            btn.textContent = 'Envoi...';
-            msg.textContent = '';
-            const { error } = await supabaseClient.auth.signInWithOtp({
-                email,
-                options: { emailRedirectTo: window.location.origin }
-            });
-            if (error) {
-                msg.textContent = '❌ ' + error.message;
-                msg.className = 'auth-msg error';
-                btn.disabled = false;
-                btn.textContent = 'Recevoir un lien de connexion';
-            } else {
-                msg.textContent = '✉️ Vérifie ta boîte mail !';
-                msg.className = 'auth-msg success';
-                btn.textContent = 'Lien envoyé';
-            }
-        }
-
-        // --- Onboarding ---
+        // ---- checkOnboarding ----
 
         async function checkOnboarding(userId) {
-            // Timeout de 5s pour éviter un hang si RLS bloque la requête
             const profilePromise = supabaseClient
                 .from('profiles')
                 .select('id')
@@ -1291,100 +1568,171 @@ select option { background: #0d2137; color: #f0f4ff; }
             try {
                 const { data } = await Promise.race([profilePromise, timeoutPromise]);
                 if (!data) {
-                    showOnboarding(userId);
+                    showProfileSteps(userId);
                 } else {
                     await initApp();
                 }
             } catch {
-                // Timeout ou erreur RLS → le profil existe probablement, lancer l'app
                 await initApp();
             }
         }
 
-        function showOnboarding(userId) {
-            // Garantir que l'overlay existe (cas retour magic link sans passage par showLoginOverlay)
-            if (!document.getElementById('auth-overlay')) showLoginOverlay();
-            const overlay = document.getElementById('auth-overlay');
-            overlay.classList.remove('hidden');
+        // ---- Profile steps (5-step onboarding) ----
 
-            const card = overlay.querySelector('.auth-card');
-            if (!card) return;
+        let currentProfileStep = 0;
 
-            card.innerHTML = `
-                <div class="auth-logo">🏄‍♂️</div>
-                <h2>Bienvenue !</h2>
-                <p class="auth-sub" id="onboarding-step-label">1 / 2 — Comment tu t'appelles ?</p>
-                <div id="onboarding-step-1">
-                    <input type="text" id="onboarding-pseudo" placeholder="Ton prénom ou pseudo"
-                        style="width:100%;box-sizing:border-box;padding:12px;border-radius:8px;
-                        border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);
-                        color:#f0f4ff;font-size:0.95rem;margin-bottom:12px;outline:none" />
-                    <button class="auth-btn" onclick="onboardingStep2()">Suivant →</button>
-                </div>
-                <div id="onboarding-step-2" style="display:none">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-                        <button class="onboarding-level-btn" data-level="beginner" onclick="selectLevel(this)"
-                            style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#f0f4ff;cursor:pointer;font-size:0.88rem">Débutant</button>
-                        <button class="onboarding-level-btn" data-level="intermediate" onclick="selectLevel(this)"
-                            style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#f0f4ff;cursor:pointer;font-size:0.88rem">Intermédiaire</button>
-                        <button class="onboarding-level-btn" data-level="advanced" onclick="selectLevel(this)"
-                            style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#f0f4ff;cursor:pointer;font-size:0.88rem">Avancé</button>
-                        <button class="onboarding-level-btn" data-level="expert" onclick="selectLevel(this)"
-                            style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#f0f4ff;cursor:pointer;font-size:0.88rem">Expert</button>
+        function goToProfileStep(n) {
+            if (n < 0 || n > 4) return;
+            currentProfileStep = n;
+            const track = document.querySelector('.onb-profile-track');
+            if (track) track.style.transform = `translateX(-${n * 100}%)`;
+            const fill = document.querySelector('.onb-progress-fill');
+            if (fill) fill.style.width = `${(n + 1) * 20}%`;
+        }
+
+        function showProfileSteps(userId) {
+            showOnboardingOverlay();
+            const container = document.querySelector('.onb-container');
+            if (!container) return;
+            currentProfileStep = 0;
+
+            container.innerHTML = `
+                <div class="onb-progress-bar"><div class="onb-progress-fill" style="width:20%"></div></div>
+                <div class="onb-screens-track onb-profile-track">
+
+                    <!-- Step 1: Pseudo + Photo -->
+                    <div class="onb-screen" style="justify-content:flex-start;padding-top:60px">
+                        <div class="onb-emoji">\u{1F44B}</div>
+                        <div class="onb-title">Comment tu t'appelles ?</div>
+                        <div class="onb-why-text">Tes buddy te retrouveront plus facilement.</div>
+                        <div class="onb-avatar-area">
+                            <div class="onb-avatar-circle" title="Photo optionnelle">\u{1F4F7}</div>
+                            <span style="color:rgba(255,255,255,0.3);font-size:0.78rem">Photo optionnelle</span>
+                        </div>
+                        <input type="text" class="onb-input" id="onb-pseudo" placeholder="Ton prenom ou pseudo" />
+                        <button class="onb-btn" onclick="if(!document.getElementById('onb-pseudo').value.trim()){showOnbMsg('Entre ton prenom ou pseudo','error');return;}showOnbMsg('','');goToProfileStep(1)">Suivant \u{2192}</button>
+                        <div class="onb-msg"></div>
                     </div>
-                    <button class="auth-btn" id="onboarding-finish-btn"
-                        onclick="finishOnboarding('${userId}')" disabled>
-                        C'est parti ! →
-                    </button>
-                </div>
-                <div class="auth-msg" id="onboarding-msg"></div>`;
+
+                    <!-- Step 2: Niveau -->
+                    <div class="onb-screen" style="justify-content:flex-start;padding-top:60px">
+                        <div class="onb-emoji">\u{1F3C4}</div>
+                        <div class="onb-title">Quel est ton <span class="onb-accent">niveau</span> ?</div>
+                        <div class="onb-why-text">On adapte les spots et les conditions a ton niveau. Un debutant et un expert ne cherchent pas la meme vague.</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-bottom:20px">
+                            <div class="onb-chip" data-level="beginner" onclick="document.querySelectorAll('.onb-chip').forEach(c=>c.classList.remove('selected'));this.classList.add('selected')">\u{1F30A} Debutant</div>
+                            <div class="onb-chip" data-level="intermediate" onclick="document.querySelectorAll('.onb-chip').forEach(c=>c.classList.remove('selected'));this.classList.add('selected')">\u{1F3C4} Intermediaire</div>
+                            <div class="onb-chip" data-level="advanced" onclick="document.querySelectorAll('.onb-chip').forEach(c=>c.classList.remove('selected'));this.classList.add('selected')">\u{1F4AA} Avance</div>
+                            <div class="onb-chip" data-level="expert" onclick="document.querySelectorAll('.onb-chip').forEach(c=>c.classList.remove('selected'));this.classList.add('selected')">\u{1F525} Expert</div>
+                        </div>
+                        <button class="onb-btn" onclick="goToProfileStep(2)">Suivant \u{2192}</button>
+                    </div>
+
+                    <!-- Step 3: Vagues -->
+                    <div class="onb-screen" style="justify-content:flex-start;padding-top:60px">
+                        <div class="onb-emoji">\u{1F30A}</div>
+                        <div class="onb-title">Quelles vagues tu <span class="onb-accent">surfes</span> ?</div>
+                        <div class="onb-why-text">On ne te montre que les sessions dans ta zone. Pas de previsions pour du 3m si tu surfes du 1m.</div>
+                        <div style="display:flex;gap:12px;width:100%;margin-bottom:20px">
+                            <div style="flex:1">
+                                <div class="onb-field-label">Hauteur min (m)</div>
+                                <input type="number" class="onb-input" id="onb-wave-min" value="0.5" step="0.1" min="0" />
+                            </div>
+                            <div style="flex:1">
+                                <div class="onb-field-label">Hauteur max (m)</div>
+                                <input type="number" class="onb-input" id="onb-wave-max" value="2.0" step="0.1" min="0" />
+                            </div>
+                        </div>
+                        <button class="onb-btn" onclick="goToProfileStep(3)">Suivant \u{2192}</button>
+                    </div>
+
+                    <!-- Step 4: Board -->
+                    <div class="onb-screen" style="justify-content:flex-start;padding-top:60px">
+                        <div class="onb-emoji">\u{1F3C4}\u{200D}\u{2642}\u{FE0F}</div>
+                        <div class="onb-title">Ta premiere <span class="onb-accent">board</span></div>
+                        <div class="onb-why-text">L'app te dit quelle board sortir selon les conditions du jour.</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;width:100%;margin-bottom:16px">
+                            <div class="onb-board-type" data-type="shortboard" onclick="document.querySelectorAll('.onb-board-type').forEach(c=>c.classList.remove('selected'));this.classList.add('selected')">Shortboard</div>
+                            <div class="onb-board-type" data-type="fish" onclick="document.querySelectorAll('.onb-board-type').forEach(c=>c.classList.remove('selected'));this.classList.add('selected')">Fish</div>
+                            <div class="onb-board-type" data-type="midlength" onclick="document.querySelectorAll('.onb-board-type').forEach(c=>c.classList.remove('selected'));this.classList.add('selected')">Mid-length</div>
+                            <div class="onb-board-type" data-type="longboard" onclick="document.querySelectorAll('.onb-board-type').forEach(c=>c.classList.remove('selected'));this.classList.add('selected')">Longboard</div>
+                            <div class="onb-board-type" data-type="foamie" onclick="document.querySelectorAll('.onb-board-type').forEach(c=>c.classList.remove('selected'));this.classList.add('selected')">Foamie</div>
+                            <div class="onb-board-type" data-type="autre" onclick="document.querySelectorAll('.onb-board-type').forEach(c=>c.classList.remove('selected'));this.classList.add('selected')">Autre</div>
+                        </div>
+                        <input type="text" class="onb-input" id="onb-board-name" placeholder="Nom de la board (optionnel)" />
+                        <input type="text" class="onb-input" id="onb-board-size" placeholder="Taille (ex: 6'2)" />
+                        <div class="onb-photo-zone">\u{1F4F7} Ajouter une photo (optionnel)</div>
+                        <button class="onb-btn" style="margin-top:16px" onclick="goToProfileStep(4)">Suivant \u{2192}</button>
+                        <button class="onb-btn-skip" onclick="goToProfileStep(4)">Passer cette etape</button>
+                    </div>
+
+                    <!-- Step 5: Jours + Creneaux -->
+                    <div class="onb-screen" style="justify-content:flex-start;padding-top:60px">
+                        <div class="onb-emoji">\u{1F4C5}</div>
+                        <div class="onb-title">Quand tu peux <span class="onb-accent">surfer</span> ?</div>
+                        <div class="onb-why-text">On te previent en priorite quand tu peux y aller. Pas quand t'es au bureau.</div>
+                        <div class="onb-field-label">Jours disponibles</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;width:100%;margin-bottom:20px">
+                            <div class="onb-day-chip" data-day="lundi" onclick="this.classList.toggle('selected')">Lun</div>
+                            <div class="onb-day-chip" data-day="mardi" onclick="this.classList.toggle('selected')">Mar</div>
+                            <div class="onb-day-chip" data-day="mercredi" onclick="this.classList.toggle('selected')">Mer</div>
+                            <div class="onb-day-chip" data-day="jeudi" onclick="this.classList.toggle('selected')">Jeu</div>
+                            <div class="onb-day-chip" data-day="vendredi" onclick="this.classList.toggle('selected')">Ven</div>
+                            <div class="onb-day-chip" data-day="samedi" onclick="this.classList.toggle('selected')">Sam</div>
+                            <div class="onb-day-chip" data-day="dimanche" onclick="this.classList.toggle('selected')">Dim</div>
+                        </div>
+                        <div class="onb-field-label">Creneaux preferes</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;width:100%;margin-bottom:24px">
+                            <div class="onb-slot-chip" data-slot="avant_8h" onclick="this.classList.toggle('selected')">\u{1F305} Avant 8h</div>
+                            <div class="onb-slot-chip" data-slot="matin" onclick="this.classList.toggle('selected')">\u{2600}\u{FE0F} Matin</div>
+                            <div class="onb-slot-chip" data-slot="midi" onclick="this.classList.toggle('selected')">\u{1F324} Midi</div>
+                            <div class="onb-slot-chip" data-slot="apres_midi" onclick="this.classList.toggle('selected')">\u{1F307} Apres-midi</div>
+                            <div class="onb-slot-chip" data-slot="apres_18h" onclick="this.classList.toggle('selected')">\u{1F319} Apres 18h</div>
+                        </div>
+                        <button class="onb-btn" onclick="finishProfileSteps('${userId}')">C'est parti !</button>
+                        <div class="onb-tip-box">Tu as d'autres boards ? Complete ton quiver dans l'onglet Boards.</div>
+                        <div class="onb-msg"></div>
+                    </div>
+
+                </div>`;
         }
 
-        function onboardingStep2() {
-            const pseudo = document.getElementById('onboarding-pseudo')?.value?.trim();
-            if (!pseudo) {
-                document.getElementById('onboarding-msg').textContent = 'Entre ton prénom ou pseudo';
-                document.getElementById('onboarding-msg').className = 'auth-msg error';
-                return;
-            }
-            document.getElementById('onboarding-step-1').style.display = 'none';
-            document.getElementById('onboarding-step-2').style.display = 'block';
-            document.getElementById('onboarding-step-label').textContent = '2 / 2 — Ton niveau de surf ?';
-            document.getElementById('onboarding-msg').textContent = '';
-        }
+        async function finishProfileSteps(userId) {
+            const pseudo = document.getElementById('onb-pseudo')?.value?.trim();
+            if (!pseudo) { showOnbMsg('Entre ton prenom ou pseudo', 'error'); return; }
 
-        function selectLevel(btn) {
-            document.querySelectorAll('.onboarding-level-btn').forEach(b => {
-                b.style.background = 'rgba(255,255,255,0.06)';
-                b.style.borderColor = 'rgba(255,255,255,0.15)';
-                b.style.color = '#f0f4ff';
-            });
-            btn.style.background = 'rgba(77,255,145,0.15)';
-            btn.style.borderColor = '#4dff91';
-            btn.style.color = '#4dff91';
-            document.getElementById('onboarding-finish-btn').disabled = false;
-        }
-
-        async function finishOnboarding(userId) {
-            const pseudo = document.getElementById('onboarding-pseudo')?.value?.trim();
-            const levelBtn = document.querySelector('.onboarding-level-btn[style*="4dff91"]');
-            const level = levelBtn?.dataset?.level || 'intermediate';
-            const msg = document.getElementById('onboarding-msg');
+            const level = document.querySelector('.onb-chip.selected')?.dataset?.level || 'intermediate';
+            const waveMin = parseFloat(document.getElementById('onb-wave-min')?.value) || 0.5;
+            const waveMax = parseFloat(document.getElementById('onb-wave-max')?.value) || 2.0;
+            const days = [...document.querySelectorAll('.onb-day-chip.selected')].map(el => el.dataset.day);
+            const slots = [...document.querySelectorAll('.onb-slot-chip.selected')].map(el => el.dataset.slot);
 
             const { error } = await supabaseClient.from('profiles').insert({
                 id: userId,
                 nickname: pseudo,
                 surf_level: level,
-                min_wave_height: 0.5,
-                max_wave_height: 2.0
+                min_wave_height: waveMin,
+                max_wave_height: waveMax,
+                available_days: days,
+                available_slots: slots
             });
 
-            if (error) {
-                msg.textContent = '❌ ' + error.message;
-                msg.className = 'auth-msg error';
-                return;
+            if (error) { showOnbMsg(error.message, 'error'); return; }
+
+            // Insert board if filled
+            const boardType = document.querySelector('.onb-board-type.selected')?.dataset?.type;
+            if (boardType) {
+                const boardName = document.getElementById('onb-board-name')?.value?.trim() || null;
+                const boardSize = document.getElementById('onb-board-size')?.value?.trim() || null;
+                await supabaseClient.from('boards').insert({
+                    user_id: userId,
+                    board_type: boardType,
+                    nickname: boardName,
+                    size: boardSize
+                });
             }
-            hideLoginOverlay();
+
+            hideOnboardingOverlay();
             await initApp();
         }
 
