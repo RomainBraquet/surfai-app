@@ -1969,6 +1969,15 @@ select option { background: #0d2137; color: #f0f4ff; }
           }
         }
 
+        // Helpers globaux pour les prédictions
+        function scoreColor(s) { return s >= 8 ? '#4dff91' : s >= 6 ? '#00cfff' : s >= 4 ? '#ed8936' : 'rgba(255,255,255,0.2)'; }
+        function narrativeStyle(score) {
+          if (score >= 7) return 'background:linear-gradient(135deg, rgba(77,255,145,0.1), rgba(0,207,255,0.08));border:1px solid rgba(77,255,145,0.2);color:#4dff91';
+          if (score >= 5.5) return 'background:linear-gradient(135deg, rgba(0,207,255,0.08), rgba(0,207,255,0.05));border:1px solid rgba(0,207,255,0.2);color:#00cfff';
+          if (score >= 4) return 'background:linear-gradient(135deg, rgba(237,137,54,0.1), rgba(237,137,54,0.05));border:1px solid rgba(237,137,54,0.2);color:#ed8936';
+          return 'background:linear-gradient(135deg, rgba(255,90,90,0.1), rgba(255,90,90,0.05));border:1px solid rgba(255,90,90,0.2);color:#ff5a5a';
+        }
+
         function showSpotPredictionDetail(resultIdx) {
           const result = window._predictionResults?.[resultIdx];
           if (!result) return;
@@ -1985,8 +1994,6 @@ select option { background: #0d2137; color: #f0f4ff; }
             if (!days[h.date]) days[h.date] = [];
             days[h.date].push(h);
           });
-
-          function scoreColor(s) { return s >= 8 ? '#4dff91' : s >= 6 ? '#00cfff' : s >= 4 ? '#ed8936' : 'rgba(255,255,255,0.2)'; }
           function dirToCard(d) {
             if (typeof d !== 'number') return d || '';
             return ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(d / 22.5) % 16];
@@ -2042,7 +2049,7 @@ select option { background: #0d2137; color: #f0f4ff; }
                 <div style="background:${sc};color:#0a0e27;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.72rem;flex-shrink:0">${h.score}</div>
                 <div style="flex:1;min-width:0">
                   <div style="color:rgba(255,255,255,0.5);font-size:0.72rem">🌊 ${(h.conditions?.waveHeight || 0).toFixed(1)}m · 💨 ${Math.round(h.conditions?.windSpeed || 0)}km/h ${dirToCard(h.conditions?.windDirection)}${h.conditions?.wavePeriod ? ' · ' + Math.round(h.conditions.wavePeriod) + 's' : ''}</div>
-                  ${tideText ? `<div style="color:rgba(255,255,255,0.35);font-size:0.65rem">${tideText}</div>` : ''}
+                  <div style="color:rgba(255,255,255,0.35);font-size:0.65rem">${tideText}${tideText && (h.conditions?.airTemp != null || h.conditions?.waterTemp != null) ? ' · ' : ''}${h.conditions?.airTemp != null ? '🌡' + h.conditions.airTemp + '°' : ''}${h.conditions?.waterTemp != null ? ' 💧' + h.conditions.waterTemp + '°' : ''}</div>
                 </div>
                 ${isBest ? '<div style="color:#4dff91;font-size:0.65rem;font-weight:600;flex-shrink:0">BEST</div>' : ''}
               </div>`;
@@ -2071,8 +2078,16 @@ select option { background: #0d2137; color: #f0f4ff; }
                   <div style="color:rgba(255,255,255,0.5);font-size:0.8rem">${spot.city || ''} · Meilleur créneau : ${bestWindow?.timeWindow || ''}</div>
                 </div>
               </div>
+              ${bestWindow ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+                <div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:6px 10px;font-size:0.78rem;color:rgba(255,255,255,0.6)">🌊 ${(bestWindow.conditions?.waveHeight || 0).toFixed(1)}m</div>
+                <div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:6px 10px;font-size:0.78rem;color:rgba(255,255,255,0.6)">💨 ${Math.round(bestWindow.conditions?.windSpeed || 0)}km/h ${dirToCard(bestWindow.conditions?.windDirection)}</div>
+                ${bestWindow.conditions?.wavePeriod ? `<div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:6px 10px;font-size:0.78rem;color:rgba(255,255,255,0.6)">⏱ ${Math.round(bestWindow.conditions.wavePeriod)}s</div>` : ''}
+                ${bestWindow.conditions?.tidePhase ? `<div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:6px 10px;font-size:0.78rem;color:rgba(255,255,255,0.6)">🌙 ${{low:'Basse',high:'Haute',rising:'Montante',falling:'Descendante'}[bestWindow.conditions.tidePhase] || ''}</div>` : ''}
+                ${bestWindow.conditions?.airTemp != null ? `<div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:6px 10px;font-size:0.78rem;color:rgba(255,255,255,0.6)">🌡 ${bestWindow.conditions.airTemp}°C</div>` : ''}
+                ${bestWindow.conditions?.waterTemp != null ? `<div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:6px 10px;font-size:0.78rem;color:rgba(255,255,255,0.6)">💧 ${bestWindow.conditions.waterTemp}°C</div>` : ''}
+              </div>` : ''}
               ${whyHtml}
-              ${bestWindow?.narrative ? `<div style="margin-top:8px;padding:8px 12px;background:linear-gradient(135deg, rgba(77,255,145,0.1), rgba(0,207,255,0.08));border:1px solid rgba(77,255,145,0.2);border-radius:8px;color:#4dff91;font-size:0.82rem;font-weight:600;text-align:center">${bestWindow.narrative}</div>` : ''}
+              ${bestWindow?.narrative ? `<div style="margin-top:8px;padding:8px 12px;${narrativeStyle(bestWindow?.score || 0)};border-radius:8px;font-size:0.82rem;font-weight:600;text-align:center">${bestWindow.narrative}</div>` : ''}
               ${boardHtml}
             </div>
             <div style="color:rgba(255,255,255,0.4);font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Score heure par heure</div>
@@ -2141,8 +2156,9 @@ select option { background: #0d2137; color: #f0f4ff; }
                     </div>
                   </div>
                   <div style="color:rgba(255,255,255,0.5);font-size:0.8rem">🌊 ${(w.conditions?.waveHeight || 0).toFixed(1)}m · 💨 ${Math.round(w.conditions?.windSpeed || 0)}km/h · 🧭 ${windDir}${w.conditions?.wavePeriod ? ' · ⏱ ' + Math.round(w.conditions.wavePeriod) + 's' : ''}${w.conditions?.tidePhase ? ' · 🌙 ' + ({low:'↓',high:'↑',rising:'↗',falling:'↘'}[w.conditions.tidePhase] || '') : ''}</div>
+                  <div style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:2px">${w.conditions?.airTemp != null ? '🌡 Air ' + w.conditions.airTemp + '°C' : ''}${w.conditions?.waterTemp != null ? ' · 💧 Eau ' + w.conditions.waterTemp + '°C' : ''}</div>
                   ${whyHtml}
-                  ${w.narrative ? `<div style="margin-top:8px;padding:8px 12px;background:linear-gradient(135deg, rgba(77,255,145,0.1), rgba(0,207,255,0.08));border:1px solid rgba(77,255,145,0.2);border-radius:8px;color:#4dff91;font-size:0.82rem;font-weight:600;text-align:center">${w.narrative}</div>` : ''}
+                  ${w.narrative ? `<div style="margin-top:8px;padding:8px 12px;${narrativeStyle(w.score || 0)};border-radius:8px;font-size:0.82rem;font-weight:600;text-align:center">${w.narrative}</div>` : ''}
                   ${boardHtml}
                 </div>`;
               }
@@ -2158,9 +2174,10 @@ select option { background: #0d2137; color: #f0f4ff; }
                   <div style="text-align:right;flex-shrink:0">
                     <div style="color:rgba(255,255,255,0.5);font-size:0.75rem">🌊 ${(w.conditions?.waveHeight || 0).toFixed(1)}m${w.conditions?.wavePeriod ? ' · ' + Math.round(w.conditions.wavePeriod) + 's' : ''}</div>
                     <div style="color:rgba(255,255,255,0.4);font-size:0.7rem">💨 ${Math.round(w.conditions?.windSpeed || 0)}km/h ${windDir}</div>
+                    <div style="color:rgba(255,255,255,0.35);font-size:0.65rem">${w.conditions?.airTemp != null ? '🌡' + w.conditions.airTemp + '°' : ''}${w.conditions?.waterTemp != null ? ' 💧' + w.conditions.waterTemp + '°' : ''}</div>
                   </div>
                 </div>
-                ${w.whyGood?.length ? `<div style="color:#4dff91;font-size:0.7rem;margin-top:4px">${w.whyGood[0]}</div>` : ''}
+                ${w.whyGood?.length ? `<div style="color:#4dff91;font-size:0.7rem;margin-top:4px">✅ ${w.whyGood[0]}</div>` : w.whyNotPerfect?.length ? `<div style="color:#ed8936;font-size:0.7rem;margin-top:4px">⚠️ ${w.whyNotPerfect[0]}</div>` : ''}
               </div>`;
             }).join('');
 
@@ -2936,13 +2953,14 @@ select option { background: #0d2137; color: #f0f4ff; }
                     const pData = await res.json();
                     if (pData.success && pData.windows?.length) {
                         predsHtml = pData.windows.slice(0, 5).map(w => {
-                            const wColor = w.score >= 8 ? '#4dff91' : w.score >= 6 ? '#00cfff' : '#ed8936';
+                            const wColor = scoreColor(w.score);
+                            const narColor = w.score >= 7 ? '#4dff91' : w.score >= 5.5 ? '#00cfff' : w.score >= 4 ? '#ed8936' : '#ff5a5a';
                             const date = new Date(w.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
                             return `<div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:8px;margin-bottom:4px;display:flex;align-items:center;gap:8px">
                                 <div style="background:${wColor};color:#0a0e27;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.7rem;flex-shrink:0">${w.score}</div>
                                 <div style="flex:1">
                                     <div style="color:#f0f4ff;font-size:0.75rem;font-weight:600">${date} · ${w.startTime || ''}–${w.endTime || ''}</div>
-                                    <div style="color:rgba(255,255,255,0.35);font-size:0.65rem">${w.narrative || ''}</div>
+                                    <div style="color:${narColor};font-size:0.65rem">${w.narrative || ''}</div>
                                 </div>
                             </div>`;
                         }).join('');
@@ -4697,12 +4715,15 @@ select option { background: #0d2137; color: #f0f4ff; }
             const stars = '★'.repeat(Math.min(s.rating || 0, 5));
             const wh = s.meteo?.waveHeight;
             const meteo = wh != null ? ` · 🌊 ${Number(wh).toFixed(1)}m` : '';
-            return `<div class="session-compact">
-              <div>
+            return `<div class="session-compact" style="position:relative">
+              <div style="flex:1" onclick="openSessionEdit('${s.id}')">
                 <div style="font-size:0.82rem;color:#f0f4ff">${date} · ${spot}</div>
-                <div style="font-size:0.72rem;color:rgba(255,255,255,0.45)">${meteo}</div>
+                <div style="font-size:0.72rem;color:rgba(255,255,255,0.45)">${stars}${meteo}</div>
               </div>
-              <span style="color:#4dff91;font-size:0.78rem">${stars}</span>
+              <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+                <div onclick="openSessionEdit('${s.id}')" style="cursor:pointer;padding:4px 8px;border-radius:6px;background:rgba(0,207,255,0.1);color:#00cfff;font-size:0.7rem">✏️</div>
+                <div onclick="confirmDeleteSession('${s.id}')" style="cursor:pointer;padding:4px 8px;border-radius:6px;background:rgba(255,90,90,0.1);color:#ff5a5a;font-size:0.7rem">🗑</div>
+              </div>
             </div>`;
           }).join('');
 
@@ -4715,6 +4736,85 @@ select option { background: #0d2137; color: #f0f4ff; }
               ${rows}
             </div>
             ${moreBtn}`;
+        }
+
+        // ─── Edit / Delete session ────────────────────────
+        async function confirmDeleteSession(sessionId) {
+          if (!confirm('Supprimer cette session ? Cette action est irréversible.')) return;
+          try {
+            const res = await fetch(`${backendUrl}/api/v1/sessions/${sessionId}?userId=${dataManager.currentUserId}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+              userData.sessions = userData.sessions.filter(s => s.id !== sessionId);
+              renderSessionHistory();
+            } else {
+              alert('Erreur : ' + (data.error || 'Impossible de supprimer'));
+            }
+          } catch (e) { alert('Erreur réseau'); }
+        }
+
+        function openSessionEdit(sessionId) {
+          const session = userData.sessions.find(s => s.id === sessionId);
+          if (!session) return;
+          const spotName = session.spots?.name || 'Spot inconnu';
+          const dateStr = session.date?.split('T')[0] || '';
+          const container = document.getElementById('session-history-view');
+          if (!container) return;
+
+          container.innerHTML = `
+            <div style="margin-bottom:12px">
+              <div onclick="renderSessionHistory()" style="display:inline-block;color:rgba(255,255,255,0.5);font-size:0.8rem;cursor:pointer;margin-bottom:10px;padding:6px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:6px">← Retour</div>
+              <div class="card">
+                <span class="section-label">✏️ Modifier session — ${spotName}</span>
+                <div style="margin-top:12px">
+                  <label style="color:rgba(255,255,255,0.5);font-size:0.75rem;display:block;margin-bottom:4px">Date</label>
+                  <input type="date" id="edit-session-date" value="${dateStr}" style="width:100%;padding:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#f0f4ff;font-size:0.85rem;margin-bottom:12px">
+
+                  <label style="color:rgba(255,255,255,0.5);font-size:0.75rem;display:block;margin-bottom:4px">Note (1-5)</label>
+                  <div id="edit-session-rating" style="display:flex;gap:8px;margin-bottom:12px">
+                    ${[1,2,3,4,5].map(r => `<div onclick="document.querySelectorAll('#edit-session-rating div').forEach(d=>d.style.background='rgba(255,255,255,0.06)');this.style.background='rgba(77,255,145,0.2)';this.dataset.selected='1';document.querySelectorAll('#edit-session-rating div').forEach(d=>{if(parseInt(d.textContent)<=${r})d.style.background='rgba(77,255,145,0.2)';else d.style.background='rgba(255,255,255,0.06)'});document.getElementById('edit-session-rating').dataset.value='${r}'" data-val="${r}" style="flex:1;text-align:center;padding:8px;border-radius:6px;cursor:pointer;font-size:1rem;background:${(session.rating || 0) >= r ? 'rgba(77,255,145,0.2)' : 'rgba(255,255,255,0.06)'};border:1px solid rgba(255,255,255,0.1)">${'★'.repeat(r)}</div>`).join('')}
+                  </div>
+
+                  <label style="color:rgba(255,255,255,0.5);font-size:0.75rem;display:block;margin-bottom:4px">Notes</label>
+                  <textarea id="edit-session-notes" rows="3" style="width:100%;padding:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#f0f4ff;font-size:0.85rem;resize:vertical;margin-bottom:12px">${session.notes || ''}</textarea>
+
+                  ${session.meteo ? `<div style="color:rgba(255,255,255,0.4);font-size:0.72rem;padding:8px;background:rgba(255,255,255,0.03);border-radius:6px;margin-bottom:12px">
+                    📡 Météo capturée : 🌊 ${session.meteo.waveHeight?.toFixed(1) || '?'}m · 💨 ${Math.round(session.meteo.windSpeed || 0)}km/h · ⏱ ${session.meteo.wavePeriod || '?'}s
+                  </div>` : ''}
+
+                  <div style="display:flex;gap:8px">
+                    <button onclick="saveSessionEdit('${sessionId}')" style="flex:1;padding:10px;background:linear-gradient(135deg,#4dff91,#00cfff);border:none;border-radius:8px;color:#0a0e27;font-weight:700;cursor:pointer;font-size:0.85rem">Enregistrer</button>
+                    <button onclick="confirmDeleteSession('${sessionId}')" style="padding:10px 16px;background:rgba(255,90,90,0.15);border:1px solid rgba(255,90,90,0.3);border-radius:8px;color:#ff5a5a;cursor:pointer;font-size:0.85rem">Supprimer</button>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+
+          document.getElementById('edit-session-rating').dataset.value = session.rating || 3;
+        }
+
+        async function saveSessionEdit(sessionId) {
+          const rating = parseInt(document.getElementById('edit-session-rating').dataset.value) || 3;
+          const notes = document.getElementById('edit-session-notes').value;
+          const date = document.getElementById('edit-session-date').value;
+
+          try {
+            const res = await fetch(`${backendUrl}/api/v1/sessions/${sessionId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: dataManager.currentUserId, rating, notes, date }),
+            });
+            const data = await res.json();
+            if (data.success) {
+              const idx = userData.sessions.findIndex(s => s.id === sessionId);
+              if (idx >= 0) {
+                userData.sessions[idx] = { ...userData.sessions[idx], rating, notes, date };
+              }
+              renderSessionHistory();
+            } else {
+              alert('Erreur : ' + (data.error || 'Impossible de modifier'));
+            }
+          } catch (e) { alert('Erreur réseau'); }
         }
 
         function showTab(tabName, btn) {
