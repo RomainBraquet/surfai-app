@@ -1,21 +1,27 @@
-<!-- v2 -->
+<!-- v3 -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0a0e27">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#EBF2FF">
     <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,800;1,9..40,400&display=swap" rel="stylesheet">
     <title>SurfAI</title>
     <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: #0a0e27;
-  color: #f0f4ff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background:
+    radial-gradient(ellipse 130% 70% at 15% 8%, rgba(147,197,253,0.4) 0%, transparent 50%),
+    radial-gradient(ellipse 100% 50% at 85% 15%, rgba(196,181,253,0.22) 0%, transparent 50%),
+    radial-gradient(ellipse 90% 50% at 50% 90%, rgba(147,197,253,0.18) 0%, transparent 50%),
+    linear-gradient(175deg, #EBF2FF 0%, #E0EAFC 30%, #EDE8FB 55%, #E8F0FF 80%, #F0F4FF 100%);
+  background-attachment: fixed;
+  color: #1a1a1a;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 14px;
   min-height: 100vh;
 }
@@ -35,10 +41,13 @@ body {
   transform: translateX(-50%);
   width: 100%;
   max-width: 420px;
-  height: 60px;
+  height: 72px;
   display: flex;
-  background: #0d2137;
-  border-top: 1px solid rgba(255,255,255,0.08);
+  background: rgba(235,242,255,0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(0,0,0,0.05);
+  padding-bottom: 12px;
   z-index: 100;
 }
 
@@ -51,20 +60,23 @@ body {
   gap: 2px;
   border: none;
   background: transparent;
-  color: rgba(255,255,255,0.45);
+  color: #7BA3D4;
   cursor: pointer;
   padding: 6px 0;
-  transition: background 0.15s, color 0.15s;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: color 0.15s;
 }
 
 .nav-tab.active {
-  background: #4dff91;
-  color: #0a0e27;
+  color: #2563EB;
   font-weight: 700;
 }
 
 .nav-icon { font-size: 1.3rem; line-height: 1; }
-.nav-label { font-size: 0.62rem; letter-spacing: 0.3px; }
+.nav-label { font-size: 0.58rem; letter-spacing: 0.5px; }
 
 /* ---- Panels ---- */
 .tab-content { padding-bottom: 68px; }
@@ -74,11 +86,12 @@ body {
 
 /* ---- Cards ---- */
 .card {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  padding: 14px;
+  background: rgba(255,255,255,0.45);
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 18px;
+  padding: 16px;
   margin-bottom: 12px;
+  backdrop-filter: blur(8px);
 }
 
 /* ---- Section labels ---- */
@@ -86,17 +99,18 @@ body {
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #888;
+  color: rgba(0,0,0,0.3);
   margin-bottom: 8px;
   display: block;
 }
 
 /* ---- Hero profil ---- */
 .hero {
-  background: linear-gradient(135deg, #0a0e27, #0d2137);
-  border-radius: 16px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 20px;
   padding: 18px 14px 14px;
   margin-bottom: 12px;
+  backdrop-filter: blur(8px);
 }
 
 .hero-top {
@@ -110,8 +124,8 @@ body {
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  background: #4dff91;
-  color: #0a0e27;
+  background: linear-gradient(135deg, #F7B733, #FC4A1A);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -120,8 +134,8 @@ body {
   flex-shrink: 0;
 }
 
-.hero-name { font-size: 1rem; font-weight: 700; color: #f0f4ff; }
-.hero-sub  { font-size: 0.75rem; color: rgba(255,255,255,0.55); margin-top: 2px; }
+.hero-name { font-size: 1rem; font-weight: 700; color: #1a1a1a; }
+.hero-sub  { font-size: 0.75rem; color: rgba(0,0,0,0.4); margin-top: 2px; }
 
 /* ---- Grille météo 4 metrics ---- */
 .meteo-grid {
@@ -131,9 +145,9 @@ body {
   text-align: center;
 }
 
-.meteo-val  { color: #4dff91; font-weight: 700; font-size: 0.95rem; }
-.meteo-lbl  { font-size: 0.6rem; color: rgba(255,255,255,0.5); margin-top: 2px; }
-.meteo-loc  { font-size: 0.72rem; color: rgba(255,255,255,0.4); margin-top: 10px; }
+.meteo-val  { color: #1a1a1a; font-weight: 800; font-size: 0.95rem; }
+.meteo-lbl  { font-size: 0.6rem; color: rgba(0,0,0,0.3); margin-top: 2px; }
+.meteo-loc  { font-size: 0.72rem; color: rgba(0,0,0,0.35); margin-top: 10px; }
 
 /* ---- Créneaux IA ---- */
 .window-row {
@@ -141,7 +155,7 @@ body {
   align-items: flex-start;
   gap: 10px;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 .window-row:last-child { border-bottom: none; }
 
@@ -157,14 +171,14 @@ body {
   flex-shrink: 0;
 }
 
-.score-green  { background: rgba(77,255,145,0.15); color: #4dff91; }
-.score-blue   { background: rgba(0,207,255,0.15);  color: #00cfff; }
-.score-orange { background: rgba(237,137,54,0.15); color: #ed8936; }
+.score-green  { background: linear-gradient(135deg, #A8E063, #56AB2F); color: #fff; }
+.score-blue   { background: linear-gradient(135deg, #F7CE68, #F7B733); color: #fff; }
+.score-orange { background: linear-gradient(135deg, #FFB347, #FF8C42); color: #fff; }
 
 .window-info { flex: 1; min-width: 0; }
-.window-title { font-size: 0.82rem; font-weight: 600; color: #f0f4ff; }
-.window-meta  { font-size: 0.73rem; color: rgba(255,255,255,0.5); margin-top: 2px; }
-.window-narrative { font-size: 0.72rem; font-style: italic; color: #888; margin-top: 3px; }
+.window-title { font-size: 0.82rem; font-weight: 600; color: #1a1a1a; }
+.window-meta  { font-size: 0.73rem; color: rgba(0,0,0,0.4); margin-top: 2px; }
+.window-narrative { font-size: 0.72rem; font-style: italic; color: rgba(0,0,0,0.4); margin-top: 3px; }
 
 /* ---- Boutons rapides ---- */
 .quick-btns {
@@ -175,22 +189,23 @@ body {
 }
 
 .btn-quick {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px;
-  color: #f0f4ff;
+  background: rgba(255,255,255,0.5);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 14px;
+  color: #1a1a1a;
   padding: 12px;
   text-align: center;
   cursor: pointer;
   font-size: 0.82rem;
   font-weight: 600;
+  backdrop-filter: blur(8px);
 }
 
-.btn-quick:active { background: rgba(77,255,145,0.15); }
+.btn-quick:active { background: rgba(37,99,235,0.1); }
 
 /* ---- Spots (legacy, kept for compatibility) ---- */
-.spot-name { font-size: 0.85rem; font-weight: 600; color: #f0f4ff; }
-.spot-city { font-size: 0.73rem; color: rgba(255,255,255,0.45); margin-top: 2px; }
+.spot-name { font-size: 0.85rem; font-weight: 600; color: #1a1a1a; }
+.spot-city { font-size: 0.73rem; color: rgba(0,0,0,0.4); margin-top: 2px; }
 .spot-score { font-size: 0.78rem; font-weight: 700; }
 
 /* Fiche spot (push navigation) */
@@ -205,7 +220,7 @@ body {
   gap: 6px;
   background: none;
   border: none;
-  color: #4dff91;
+  color: #2563EB;
   font-size: 0.82rem;
   cursor: pointer;
   padding: 0 0 12px;
@@ -214,36 +229,38 @@ body {
 
 .fav-btn {
   background: none;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(0,0,0,0.15);
   border-radius: 20px;
-  color: rgba(255,255,255,0.6);
+  color: rgba(0,0,0,0.5);
   font-size: 0.78rem;
   padding: 4px 10px;
   cursor: pointer;
 }
-.fav-btn.active { border-color: #4dff91; color: #4dff91; }
+.fav-btn.active { border-color: #2563EB; color: #2563EB; }
 
 /* ---- Session form ---- */
 .form-group { margin-bottom: 14px; }
-.form-group label { display: block; font-size: 0.72rem; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+.form-group label { display: block; font-size: 0.72rem; color: rgba(0,0,0,0.3); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
 
 select, input[type="text"], input[type="date"], input[type="time"], input[type="number"], textarea {
   width: 100%;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 8px;
-  color: #f0f4ff;
+  background: rgba(255,255,255,0.6);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 10px;
+  color: #1a1a1a;
   padding: 9px 12px;
   font-size: 0.85rem;
+  font-family: inherit;
   outline: none;
   -webkit-appearance: none;
 }
 
 select:focus, input:focus, textarea:focus {
-  border-color: rgba(77,255,145,0.5);
+  border-color: rgba(37,99,235,0.5);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
 }
 
-select option { background: #0d2137; color: #f0f4ff; }
+select option { background: #fff; color: #1a1a1a; }
 
 /* Sélecteur étoiles 1-5 */
 .star-selector { display: flex; gap: 6px; margin-top: 4px; direction: rtl; }
@@ -251,32 +268,33 @@ select option { background: #0d2137; color: #f0f4ff; }
 .star-selector label {
   font-size: 1.6rem;
   cursor: pointer;
-  color: rgba(255,255,255,0.2);
+  color: rgba(0,0,0,0.2);
   transition: color 0.1s;
   direction: ltr;
 }
 .star-selector input:checked + label,
-.star-selector input:checked + label ~ label { color: #4dff91; }
+.star-selector input:checked + label ~ label { color: #F7B733; }
 
 /* ---- Bouton principal ---- */
 .btn-primary {
   width: 100%;
-  background: #4dff91;
-  color: #0a0e27;
+  background: linear-gradient(135deg, #2563EB, #3B82F6);
+  color: #fff;
   border: none;
-  border-radius: 10px;
-  padding: 13px;
+  border-radius: 14px;
+  padding: 15px;
   font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
   margin-top: 4px;
+  box-shadow: 0 4px 16px rgba(37,99,235,0.3);
 }
 .btn-primary:active { opacity: 0.85; }
 
 /* ---- Profil ---- */
 .profil-avatar {
   width: 64px; height: 64px; border-radius: 50%;
-  background: #4dff91; color: #0a0e27;
+  background: linear-gradient(135deg, #F7B733, #FC4A1A); color: #fff;
   display: flex; align-items: center; justify-content: center;
   font-size: 1.8rem; font-weight: 700; margin: 0 auto 12px;
 }
@@ -286,18 +304,18 @@ select option { background: #0d2137; color: #f0f4ff; }
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 .board-row:last-child { border-bottom: none; }
 .board-name { font-size: 0.85rem; font-weight: 600; }
-.board-meta { font-size: 0.72rem; color: rgba(255,255,255,0.45); }
+.board-meta { font-size: 0.72rem; color: rgba(0,0,0,0.4); }
 
 .session-compact {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 7px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
   font-size: 0.8rem;
 }
 .session-compact:last-child { border-bottom: none; }
@@ -306,7 +324,7 @@ select option { background: #0d2137; color: #f0f4ff; }
 .config-toggle {
   background: none;
   border: none;
-  color: rgba(255,255,255,0.35);
+  color: rgba(0,0,0,0.35);
   font-size: 0.75rem;
   cursor: pointer;
   padding: 8px 0;
@@ -321,27 +339,27 @@ select option { background: #0d2137; color: #f0f4ff; }
 
 /* ---- Feedback messages ---- */
 .msg-success {
-  background: rgba(77,255,145,0.12);
-  border: 1px solid rgba(77,255,145,0.3);
+  background: rgba(45,138,78,0.1);
+  border: 1px solid rgba(45,138,78,0.3);
   border-radius: 8px;
-  color: #4dff91;
+  color: #2D8A4E;
   padding: 10px 14px;
   font-size: 0.82rem;
   margin-bottom: 10px;
 }
 .msg-error {
-  background: rgba(237,100,100,0.12);
-  border: 1px solid rgba(237,100,100,0.3);
+  background: rgba(212,72,96,0.1);
+  border: 1px solid rgba(212,72,96,0.3);
   border-radius: 8px;
-  color: #fc8181;
+  color: #D44860;
   padding: 10px 14px;
   font-size: 0.82rem;
   margin-bottom: 10px;
 }
 
 /* ---- Loading / empty states ---- */
-.loading { color: rgba(255,255,255,0.4); font-size: 0.82rem; padding: 16px 0; text-align: center; }
-.empty   { color: rgba(255,255,255,0.35); font-size: 0.8rem; text-align: center; padding: 20px 0; }
+.loading { color: rgba(0,0,0,0.35); font-size: 0.82rem; padding: 16px 0; text-align: center; }
+.empty   { color: rgba(0,0,0,0.35); font-size: 0.8rem; text-align: center; padding: 20px 0; }
 
 /* ---- Filtres spots ---- */
 .filter-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
@@ -354,22 +372,22 @@ select option { background: #0d2137; color: #f0f4ff; }
   flex: 1;
   padding: 8px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.5);
+  border: 1px solid rgba(0,0,0,0.1);
+  background: rgba(0,0,0,0.04);
+  color: rgba(0,0,0,0.5);
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
 }
 .switcher-btn.active {
-  background: rgba(77,255,145,0.15);
-  border-color: rgba(77,255,145,0.4);
-  color: #4dff91;
+  background: rgba(37,99,235,0.1);
+  border-color: rgba(37,99,235,0.4);
+  color: #2563EB;
 }
 /* ===== ONBOARDING OVERLAY ===== */
 #onboarding-overlay {
   position: fixed; inset: 0; z-index: 1000;
-  background: #0a0e27;
+  background: linear-gradient(170deg, #EBF2FF 0%, #E0EAFC 40%, #D4E4FB 100%);
   display: flex; align-items: center; justify-content: center;
   overflow: hidden;
 }
@@ -395,31 +413,33 @@ select option { background: #0d2137; color: #f0f4ff; }
   50% { transform: translateY(-10px); }
 }
 .onb-title {
-  font-size: 1.55rem; font-weight: 800; color: #f0f4ff;
+  font-size: 1.55rem; font-weight: 800; color: #1a1a1a;
   line-height: 1.35; margin-bottom: 12px;
 }
-.onb-accent { color: #4dff91; }
-.onb-dim { color: rgba(255,255,255,0.2); }
+.onb-accent { color: #2563EB; }
+.onb-dim { color: rgba(0,0,0,0.15); }
 .onb-subtitle {
-  font-size: 0.92rem; color: rgba(255,255,255,0.5);
+  font-size: 0.92rem; color: rgba(0,0,0,0.4);
   line-height: 1.5; margin-bottom: 32px; max-width: 320px;
 }
 .onb-dots { display: flex; gap: 8px; justify-content: center; margin-bottom: 32px; }
 .onb-dot {
   width: 8px; height: 8px; border-radius: 50%;
-  background: rgba(255,255,255,0.15); transition: all 0.3s ease;
+  background: rgba(0,0,0,0.08); transition: all 0.3s ease;
 }
 .onb-dot.active {
-  background: #4dff91; width: 24px; border-radius: 4px;
+  background: linear-gradient(90deg, #2563EB, #3B82F6); width: 28px; border-radius: 4px;
 }
 .onb-btn {
-  width: 100%; padding: 14px; background: #4dff91; color: #0a0e27;
-  border: none; border-radius: 12px; font-weight: 700; font-size: 0.95rem;
+  width: 100%; padding: 14px; background: linear-gradient(135deg, #2563EB, #3B82F6); color: #fff;
+  border: none; border-radius: 16px; font-weight: 800; font-size: 1rem;
+  font-family: inherit;
   cursor: pointer; margin-bottom: 12px; transition: opacity 0.2s;
+  box-shadow: 0 8px 24px rgba(37,99,235,0.3);
 }
 .onb-btn:disabled { opacity: 0.5; cursor: default; }
 .onb-btn-skip {
-  width: 100%; padding: 12px; background: transparent; color: rgba(255,255,255,0.3);
+  width: 100%; padding: 12px; background: transparent; color: rgba(0,0,0,0.25);
   border: none; font-size: 0.85rem; cursor: pointer;
 }
 .onb-social-btn {
@@ -430,194 +450,197 @@ select option { background: #0d2137; color: #f0f4ff; }
 }
 .onb-divider {
   display: flex; align-items: center; gap: 12px;
-  margin: 16px 0; color: rgba(255,255,255,0.25); font-size: 0.8rem;
+  margin: 16px 0; color: rgba(0,0,0,0.25); font-size: 0.8rem;
 }
 .onb-divider::before, .onb-divider::after {
-  content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.1);
+  content: ''; flex: 1; height: 1px; background: rgba(0,0,0,0.08);
 }
 .onb-input {
   width: 100%; padding: 13px 14px; box-sizing: border-box;
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px; color: #f0f4ff; font-size: 0.92rem;
+  background: rgba(255,255,255,0.6); border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 10px; color: #1a1a1a; font-size: 0.92rem;
+  font-family: inherit;
   outline: none; margin-bottom: 10px;
 }
-.onb-input::placeholder { color: rgba(255,255,255,0.3); }
-.onb-input:focus { border-color: rgba(77,255,145,0.4); }
+.onb-input::placeholder { color: rgba(0,0,0,0.25); }
+.onb-input:focus { border-color: rgba(37,99,235,0.4); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
 .onb-progress-bar {
-  height: 3px; background: rgba(255,255,255,0.06);
+  height: 3px; background: rgba(0,0,0,0.06);
   border-radius: 2px; width: 100%; margin-bottom: 24px;
 }
 .onb-progress-fill {
-  height: 100%; background: #4dff91; border-radius: 2px;
+  height: 100%; background: linear-gradient(90deg, #2563EB, #3B82F6); border-radius: 2px;
   transition: width 0.4s ease;
 }
 .onb-chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 12px 18px; border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04);
-  color: rgba(255,255,255,0.6); font-size: 0.88rem; cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.1); background: rgba(0,0,0,0.03);
+  color: rgba(0,0,0,0.5); font-size: 0.88rem; cursor: pointer;
   transition: all 0.2s;
 }
 .onb-chip.selected {
-  border-color: #4dff91; color: #4dff91;
-  background: rgba(77,255,145,0.08);
+  border-color: #2563EB; color: #2563EB;
+  background: rgba(37,99,235,0.08);
 }
 .onb-day-chip {
   padding: 10px 14px; border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04);
-  color: rgba(255,255,255,0.6); font-size: 0.82rem; cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.1); background: rgba(0,0,0,0.03);
+  color: rgba(0,0,0,0.5); font-size: 0.82rem; cursor: pointer;
   transition: all 0.2s; text-align: center;
 }
 .onb-day-chip.selected {
-  border-color: #4dff91; color: #4dff91;
-  background: rgba(77,255,145,0.08);
+  border-color: #2563EB; color: #2563EB;
+  background: rgba(37,99,235,0.08);
 }
 .onb-slot-chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 10px 16px; border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04);
-  color: rgba(255,255,255,0.6); font-size: 0.82rem; cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.1); background: rgba(0,0,0,0.03);
+  color: rgba(0,0,0,0.5); font-size: 0.82rem; cursor: pointer;
   transition: all 0.2s;
 }
 .onb-slot-chip.selected {
-  border-color: #4dff91; color: #4dff91;
-  background: rgba(77,255,145,0.08);
+  border-color: #2563EB; color: #2563EB;
+  background: rgba(37,99,235,0.08);
 }
 .onb-board-type {
   padding: 14px 8px; border-radius: 12px; text-align: center;
-  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04);
-  color: rgba(255,255,255,0.6); font-size: 0.82rem; cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.1); background: rgba(0,0,0,0.03);
+  color: rgba(0,0,0,0.5); font-size: 0.82rem; cursor: pointer;
   transition: all 0.2s;
 }
 .onb-board-type.selected {
-  border-color: #4dff91; color: #4dff91;
-  background: rgba(77,255,145,0.08);
+  border-color: #2563EB; color: #2563EB;
+  background: rgba(37,99,235,0.08);
 }
 .onb-photo-zone {
-  border: 2px dashed rgba(255,255,255,0.15); border-radius: 12px;
-  padding: 24px; text-align: center; cursor: pointer; color: rgba(255,255,255,0.3);
+  border: 2px dashed rgba(0,0,0,0.12); border-radius: 12px;
+  padding: 24px; text-align: center; cursor: pointer; color: rgba(0,0,0,0.3);
   font-size: 0.82rem; transition: border-color 0.2s;
 }
-.onb-photo-zone:hover { border-color: rgba(77,255,145,0.3); }
+.onb-photo-zone:hover { border-color: rgba(37,99,235,0.3); }
 .onb-field-label {
   font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px;
-  color: rgba(255,255,255,0.35); margin-bottom: 8px; text-align: left; width: 100%;
+  color: rgba(0,0,0,0.3); margin-bottom: 8px; text-align: left; width: 100%;
 }
 .onb-why-text {
-  font-size: 0.82rem; color: rgba(255,255,255,0.4);
+  font-size: 0.82rem; color: rgba(0,0,0,0.4);
   line-height: 1.5; margin-bottom: 24px; max-width: 320px;
 }
 .onb-switch-link {
-  font-size: 0.82rem; color: rgba(255,255,255,0.4); margin-top: 16px;
+  font-size: 0.82rem; color: rgba(0,0,0,0.4); margin-top: 16px;
 }
-.onb-switch-link a { color: #4dff91; text-decoration: none; cursor: pointer; }
+.onb-switch-link a { color: #2563EB; text-decoration: none; cursor: pointer; }
 .onb-terms {
-  font-size: 0.65rem; color: rgba(255,255,255,0.2); margin-top: 16px;
+  font-size: 0.65rem; color: rgba(0,0,0,0.2); margin-top: 16px;
   line-height: 1.5;
 }
 .onb-tip-box {
-  background: rgba(255,255,255,0.04); border-radius: 10px;
-  padding: 14px 18px; font-size: 0.82rem; color: rgba(255,255,255,0.45);
+  background: rgba(0,0,0,0.03); border-radius: 10px;
+  padding: 14px 18px; font-size: 0.82rem; color: rgba(0,0,0,0.4);
   text-align: center; margin-top: 16px;
 }
 .onb-msg {
   margin-top: 12px; font-size: 0.82rem; min-height: 20px; text-align: center;
 }
-.onb-msg.success { color: #4dff91; }
-.onb-msg.error { color: #fc8181; }
+.onb-msg.success { color: #2D8A4E; }
+.onb-msg.error { color: #D44860; }
 .onb-avatar-area {
   display: flex; flex-direction: row; align-items: center; gap: 16px;
   margin-bottom: 16px; width: 100%;
 }
 .onb-avatar-circle {
   width: 72px; height: 72px; min-width: 72px; border-radius: 50%;
-  border: 2px dashed rgba(77,255,145,0.4); display: flex;
+  border: 2px dashed rgba(37,99,235,0.4); display: flex;
   align-items: center; justify-content: center; cursor: pointer;
-  color: rgba(255,255,255,0.3); font-size: 24px; background: rgba(255,255,255,0.04);
+  color: rgba(0,0,0,0.3); font-size: 24px; background: rgba(0,0,0,0.03);
   transition: border-color 0.2s;
 }
-.onb-avatar-circle:hover { border-color: #4dff91; }
+.onb-avatar-circle:hover { border-color: #2563EB; }
 
 /* ===== SPOTS REDESIGN ===== */
 .fav-strip { padding: 0 4px; margin-bottom: 12px; }
-.fav-strip-label { color: rgba(255,255,255,0.4); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.fav-strip-label { color: rgba(0,0,0,0.35); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
 .fav-strip-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
 .fav-strip-scroll::-webkit-scrollbar { display: none; }
-.fav-card { min-width: 100px; border-radius: 10px; padding: 8px; text-align: center; cursor: pointer; flex-shrink: 0; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); transition: border-color 0.2s; }
-.fav-score { border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.7rem; margin-bottom: 4px; color: #0a0e27; }
-.fav-name { color: #f0f4ff; font-size: 0.75rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
-.fav-city { color: rgba(255,255,255,0.35); font-size: 0.6rem; }
+.fav-card { min-width: 100px; border-radius: 10px; padding: 8px; text-align: center; cursor: pointer; flex-shrink: 0; background: rgba(255,255,255,0.45); border: 1px solid rgba(0,0,0,0.06); transition: border-color 0.2s; }
+.fav-score { border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.7rem; margin-bottom: 4px; color: #fff; }
+.fav-name { color: #1a1a1a; font-size: 0.75rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
+.fav-city { color: rgba(0,0,0,0.35); font-size: 0.6rem; }
 
-.spots-search { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #f0f4ff; font-size: 0.9rem; outline: none; margin-bottom: 8px; }
-.spots-search::placeholder { color: rgba(255,255,255,0.3); }
+.spots-search { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.6); color: #1a1a1a; font-size: 0.9rem; font-family: inherit; outline: none; margin-bottom: 8px; }
+.spots-search::placeholder { color: rgba(0,0,0,0.25); }
 .sort-chips { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-.sort-chip { border-radius: 20px; padding: 8px 18px; font-size: 0.85rem; cursor: pointer; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); }
-.sort-chip.active { background: rgba(77,255,145,0.15); border-color: #4dff91; color: #4dff91; }
+.sort-chip { border-radius: 20px; padding: 8px 18px; font-size: 0.85rem; cursor: pointer; border: 1px solid rgba(0,0,0,0.12); background: rgba(0,0,0,0.04); color: rgba(0,0,0,0.4); }
+.sort-chip.active { background: rgba(37,99,235,0.1); border-color: #2563EB; color: #2563EB; }
 .filter-panel { display: none; margin-bottom: 8px; }
 .filter-panel.open { display: flex; gap: 6px; }
-.filter-panel select { flex: 1; padding: 6px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #f0f4ff; font-size: 0.75rem; }
+.filter-panel select { flex: 1; padding: 6px 8px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.12); background: rgba(255,255,255,0.6); color: #1a1a1a; font-size: 0.75rem; }
 .active-filters { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; }
-.active-filter { background: rgba(77,255,145,0.1); border: 1px solid rgba(77,255,145,0.3); border-radius: 12px; padding: 2px 8px; font-size: 0.65rem; color: #4dff91; cursor: pointer; }
+.active-filter { background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.3); border-radius: 12px; padding: 2px 8px; font-size: 0.65rem; color: #2563EB; cursor: pointer; }
 
 .zone-chips { display: flex; gap: 6px; flex-wrap: nowrap; }
-#surf-zone-chips, #city-chips { background: #0a0e27; }
+#surf-zone-chips, #city-chips { background: transparent; }
 #surf-zone-chips::-webkit-scrollbar, #city-chips::-webkit-scrollbar { display: none; }
 #surf-zone-chips, #city-chips { scrollbar-width: none; }
-.zone-chip { border-radius: 16px; padding: 4px 10px; font-size: 0.65rem; white-space: nowrap; flex-shrink: 0; cursor: pointer; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.5); transition: all 0.15s; }
-.zone-chip.active { background: rgba(0,207,255,0.12); border-color: rgba(0,207,255,0.4); color: #00cfff; font-weight: 600; }
+.zone-chip { border-radius: 16px; padding: 4px 10px; font-size: 0.65rem; white-space: nowrap; flex-shrink: 0; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); background: rgba(0,0,0,0.03); color: rgba(0,0,0,0.5); transition: all 0.15s; }
+.zone-chip.active { background: rgba(37,99,235,0.1); border-color: rgba(37,99,235,0.4); color: #2563EB; font-weight: 600; }
 
-.spot-row { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 10px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-.spot-row:active { background: rgba(255,255,255,0.08); }
+.spot-row { background: rgba(255,255,255,0.45); border-radius: 14px; border: 1px solid rgba(0,0,0,0.04); padding: 12px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+.spot-row:active { background: rgba(255,255,255,0.7); }
 .spot-row-info { flex: 1; min-width: 0; }
-.spot-row-name { color: #f0f4ff; font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.spot-row-meta { color: rgba(255,255,255,0.4); font-size: 0.7rem; margin-top: 2px; }
+.spot-row-name { color: #1a1a1a; font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spot-row-meta { color: rgba(0,0,0,0.4); font-size: 0.7rem; margin-top: 2px; }
 
-.spots-load-more { width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: rgba(255,255,255,0.5); cursor: pointer; font-size: 0.8rem; margin-top: 8px; }
+.spots-load-more { width: 100%; padding: 10px; background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.08); border-radius: 8px; color: rgba(0,0,0,0.5); cursor: pointer; font-size: 0.8rem; margin-top: 8px; }
 .spots-load-more:disabled { opacity: 0.4; cursor: default; }
 
-.gmaps-btn { display: block; width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #f0f4ff; text-align: center; text-decoration: none; font-size: 0.85rem; margin: 12px 0; }
-.spot-chars { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-.spot-char { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 10px; text-align: center; }
-.spot-char-label { color: rgba(255,255,255,0.35); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-.spot-char-value { color: #f0f4ff; font-size: 0.85rem; font-weight: 600; }
-.spot-char-sub { color: rgba(255,255,255,0.3); font-size: 0.65rem; margin-top: 2px; }
-.spot-wind-box { background: rgba(0,207,255,0.06); border: 1px solid rgba(0,207,255,0.2); border-radius: 10px; padding: 10px; display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.gmaps-btn { display: block; width: 100%; padding: 10px; background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 8px; color: #1a1a1a; text-align: center; text-decoration: none; font-size: 0.85rem; margin: 12px 0; }
+.spot-chars { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; background: rgba(255,255,255,0.45); border-radius: 12px; }
+.spot-char { background: rgba(255,255,255,0.45); border-radius: 12px; padding: 10px; text-align: center; }
+.spot-char-label { color: rgba(0,0,0,0.35); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.spot-char-value { color: #1a1a1a; font-size: 0.85rem; font-weight: 600; }
+.spot-char-sub { color: rgba(0,0,0,0.3); font-size: 0.65rem; margin-top: 2px; }
+.spot-wind-box { background: rgba(37,99,235,0.06); border: 1px solid rgba(37,99,235,0.2); border-radius: 10px; padding: 10px; display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 
 /* ===== SESSION SHARE CARD OVERLAY ===== */
 #share-overlay {
   position: fixed; inset: 0; z-index: 1000;
-  background: rgba(10,14,39,0.95);
-  backdrop-filter: blur(6px);
+  background: rgba(235,242,255,0.92);
+  backdrop-filter: blur(12px);
   display: flex; align-items: center; justify-content: center;
   padding: 20px;
 }
 #share-overlay.hidden { display: none; }
 .share-card {
-  background: #0d2137;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 16px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 20px;
   padding: 28px 24px;
   width: 340px;
   max-height: 90vh;
   overflow-y: auto;
   text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
 }
-.share-card h2 { color: #f0f4ff; font-size: 1.3rem; margin: 0 0 6px; }
+.share-card h2 { color: #1a1a1a; font-size: 1.3rem; margin: 0 0 6px; }
 .share-card .share-check { font-size: 40px; margin-bottom: 8px; }
-.share-card .share-spot { color: #f0f4ff; font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
-.share-card .share-meta { color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-bottom: 20px; }
-.share-card .share-stars { color: #ffd700; }
+.share-card .share-spot { color: #1a1a1a; font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
+.share-card .share-meta { color: rgba(0,0,0,0.5); font-size: 0.85rem; margin-bottom: 20px; }
+.share-card .share-stars { color: #F7B733; }
 .share-btn-primary {
-  display: block; width: 100%; padding: 14px; border: none; border-radius: 12px;
-  background: #4dff91; color: #0a0e27; font-size: 1rem; font-weight: 700;
+  display: block; width: 100%; padding: 14px; border: none; border-radius: 14px;
+  background: linear-gradient(135deg, #2563EB, #3B82F6); color: #fff; font-size: 1rem; font-weight: 700;
   cursor: pointer; margin-bottom: 12px;
+  box-shadow: 0 4px 16px rgba(37,99,235,0.3);
 }
 .share-btn-primary:active { opacity: 0.85; }
 .share-btn-skip {
-  background: none; border: none; color: rgba(255,255,255,0.45);
+  background: none; border: none; color: rgba(0,0,0,0.4);
   font-size: 0.9rem; cursor: pointer; padding: 8px;
 }
-.share-btn-skip:hover { color: rgba(255,255,255,0.7); }
+.share-btn-skip:hover { color: rgba(0,0,0,0.6); }
 .share-preview-img {
   width: 100%; max-width: 300px; border-radius: 10px;
   margin: 0 auto 16px; display: block;
@@ -631,10 +654,10 @@ select option { background: #0d2137; color: #f0f4ff; }
   font-size: 0.9rem; font-weight: 600; cursor: pointer;
 }
 .share-btn-save {
-  background: rgba(255,255,255,0.1); color: #f0f4ff;
+  background: rgba(0,0,0,0.06); color: #1a1a1a;
 }
 .share-btn-share {
-  background: #4dff91; color: #0a0e27;
+  background: linear-gradient(135deg, #2563EB, #3B82F6); color: #fff;
 }
 .share-file-input { display: none; }
     </style>
@@ -653,9 +676,9 @@ select option { background: #0d2137; color: #f0f4ff; }
     <!-- ===== SPOTS ===== -->
     <div id="tab-spots" class="tab-panel">
       <!-- Bandeau mode sélection -->
-      <div id="spot-pick-banner" style="display:none;padding:10px 14px;background:rgba(0,207,255,0.12);border-bottom:1px solid rgba(0,207,255,0.3);display:none;align-items:center;justify-content:space-between">
-        <div style="color:#00cfff;font-size:0.85rem;font-weight:600">Sélectionne un spot pour ta session</div>
-        <div onclick="cancelSpotPick()" style="color:rgba(255,255,255,0.5);cursor:pointer;font-size:0.8rem;padding:4px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:6px">Annuler</div>
+      <div id="spot-pick-banner" style="display:none;padding:10px 14px;background:rgba(37,99,235,0.08);border-bottom:1px solid rgba(37,99,235,0.2);display:none;align-items:center;justify-content:space-between">
+        <div style="color:#2563EB;font-size:0.85rem;font-weight:600">Sélectionne un spot pour ta session</div>
+        <div onclick="cancelSpotPick()" style="color:rgba(0,0,0,0.5);cursor:pointer;font-size:0.8rem;padding:4px 10px;border:1px solid rgba(0,0,0,0.12);border-radius:6px">Annuler</div>
       </div>
       <div class="spot-list-view" id="spots-list-view">
         <!-- Favoris toujours visibles -->
@@ -664,9 +687,9 @@ select option { background: #0d2137; color: #f0f4ff; }
         <!-- Tabs Autour de moi / Explorer -->
         <div style="display:flex;gap:0;margin-bottom:12px">
           <div id="spots-tab-nearby" class="spots-tab active" onclick="switchSpotsTab('nearby')"
-               style="flex:1;padding:10px;text-align:center;font-size:0.85rem;font-weight:600;cursor:pointer;border-bottom:2px solid #4dff91;color:#4dff91">Autour de moi</div>
+               style="flex:1;padding:10px;text-align:center;font-size:0.85rem;font-weight:600;cursor:pointer;border-bottom:2px solid #2563EB;color:#2563EB">Autour de moi</div>
           <div id="spots-tab-explore" class="spots-tab" onclick="switchSpotsTab('explore')"
-               style="flex:1;padding:10px;text-align:center;font-size:0.85rem;cursor:pointer;border-bottom:2px solid transparent;color:rgba(255,255,255,0.4)">Explorer</div>
+               style="flex:1;padding:10px;text-align:center;font-size:0.85rem;cursor:pointer;border-bottom:2px solid transparent;color:rgba(0,0,0,0.4)">Explorer</div>
         </div>
 
         <!-- Contenu Autour de moi -->
@@ -704,7 +727,7 @@ select option { background: #0d2137; color: #f0f4ff; }
             <span class="section-label">📍 Spot</span>
             <input type="hidden" id="session-spot" required>
             <div id="session-spot-display" onclick="enterSpotPickMode()"
-                 style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);font-size:0.9rem;cursor:pointer">
+                 style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:rgba(255,255,255,0.6);color:rgba(0,0,0,0.4);font-size:0.9rem;cursor:pointer">
               Choisir un spot...
             </div>
           </div>
@@ -1610,7 +1633,7 @@ select option { background: #0d2137; color: #f0f4ff; }
                         <div class="onb-why-text">Tes buddy te retrouveront plus facilement.</div>
                         <div class="onb-avatar-area">
                             <div class="onb-avatar-circle" title="Photo optionnelle">\u{1F4F7}</div>
-                            <span style="color:rgba(255,255,255,0.3);font-size:0.78rem">Photo optionnelle</span>
+                            <span style="color:rgba(0,0,0,0.3);font-size:0.78rem">Photo optionnelle</span>
                         </div>
                         <input type="text" class="onb-input" id="onb-pseudo" placeholder="Ton prenom ou pseudo" />
                         <button class="onb-btn" onclick="if(!document.getElementById('onb-pseudo').value.trim()){showOnbMsg('Entre ton prenom ou pseudo','error');return;}showOnbMsg('','');goToProfileStep(1)">Suivant \u{2192}</button>
@@ -1864,12 +1887,12 @@ select option { background: #0d2137; color: #f0f4ff; }
             const favsHtml = favs.map((s, i) => {
                 const cond = spotConditions[s.id] || {};
                 const score = _spotScoresCache?.[s.id]?.score;
-                const scoreColor = score >= 8 ? '#4dff91' : score >= 6 ? '#00cfff' : score ? '#ed8936' : '';
-                return `<div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,0.05)">
-                    ${score ? `<div style="background:${scoreColor};color:#0a0e27;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0">${score}</div>` : ''}
+                const scoreColor = score >= 8 ? '#2D8A4E' : score >= 6 ? '#E89A1E' : score ? '#E06B30' : '';
+                return `<div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid rgba(0,0,0,0.05)">
+                    ${score ? `<div style="background:${scoreBadgeBg(score)};color:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0">${score}</div>` : ''}
                     <div style="flex:1;min-width:0;cursor:pointer" onclick="showTab('spots'); setTimeout(() => showSpotDetail('${s.id}'), 300)">
-                        <div style="color:#f0f4ff;font-size:0.85rem;font-weight:500">${s.name}</div>
-                        <div style="color:rgba(255,255,255,0.4);font-size:0.7rem">${s.city || ''}${cond.waveHeight != null ? ` · 🌊 ${cond.waveHeight.toFixed(1)}m` : ''}${cond.windSpeed != null ? ` · 💨 ${Math.round(cond.windSpeed)}km/h ${cond.windDirection || ''}` : ''}${cond.wavePeriod != null ? ` · ${cond.wavePeriod.toFixed(0)}s` : ''}</div>
+                        <div style="color:#1a1a1a;font-size:0.85rem;font-weight:500">${s.name}</div>
+                        <div style="color:rgba(0,0,0,0.4);font-size:0.7rem">${s.city || ''}${cond.waveHeight != null ? ` · 🌊 ${cond.waveHeight.toFixed(1)}m` : ''}${cond.windSpeed != null ? ` · 💨 ${Math.round(cond.windSpeed)}km/h ${cond.windDirection || ''}` : ''}${cond.wavePeriod != null ? ` · ${cond.wavePeriod.toFixed(0)}s` : ''}</div>
                     </div>
                     <div onclick="event.stopPropagation();toggleFavorite('${s.id}',this);setTimeout(()=>loadAccueilFavs('${userId}'),500)" class="active"
                          style="font-size:1.1rem;cursor:pointer;padding:4px 6px;flex-shrink:0">⭐</div>
@@ -1878,13 +1901,13 @@ select option { background: #0d2137; color: #f0f4ff; }
 
             container.innerHTML = `
               <div class="card" style="padding:0;overflow:hidden">
-                <div onclick="toggleAccueilFavs()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;cursor:pointer;background:rgba(77,255,145,0.08);border-bottom:1px solid rgba(77,255,145,0.15)">
+                <div onclick="toggleAccueilFavs()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;cursor:pointer;background:rgba(37,99,235,0.06);border-bottom:1px solid rgba(37,99,235,0.12)">
                     <div style="display:flex;align-items:center;gap:8px">
                         <span style="font-size:1.1rem">⭐</span>
-                        <span style="color:#4dff91;font-size:0.9rem;font-weight:600">Mes favoris</span>
-                        <span style="background:rgba(77,255,145,0.2);color:#4dff91;border-radius:12px;padding:1px 8px;font-size:0.7rem;font-weight:700">${favs.length}</span>
+                        <span style="color:#2563EB;font-size:0.9rem;font-weight:600">Mes favoris</span>
+                        <span style="background:rgba(37,99,235,0.1);color:#2563EB;border-radius:12px;padding:1px 8px;font-size:0.7rem;font-weight:700">${favs.length}</span>
                     </div>
-                    <div id="accueil-favs-arrow" style="color:#4dff91;font-size:0.8rem;transition:transform 0.2s">▾</div>
+                    <div id="accueil-favs-arrow" style="color:#2563EB;font-size:0.8rem;transition:transform 0.2s">▾</div>
                 </div>
                 <div id="accueil-favs-list" style="display:none;padding:4px 10px">
                     ${favsHtml}
@@ -1973,12 +1996,15 @@ select option { background: #0d2137; color: #f0f4ff; }
         }
 
         // Helpers globaux pour les prédictions
-        function scoreColor(s) { return s >= 8 ? '#4dff91' : s >= 6 ? '#00cfff' : s >= 4 ? '#ed8936' : 'rgba(255,255,255,0.2)'; }
+        function scoreColor(s) { return s >= 8 ? '#2D8A4E' : s >= 6 ? '#E89A1E' : s >= 4 ? '#E06B30' : 'rgba(0,0,0,0.2)'; }
+        function scoreBadgeBg(s) { return s >= 8 ? 'linear-gradient(135deg, #A8E063, #56AB2F)' : s >= 6 ? 'linear-gradient(135deg, #F7CE68, #F7B733)' : s >= 4 ? 'linear-gradient(135deg, #FFB347, #FF8C42)' : 'linear-gradient(135deg, #F9A8B0, #E8667A)'; }
+        function scoreCardBg(s) { return s >= 8 ? 'linear-gradient(135deg, #D4ECC4, #E8F5D8)' : s >= 6 ? 'linear-gradient(135deg, #FFF3D0, #FFE8A0)' : s >= 4 ? 'linear-gradient(135deg, #FFE0C0, #FFD0A0)' : 'linear-gradient(135deg, #FCCCD0, #F5B0B8)'; }
+        function heroCardBg(s) { return s >= 8 ? 'linear-gradient(155deg, #A8E063 0%, #56AB2F 40%, #2D8A4E 100%)' : s >= 6 ? 'linear-gradient(155deg, #F7CE68 0%, #F7B733 40%, #E89A1E 100%)' : s >= 4 ? 'linear-gradient(155deg, #FFB347 0%, #FF8C42 40%, #E06B30 100%)' : 'linear-gradient(155deg, #F9A8B0 0%, #E8667A 50%, #D44860 100%)'; }
         function narrativeStyle(score) {
-          if (score >= 7) return 'background:linear-gradient(135deg, rgba(77,255,145,0.1), rgba(0,207,255,0.08));border:1px solid rgba(77,255,145,0.2);color:#4dff91';
-          if (score >= 5.5) return 'background:linear-gradient(135deg, rgba(0,207,255,0.08), rgba(0,207,255,0.05));border:1px solid rgba(0,207,255,0.2);color:#00cfff';
-          if (score >= 4) return 'background:linear-gradient(135deg, rgba(237,137,54,0.1), rgba(237,137,54,0.05));border:1px solid rgba(237,137,54,0.2);color:#ed8936';
-          return 'background:linear-gradient(135deg, rgba(255,90,90,0.1), rgba(255,90,90,0.05));border:1px solid rgba(255,90,90,0.2);color:#ff5a5a';
+          if (score >= 7) return `background:${scoreCardBg(score)};border:1px solid rgba(45,138,78,0.2);color:#2D8A4E`;
+          if (score >= 5.5) return `background:${scoreCardBg(score)};border:1px solid rgba(232,154,30,0.2);color:#E89A1E`;
+          if (score >= 4) return `background:${scoreCardBg(score)};border:1px solid rgba(224,107,48,0.2);color:#E06B30`;
+          return `background:${scoreCardBg(score)};border:1px solid rgba(212,72,96,0.2);color:#D44860`;
         }
 
         function showSpotPredictionDetail(resultIdx) {
@@ -2040,60 +2066,70 @@ select option { background: #0d2137; color: #f0f4ff; }
               : '';
 
             const hoursHtml = hours.map(h => {
-              const sc = scoreColor(h.score);
               const isBest = bestWindow && h.hour === parseInt(bestWindow.peakHour) && h.date === bestWindow.date;
-              const border = isBest ? `border:2px solid ${sc}` : 'border:1px solid rgba(255,255,255,0.06)';
-              const tideLabels = {low:'Basse',high:'Haute',rising:'Montante',falling:'Descendante'};
-              const tideIcons = {low:'↓',high:'↑',rising:'↗',falling:'↘'};
-              const tp = h.conditions?.tidePhase || '';
-              const tideText = tp ? `🌙 ${tideIcons[tp] || ''} ${tideLabels[tp] || tp}` : '';
-              return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;${border};margin-bottom:3px;background:rgba(255,255,255,0.02)">
-                <div style="width:32px;text-align:center;color:rgba(255,255,255,0.5);font-size:0.75rem;font-weight:600;flex-shrink:0">${h.hour}h</div>
-                <div style="background:${sc};color:#0a0e27;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.72rem;flex-shrink:0">${h.score}</div>
-                <div style="flex:1;min-width:0">
-                  <div style="color:rgba(255,255,255,0.5);font-size:0.72rem">🌊 ${(h.conditions?.waveHeight || 0).toFixed(1)}m · 💨 ${Math.round(h.conditions?.windSpeed || 0)}km/h ${dirToCard(h.conditions?.windDirection)}${h.conditions?.wavePeriod ? ' · ' + Math.round(h.conditions.wavePeriod) + 's' : ''}</div>
-                  <div style="color:rgba(255,255,255,0.35);font-size:0.65rem">${tideText}${tideText && (h.conditions?.airTemp != null || h.conditions?.waterTemp != null) ? ' · ' : ''}${h.conditions?.airTemp != null ? '🌡' + h.conditions.airTemp + '°' : ''}${h.conditions?.waterTemp != null ? ' 💧' + h.conditions.waterTemp + '°' : ''}</div>
+              const barWidth = Math.max(15, Math.min(95, (h.score / 10) * 100));
+              const barGrad = h.score >= 8 ? 'linear-gradient(90deg, #A8E063, #56AB2F)'
+                : h.score >= 6 ? 'linear-gradient(90deg, #C8E89A, #A8D870)'
+                : h.score >= 5 ? 'linear-gradient(90deg, #F7CE68, #F7B733)'
+                : h.score >= 4 ? 'linear-gradient(90deg, #FFB347, #FF8C42)'
+                : 'linear-gradient(90deg, #E8CBC0, #D4A69A)';
+              const barTextColor = h.score >= 8 ? '#fff' : 'rgba(0,0,0,0.5)';
+              const peakBg = isBest ? 'background:rgba(0,0,0,0.04);border-radius:10px;padding:6px 4px' : 'padding:6px 0';
+              const timeColor = isBest ? 'color:#2D8A4E;font-weight:800' : 'color:rgba(0,0,0,0.3);font-weight:600';
+              const condText = `${(h.conditions?.waveHeight || 0).toFixed(1)}m · ${Math.round(h.conditions?.windSpeed || 0)}km/h`;
+              return `<div style="display:flex;align-items:center;gap:8px;${peakBg}">
+                <div style="width:30px;font-size:0.75rem;${timeColor};flex-shrink:0">${h.hour}h</div>
+                <div style="flex:1;height:28px;background:rgba(0,0,0,0.03);border-radius:8px;overflow:hidden;position:relative">
+                  <div style="height:100%;width:${barWidth}%;background:${barGrad};border-radius:8px;display:flex;align-items:center;padding-left:10px;font-size:0.72rem;font-weight:700;color:${barTextColor}">${h.score}</div>
                 </div>
-                ${isBest ? '<div style="color:#4dff91;font-size:0.65rem;font-weight:600;flex-shrink:0">BEST</div>' : ''}
+                <div style="width:80px;text-align:right;font-size:0.62rem;color:rgba(0,0,0,0.25);flex-shrink:0">${condText}</div>
               </div>`;
             }).join('');
             return `<div style="margin-bottom:12px">
-              <div style="color:rgba(255,255,255,0.4);font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">${dayLabel}</div>
-              ${tidesSummary ? `<div style="color:rgba(255,255,255,0.3);font-size:0.68rem;margin-bottom:6px">🌙 ${tidesSummary}</div>` : ''}
+              <div style="color:rgba(0,0,0,0.4);font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">${dayLabel}</div>
+              ${tidesSummary ? `<div style="color:rgba(0,0,0,0.3);font-size:0.68rem;margin-bottom:6px">🌙 ${tidesSummary}</div>` : ''}
               ${hoursHtml}
             </div>`;
           }).join('');
 
           // whyGood du meilleur créneau
           const whyHtml = bestWindow
-            ? (bestWindow.whyGood || []).map(r => `<div style="color:#4dff91;font-size:0.75rem;margin-top:3px">✅ ${r}</div>`).join('')
-              + (bestWindow.whyNotPerfect || []).map(r => `<div style="color:#ed8936;font-size:0.75rem;margin-top:3px">⚠️ ${r}</div>`).join('')
+            ? (bestWindow.whyGood || []).map(r => `<div style="color:#2D8A4E;font-size:0.75rem;margin-top:3px">✅ ${r}</div>`).join('')
+              + (bestWindow.whyNotPerfect || []).map(r => `<div style="color:#E06B30;font-size:0.75rem;margin-top:3px">⚠️ ${r}</div>`).join('')
             : '';
-          const boardHtml = bestWindow?.boardSuggestion?.board ? `<div style="color:#00cfff;font-size:0.75rem;margin-top:6px;padding:6px 10px;background:rgba(0,207,255,0.08);border:1px solid rgba(0,207,255,0.15);border-radius:6px">🏄 Prends ta <strong>${bestWindow.boardSuggestion.board.nickname || bestWindow.boardSuggestion.board.name}</strong> — ${bestWindow.boardSuggestion.reason || ''}</div>` : '';
+          const boardHtml = bestWindow?.boardSuggestion?.board ? `<div style="color:#3B82F6;font-size:0.75rem;margin-top:6px;padding:6px 10px;background:rgba(37,99,235,0.06);border:1px solid rgba(37,99,235,0.15);border-radius:6px">🏄 Prends ta <strong>${bestWindow.boardSuggestion.board.nickname || bestWindow.boardSuggestion.board.name}</strong> — ${bestWindow.boardSuggestion.reason || ''}</div>` : '';
+
+          const bw = bestWindow || {};
+          const detailHeroText = (bw.score >= 6 && bw.score < 8) ? '#1a1a1a' : '#fff';
+          const detailTagBg = (bw.score >= 6 && bw.score < 8) ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.25)';
+          const tideLabel = {low:'Basse',high:'Haute',rising:'Montante',falling:'Descendante'}[bw.conditions?.tidePhase] || '';
 
           container.innerHTML = `
-            <div style="margin-bottom:12px">
-              <div onclick="loadAccueilWindows('${dataManager.currentUserId}')" style="display:inline-block;color:rgba(255,255,255,0.5);font-size:0.8rem;cursor:pointer;margin-bottom:10px;padding:6px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:6px">← Tous les spots</div>
-              <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
-                <div style="background:${scoreColor(bestWindow?.score || 0)};color:#0a0e27;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;flex-shrink:0">${bestWindow?.score || '?'}</div>
-                <div>
-                  <div style="color:#f0f4ff;font-size:1.1rem;font-weight:700">${spot.name}</div>
-                  <div style="color:rgba(255,255,255,0.5);font-size:0.8rem">${spot.city || ''} · Meilleur créneau : ${bestWindow?.timeWindow || ''}</div>
+            <div onclick="loadAccueilWindows('${dataManager.currentUserId}')" style="display:inline-flex;align-items:center;gap:4px;color:rgba(0,0,0,0.4);font-size:0.8rem;cursor:pointer;margin-bottom:10px;font-weight:500">← Retour</div>
+
+            <div style="border-radius:22px;padding:24px 20px;margin-bottom:16px;position:relative;overflow:hidden;background:${heroCardBg(bw.score || 0)};color:${detailHeroText};box-shadow:0 8px 32px rgba(0,0,0,0.12)">
+              <div style="position:absolute;top:-30%;right:-20%;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.15);filter:blur(40px)"></div>
+              <div style="position:absolute;bottom:-20%;left:-15%;width:140px;height:140px;border-radius:50%;background:rgba(0,0,0,0.08);filter:blur(50px)"></div>
+              <div style="position:relative;z-index:1">
+                <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;opacity:0.7">${spot.name}${spot.city ? ' · ' + spot.city : ''}</div>
+                <div style="font-size:4.2rem;font-weight:800;line-height:1;margin:4px 0">${bw.score || '?'}</div>
+                <div style="font-size:1.1rem;font-weight:700;opacity:0.85;margin-bottom:6px">${bw.score >= 8 ? 'Excellent' : bw.score >= 6 ? 'Bon créneau' : bw.score >= 4 ? 'Moyen' : 'Difficile'}</div>
+                <div style="font-size:0.8rem;opacity:0.6;margin-bottom:12px">Meilleur créneau : ${bw.timeWindow || ''}</div>
+                <div style="display:flex;gap:5px;flex-wrap:wrap">
+                  <span style="padding:4px 10px;background:${detailTagBg};border-radius:16px;font-size:0.7rem;font-weight:600;backdrop-filter:blur(8px)">🌊 ${(bw.conditions?.waveHeight || 0).toFixed(1)}m</span>
+                  <span style="padding:4px 10px;background:${detailTagBg};border-radius:16px;font-size:0.7rem;font-weight:600">💨 ${Math.round(bw.conditions?.windSpeed || 0)}km/h ${dirToCard(bw.conditions?.windDirection)}</span>
+                  ${bw.conditions?.wavePeriod ? `<span style="padding:4px 10px;background:${detailTagBg};border-radius:16px;font-size:0.7rem;font-weight:600">⏱ ${Math.round(bw.conditions.wavePeriod)}s</span>` : ''}
+                  ${tideLabel ? `<span style="padding:4px 10px;background:${detailTagBg};border-radius:16px;font-size:0.7rem;font-weight:600">🌙 ${tideLabel}</span>` : ''}
+                  ${bw.conditions?.airTemp != null ? `<span style="padding:4px 10px;background:${detailTagBg};border-radius:16px;font-size:0.7rem;font-weight:600">🌡 ${bw.conditions.airTemp}°</span>` : ''}
+                  ${bw.conditions?.waterTemp != null ? `<span style="padding:4px 10px;background:${detailTagBg};border-radius:16px;font-size:0.7rem;font-weight:600">💧 ${bw.conditions.waterTemp}°</span>` : ''}
                 </div>
               </div>
-              ${bestWindow ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-                <div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:6px 10px;font-size:0.78rem;color:rgba(255,255,255,0.6)">🌊 ${(bestWindow.conditions?.waveHeight || 0).toFixed(1)}m</div>
-                <div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:6px 10px;font-size:0.78rem;color:rgba(255,255,255,0.6)">💨 ${Math.round(bestWindow.conditions?.windSpeed || 0)}km/h ${dirToCard(bestWindow.conditions?.windDirection)}</div>
-                ${bestWindow.conditions?.wavePeriod ? `<div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:6px 10px;font-size:0.78rem;color:rgba(255,255,255,0.6)">⏱ ${Math.round(bestWindow.conditions.wavePeriod)}s</div>` : ''}
-                ${bestWindow.conditions?.tidePhase ? `<div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:6px 10px;font-size:0.78rem;color:rgba(255,255,255,0.6)">🌙 ${{low:'Basse',high:'Haute',rising:'Montante',falling:'Descendante'}[bestWindow.conditions.tidePhase] || ''}</div>` : ''}
-                ${bestWindow.conditions?.airTemp != null ? `<div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:6px 10px;font-size:0.78rem;color:rgba(255,255,255,0.6)">🌡 ${bestWindow.conditions.airTemp}°C</div>` : ''}
-                ${bestWindow.conditions?.waterTemp != null ? `<div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:6px 10px;font-size:0.78rem;color:rgba(255,255,255,0.6)">💧 ${bestWindow.conditions.waterTemp}°C</div>` : ''}
-              </div>` : ''}
-              ${whyHtml}
-              ${bestWindow?.narrative ? `<div style="margin-top:8px;padding:8px 12px;${narrativeStyle(bestWindow?.score || 0)};border-radius:8px;font-size:0.82rem;font-weight:600;text-align:center">${bestWindow.narrative}</div>` : ''}
-              ${boardHtml}
             </div>
-            <div style="color:rgba(255,255,255,0.4);font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Score heure par heure</div>
+
+            ${whyHtml ? `<div style="margin-bottom:8px">${whyHtml}</div>` : ''}
+            ${boardHtml}
+
+            <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:2.5px;color:rgba(0,0,0,0.2);font-weight:700;margin:18px 0 10px">Heure par heure</div>
             ${daysHtml}`;
         }
 
@@ -2140,47 +2176,51 @@ select option { background: #0d2137; color: #f0f4ff; }
             const html = spotCards.map((item, i) => {
               const w = item.best;
               const spotName = item.spot?.name || '';
-              const scoreColor = w.score >= 8 ? '#4dff91' : w.score >= 6 ? '#00cfff' : '#ed8936';
+              const scoreColor = w.score >= 8 ? '#2D8A4E' : w.score >= 6 ? '#E89A1E' : '#E06B30';
               const date = new Date(w.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
               const windDir = dirToCardinal(w.conditions?.windDirection);
               const isFirst = i === 0;
 
               if (isFirst) {
-                // Premier spot = card détaillée avec whyGood
-                const whyHtml = (w.whyGood || []).map(r => `<div style="color:#4dff91;font-size:0.75rem;margin-top:3px">✅ ${r}</div>`).join('')
-                  + (w.whyNotPerfect || []).map(r => `<div style="color:#ed8936;font-size:0.75rem;margin-top:3px">⚠️ ${r}</div>`).join('');
-                const boardHtml = w.boardSuggestion?.board ? `<div style="color:#00cfff;font-size:0.75rem;margin-top:6px;padding:6px 10px;background:rgba(0,207,255,0.08);border:1px solid rgba(0,207,255,0.15);border-radius:6px">🏄 Prends ta <strong>${w.boardSuggestion.board.nickname || w.boardSuggestion.board.name}</strong> — ${w.boardSuggestion.reason || ''}</div>` : '';
-                return `<div onclick="showSpotPredictionDetail(${item.resultIdx})" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:10px;cursor:pointer">
-                  <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-                    <div style="background:${scoreColor};color:#0a0e27;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;flex-shrink:0">${w.score}</div>
-                    <div>
-                      <div style="color:#f0f4ff;font-size:1rem;font-weight:600">${spotName}</div>
-                      <div style="color:rgba(255,255,255,0.5);font-size:0.85rem">${date} · ${w.timeWindow || ''}</div>
+                const heroTextColor = w.score >= 6 && w.score < 8 ? '#1a1a1a' : '#fff';
+                const heroSubOpacity = w.score >= 6 && w.score < 8 ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.7)';
+                const heroTagBg = w.score >= 6 && w.score < 8 ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.25)';
+                const heroLabel = w.score >= 8 ? 'Excellent' : w.score >= 6 ? 'Bon créneau' : w.score >= 4 ? 'Moyen' : 'Difficile';
+                const whyHtml = (w.whyGood || []).map(r => `<div style="color:#2D8A4E;font-size:0.75rem;margin-top:3px">✅ ${r}</div>`).join('')
+                  + (w.whyNotPerfect || []).map(r => `<div style="color:#E06B30;font-size:0.75rem;margin-top:3px">⚠️ ${r}</div>`).join('');
+                const boardHtml = w.boardSuggestion?.board ? `<div style="color:#2D8A4E;font-size:0.78rem;margin-top:8px;padding:10px 14px;background:linear-gradient(135deg, rgba(86,171,47,0.08), rgba(86,171,47,0.03));border:1px solid rgba(86,171,47,0.15);border-radius:12px;font-weight:600;display:flex;align-items:center;gap:6px">🏄 Prends ta <strong>${w.boardSuggestion.board.nickname || w.boardSuggestion.board.name}</strong> — ${w.boardSuggestion.reason || ''}</div>` : '';
+                const tideIcon = {low:'↓ Basse',high:'↑ Haute',rising:'↗ Montante',falling:'↘ Descendante'}[w.conditions?.tidePhase] || '';
+                return `<div onclick="showSpotPredictionDetail(${item.resultIdx})" style="border-radius:22px;padding:24px 20px;margin-bottom:14px;position:relative;overflow:hidden;background:${heroCardBg(w.score || 0)};color:${heroTextColor};cursor:pointer;box-shadow:0 8px 32px rgba(0,0,0,0.12)">
+                  <div style="position:absolute;top:-30%;right:-20%;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.15);filter:blur(40px)"></div>
+                  <div style="position:absolute;bottom:-20%;left:-15%;width:140px;height:140px;border-radius:50%;background:rgba(0,0,0,0.08);filter:blur(50px)"></div>
+                  <div style="position:relative;z-index:1">
+                    <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;opacity:0.7">${spotName}</div>
+                    <div style="font-size:4.2rem;font-weight:800;line-height:1;margin:4px 0">${w.score}</div>
+                    <div style="font-size:1.1rem;font-weight:700;opacity:0.85;margin-bottom:6px">${heroLabel}</div>
+                    <div style="font-size:0.8rem;opacity:0.6;margin-bottom:12px">${date} · ${w.timeWindow || ''}</div>
+                    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
+                      <span style="padding:4px 10px;background:${heroTagBg};border-radius:16px;font-size:0.7rem;font-weight:600;backdrop-filter:blur(8px)">🌊 ${(w.conditions?.waveHeight || 0).toFixed(1)}m</span>
+                      <span style="padding:4px 10px;background:${heroTagBg};border-radius:16px;font-size:0.7rem;font-weight:600">💨 ${Math.round(w.conditions?.windSpeed || 0)}km/h ${windDir}</span>
+                      ${w.conditions?.wavePeriod ? `<span style="padding:4px 10px;background:${heroTagBg};border-radius:16px;font-size:0.7rem;font-weight:600">⏱ ${Math.round(w.conditions.wavePeriod)}s</span>` : ''}
+                      ${tideIcon ? `<span style="padding:4px 10px;background:${heroTagBg};border-radius:16px;font-size:0.7rem;font-weight:600">🌙 ${tideIcon}</span>` : ''}
                     </div>
-                  </div>
-                  <div style="color:rgba(255,255,255,0.5);font-size:0.8rem">🌊 ${(w.conditions?.waveHeight || 0).toFixed(1)}m · 💨 ${Math.round(w.conditions?.windSpeed || 0)}km/h · 🧭 ${windDir}${w.conditions?.wavePeriod ? ' · ⏱ ' + Math.round(w.conditions.wavePeriod) + 's' : ''}${w.conditions?.tidePhase ? ' · 🌙 ' + ({low:'↓',high:'↑',rising:'↗',falling:'↘'}[w.conditions.tidePhase] || '') : ''}</div>
-                  <div style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:2px">${w.conditions?.airTemp != null ? '🌡 Air ' + w.conditions.airTemp + '°C' : ''}${w.conditions?.waterTemp != null ? ' · 💧 Eau ' + w.conditions.waterTemp + '°C' : ''}</div>
-                  ${whyHtml}
-                  ${w.narrative ? `<div style="margin-top:8px;padding:8px 12px;${narrativeStyle(w.score || 0)};border-radius:8px;font-size:0.82rem;font-weight:600;text-align:center">${w.narrative}</div>` : ''}
-                  ${boardHtml}
-                </div>`;
-              }
-
-              // Autres spots = cards compactes mais informatives — cliquables
-              return `<div onclick="showSpotPredictionDetail(${item.resultIdx})" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer">
-                <div style="display:flex;align-items:center;gap:10px">
-                  <div style="background:${scoreColor};color:#0a0e27;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.9rem;flex-shrink:0">${w.score}</div>
-                  <div style="flex:1;min-width:0">
-                    <div style="color:#f0f4ff;font-size:0.88rem;font-weight:600">${spotName}</div>
-                    <div style="color:rgba(255,255,255,0.45);font-size:0.75rem">${date} · ${w.timeWindow || ''}</div>
-                  </div>
-                  <div style="text-align:right;flex-shrink:0">
-                    <div style="color:rgba(255,255,255,0.5);font-size:0.75rem">🌊 ${(w.conditions?.waveHeight || 0).toFixed(1)}m${w.conditions?.wavePeriod ? ' · ' + Math.round(w.conditions.wavePeriod) + 's' : ''}</div>
-                    <div style="color:rgba(255,255,255,0.4);font-size:0.7rem">💨 ${Math.round(w.conditions?.windSpeed || 0)}km/h ${windDir}</div>
-                    <div style="color:rgba(255,255,255,0.35);font-size:0.65rem">${w.conditions?.airTemp != null ? '🌡' + w.conditions.airTemp + '°' : ''}${w.conditions?.waterTemp != null ? ' 💧' + w.conditions.waterTemp + '°' : ''}</div>
+                    ${w.conditions?.airTemp != null || w.conditions?.waterTemp != null ? `<div style="font-size:0.72rem;opacity:0.55;margin-bottom:6px">${w.conditions?.airTemp != null ? '🌡 Air ' + w.conditions.airTemp + '°C' : ''}${w.conditions?.waterTemp != null ? ' · 💧 Eau ' + w.conditions.waterTemp + '°C' : ''}</div>` : ''}
+                    ${w.narrative ? `<div style="margin-top:8px;font-size:0.88rem;font-weight:700;font-style:italic;opacity:0.9">"${w.narrative}"</div>` : ''}
                   </div>
                 </div>
-                ${w.whyGood?.length ? `<div style="color:#4dff91;font-size:0.7rem;margin-top:4px">✅ ${w.whyGood[0]}</div>` : w.whyNotPerfect?.length ? `<div style="color:#ed8936;font-size:0.7rem;margin-top:4px">⚠️ ${w.whyNotPerfect[0]}</div>` : ''}
+                ${whyHtml ? `<div style="padding:0 4px;margin-bottom:6px">${whyHtml}</div>` : ''}
+                ${boardHtml}`;
+              }
+
+              // Autres spots = cards colorées par score — style V3
+              const sectionLabel = i === 1 ? `<div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:2.5px;color:rgba(0,0,0,0.2);font-weight:700;margin:16px 0 8px">Autres spots</div>` : '';
+              return sectionLabel + `<div onclick="showSpotPredictionDetail(${item.resultIdx})" style="background:${scoreCardBg(w.score || 0)};border-radius:16px;padding:16px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:14px">
+                <div style="font-size:2.1rem;font-weight:800;color:#1a1a1a;min-width:50px">${w.score}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:0.85rem;font-weight:700;color:#1a1a1a">${spotName}</div>
+                  <div style="font-size:0.7rem;color:rgba(0,0,0,0.4);margin-top:2px">${date} · ${w.timeWindow || ''} · 🌊 ${(w.conditions?.waveHeight || 0).toFixed(1)}m${w.conditions?.wavePeriod ? ' · ' + Math.round(w.conditions.wavePeriod) + 's' : ''}</div>
+                  ${w.whyGood?.length ? `<div style="font-size:0.7rem;color:rgba(0,0,0,0.5);font-weight:600;margin-top:3px">${w.whyGood[0]}</div>` : w.whyNotPerfect?.length ? `<div style="font-size:0.7rem;color:rgba(0,0,0,0.5);font-weight:600;margin-top:3px">${w.whyNotPerfect[0]}</div>` : ''}
+                </div>
               </div>`;
             }).join('');
 
@@ -2234,18 +2274,18 @@ select option { background: #0d2137; color: #f0f4ff; }
             const exploreContent = document.getElementById('spots-explore-content');
 
             if (tab === 'nearby') {
-                nearbyTab.style.borderBottomColor = '#4dff91';
-                nearbyTab.style.color = '#4dff91';
+                nearbyTab.style.borderBottomColor = '#2563EB';
+                nearbyTab.style.color = '#2563EB';
                 exploreTab.style.borderBottomColor = 'transparent';
-                exploreTab.style.color = 'rgba(255,255,255,0.4)';
+                exploreTab.style.color = 'rgba(0,0,0,0.4)';
                 nearbyContent.style.display = 'block';
                 exploreContent.style.display = 'none';
                 loadNearbySpots();
             } else {
                 nearbyTab.style.borderBottomColor = 'transparent';
-                nearbyTab.style.color = 'rgba(255,255,255,0.4)';
-                exploreTab.style.borderBottomColor = '#4dff91';
-                exploreTab.style.color = '#4dff91';
+                nearbyTab.style.color = 'rgba(0,0,0,0.4)';
+                exploreTab.style.borderBottomColor = '#2563EB';
+                exploreTab.style.color = '#2563EB';
                 nearbyContent.style.display = 'none';
                 exploreContent.style.display = 'block';
                 loadExploreView();
@@ -2275,12 +2315,11 @@ select option { background: #0d2137; color: #f0f4ff; }
                 const favsHtml = favs.map((s, i) => {
                     const cond = spotConditions[s.id] || {};
                     const score = _spotScoresCache?.[s.id]?.score;
-                    const scoreColor = score >= 8 ? '#4dff91' : score >= 6 ? '#00cfff' : score ? '#ed8936' : '';
-                    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,0.05)">
-                        ${score ? `<div style="background:${scoreColor};color:#0a0e27;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0">${score}</div>` : ''}
+                    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid rgba(0,0,0,0.05)">
+                        ${score ? `<div style="background:${scoreBadgeBg(score)};color:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0">${score}</div>` : ''}
                         <div style="flex:1;min-width:0;cursor:pointer" onclick="showSpotDetail('${s.id}')">
-                            <div style="color:#f0f4ff;font-size:0.85rem;font-weight:500">${s.name}</div>
-                            <div style="color:rgba(255,255,255,0.4);font-size:0.7rem">${s.city || ''}${cond.waveHeight != null ? ` · 🌊 ${cond.waveHeight.toFixed(1)}m` : ''}${cond.windSpeed != null ? ` · 💨 ${Math.round(cond.windSpeed)}km/h ${cond.windDirection || ''}` : ''}${cond.wavePeriod != null ? ` · ${cond.wavePeriod.toFixed(0)}s` : ''}</div>
+                            <div style="color:#1a1a1a;font-size:0.85rem;font-weight:500">${s.name}</div>
+                            <div style="color:rgba(0,0,0,0.4);font-size:0.7rem">${s.city || ''}${cond.waveHeight != null ? ` · 🌊 ${cond.waveHeight.toFixed(1)}m` : ''}${cond.windSpeed != null ? ` · 💨 ${Math.round(cond.windSpeed)}km/h ${cond.windDirection || ''}` : ''}${cond.wavePeriod != null ? ` · ${cond.wavePeriod.toFixed(0)}s` : ''}</div>
                         </div>
                         <div onclick="toggleFavorite('${s.id}',this);setTimeout(()=>renderSpotsFavs(),500)" class="active"
                              style="font-size:1.1rem;cursor:pointer;padding:4px 6px;flex-shrink:0">⭐</div>
@@ -2289,13 +2328,13 @@ select option { background: #0d2137; color: #f0f4ff; }
 
                 container.innerHTML = `
                     <div style="margin-bottom:12px">
-                        <div onclick="toggleSpotsFavs()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer;background:rgba(77,255,145,0.08);border:1px solid rgba(77,255,145,0.2);border-radius:10px">
+                        <div onclick="toggleSpotsFavs()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer;background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);border-radius:10px">
                             <div style="display:flex;align-items:center;gap:8px">
                                 <span style="font-size:1.1rem">⭐</span>
-                                <span style="color:#4dff91;font-size:0.9rem;font-weight:600">Mes favoris</span>
-                                <span style="background:rgba(77,255,145,0.2);color:#4dff91;border-radius:12px;padding:1px 8px;font-size:0.7rem;font-weight:700">${favs.length}</span>
+                                <span style="color:#2563EB;font-size:0.9rem;font-weight:600">Mes favoris</span>
+                                <span style="background:rgba(37,99,235,0.2);color:#2563EB;border-radius:12px;padding:1px 8px;font-size:0.7rem;font-weight:700">${favs.length}</span>
                             </div>
-                            <div id="spots-favs-arrow" style="color:#4dff91;font-size:0.8rem;transition:transform 0.2s">▾</div>
+                            <div id="spots-favs-arrow" style="color:#2563EB;font-size:0.8rem;transition:transform 0.2s">▾</div>
                         </div>
                         <div id="spots-favs-list" style="display:none">
                             ${favsHtml}
@@ -2347,11 +2386,11 @@ select option { background: #0d2137; color: #f0f4ff; }
                             .sort((a, b) => a._dist - b._dist)
                             .slice(0, 5);
                         container.innerHTML = `
-                            <div style="color:rgba(255,255,255,0.4);font-size:0.8rem;margin-bottom:10px">Aucun spot à moins de 10km. Voici les plus proches :</div>
+                            <div style="color:rgba(0,0,0,0.4);font-size:0.8rem;margin-bottom:10px">Aucun spot à moins de 10km. Voici les plus proches :</div>
                             ${renderSpotRows(closest)}`;
                     } else {
                         container.innerHTML = `
-                            <div style="color:rgba(255,255,255,0.4);font-size:0.7rem;margin-bottom:8px">${nearby.length} spot${nearby.length > 1 ? 's' : ''} à moins de 10km</div>
+                            <div style="color:rgba(0,0,0,0.4);font-size:0.7rem;margin-bottom:8px">${nearby.length} spot${nearby.length > 1 ? 's' : ''} à moins de 10km</div>
                             ${renderSpotRows(nearby)}`;
                     }
                 } catch(e) {
@@ -2362,9 +2401,9 @@ select option { background: #0d2137; color: #f0f4ff; }
                 container.innerHTML = `
                     <div style="text-align:center;padding:30px 10px">
                         <div style="font-size:2rem;margin-bottom:12px">📍</div>
-                        <div style="color:#f0f4ff;font-size:0.9rem;font-weight:600;margin-bottom:8px">Active la géolocalisation</div>
-                        <div style="color:rgba(255,255,255,0.4);font-size:0.8rem;margin-bottom:16px">Pour voir les spots de surf autour de toi</div>
-                        <button onclick="requestGeolocAndReload()" style="padding:10px 24px;background:#4dff91;color:#0a0e27;border:none;border-radius:8px;font-weight:700;font-size:0.9rem;cursor:pointer">Activer la géolocalisation</button>
+                        <div style="color:#1a1a1a;font-size:0.9rem;font-weight:600;margin-bottom:8px">Active la géolocalisation</div>
+                        <div style="color:rgba(0,0,0,0.4);font-size:0.8rem;margin-bottom:16px">Pour voir les spots de surf autour de toi</div>
+                        <button onclick="requestGeolocAndReload()" style="padding:10px 24px;background:#2563EB;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:0.9rem;cursor:pointer">Activer la géolocalisation</button>
                     </div>`;
             }
         }
@@ -2379,7 +2418,7 @@ select option { background: #0d2137; color: #f0f4ff; }
                     },
                     () => {
                         document.getElementById('spots-nearby-list').innerHTML = `
-                            <div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:0.85rem">
+                            <div style="text-align:center;padding:20px;color:rgba(0,0,0,0.4);font-size:0.85rem">
                                 Géolocalisation refusée. Utilise l'onglet Explorer pour trouver tes spots.
                             </div>`;
                     }
@@ -2460,9 +2499,9 @@ select option { background: #0d2137; color: #f0f4ff; }
 
             // Mettre le pays en surbrillance
             countriesDiv.querySelectorAll('div').forEach(d => {
-                d.style.background = d.textContent.trim() === country ? 'rgba(77,255,145,0.15)' : 'rgba(255,255,255,0.06)';
-                d.style.borderColor = d.textContent.trim() === country ? '#4dff91' : 'rgba(255,255,255,0.15)';
-                d.style.color = d.textContent.trim() === country ? '#4dff91' : 'rgba(255,255,255,0.5)';
+                d.style.background = d.textContent.trim() === country ? 'rgba(37,99,235,0.15)' : 'rgba(0,0,0,0.06)';
+                d.style.borderColor = d.textContent.trim() === country ? '#2563EB' : 'rgba(0,0,0,0.15)';
+                d.style.color = d.textContent.trim() === country ? '#2563EB' : 'rgba(0,0,0,0.5)';
             });
 
             if (zones.length > 1) {
@@ -2600,7 +2639,7 @@ select option { background: #0d2137; color: #f0f4ff; }
 
             const cards = favs.map(s => {
                 const score = _spotScoresCache?.[s.id]?.score;
-                const color = score >= 8 ? '#4dff91' : score >= 6 ? '#00cfff' : score ? '#ed8936' : 'rgba(255,255,255,0.2)';
+                const color = score >= 8 ? '#2D8A4E' : score >= 6 ? '#E89A1E' : score ? '#E06B30' : 'rgba(0,0,0,0.2)';
                 return `<div class="fav-card" onclick="showSpotDetail('${s.id}')" style="border-color:${color}">
                     ${score ? `<div class="fav-score" style="background:${color}">${score}</div>` : ''}
                     <div class="fav-name">${s.name}</div>
@@ -2843,7 +2882,7 @@ select option { background: #0d2137; color: #f0f4ff; }
             if (callback === 'home') {
                 document.getElementById('profile-home-spot').value = spotId;
                 const display = document.getElementById('profile-home-spot-display');
-                if (display) { display.textContent = spotName; display.style.color = '#f0f4ff'; }
+                if (display) { display.textContent = spotName; display.style.color = '#1a1a1a'; }
                 localStorage.setItem('home_spot', JSON.stringify({ id: spotId, name: spotName, lat: spotLat, lng: spotLng }));
                 const profilBtn = document.querySelectorAll('.nav-tab')[3];
                 showTab('profil', profilBtn);
@@ -2859,7 +2898,7 @@ select option { background: #0d2137; color: #f0f4ff; }
             } else {
                 document.getElementById('session-spot').value = spotId;
                 const display = document.getElementById('session-spot-display');
-                if (display) { display.textContent = spotName; display.style.color = '#f0f4ff'; }
+                if (display) { display.textContent = spotName; display.style.color = '#1a1a1a'; }
                 const sessionBtn = document.querySelectorAll('.nav-tab')[2];
                 showTab('session', sessionBtn);
             }
@@ -2893,7 +2932,7 @@ select option { background: #0d2137; color: #f0f4ff; }
 
             const userId = dataManager.currentUserId;
             const score = _spotScoresCache?.[spotId]?.score;
-            const scoreColor = score >= 8 ? '#4dff91' : score >= 6 ? '#00cfff' : score ? '#ed8936' : 'rgba(255,255,255,0.3)';
+            const _spotScoreColor = score >= 8 ? '#2D8A4E' : score >= 6 ? '#E89A1E' : score ? '#E06B30' : 'rgba(0,0,0,0.2)';
 
             // Check if favorited
             let isFav = false;
@@ -2936,8 +2975,8 @@ select option { background: #0d2137; color: #f0f4ff; }
                 windHtml = `<div class="spot-wind-box">
                     <div style="font-size:1.5rem">💨</div>
                     <div>
-                        <div style="color:#00cfff;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px">Vent idéal</div>
-                        <div style="color:#f0f4ff;font-size:0.85rem;font-weight:600">${spot.ideal_wind.join(', ')} (offshore)</div>
+                        <div style="color:#3B82F6;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px">Vent idéal</div>
+                        <div style="color:#1a1a1a;font-size:0.85rem;font-weight:600">${spot.ideal_wind.join(', ')} (offshore)</div>
                     </div>
                 </div>`;
             }
@@ -2956,13 +2995,13 @@ select option { background: #0d2137; color: #f0f4ff; }
                     const pData = await res.json();
                     if (pData.success && pData.windows?.length) {
                         predsHtml = pData.windows.slice(0, 5).map(w => {
-                            const wColor = scoreColor(w.score);
-                            const narColor = w.score >= 7 ? '#4dff91' : w.score >= 5.5 ? '#00cfff' : w.score >= 4 ? '#ed8936' : '#ff5a5a';
+                            const wColor = scoreBadgeBg(w.score);
+                            const narColor = scoreColor(w.score);
                             const date = new Date(w.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-                            return `<div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:8px;margin-bottom:4px;display:flex;align-items:center;gap:8px">
-                                <div style="background:${wColor};color:#0a0e27;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.7rem;flex-shrink:0">${w.score}</div>
+                            return `<div style="background:rgba(0,0,0,0.04);border-radius:8px;padding:8px;margin-bottom:4px;display:flex;align-items:center;gap:8px">
+                                <div style="background:${wColor};color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.7rem;flex-shrink:0">${w.score}</div>
                                 <div style="flex:1">
-                                    <div style="color:#f0f4ff;font-size:0.75rem;font-weight:600">${date} · ${w.startTime || ''}–${w.endTime || ''}</div>
+                                    <div style="color:#1a1a1a;font-size:0.75rem;font-weight:600">${date} · ${w.startTime || ''}–${w.endTime || ''}</div>
                                     <div style="color:${narColor};font-size:0.65rem">${w.narrative || ''}</div>
                                 </div>
                             </div>`;
@@ -2973,13 +3012,13 @@ select option { background: #0d2137; color: #f0f4ff; }
 
             // User sessions on this spot
             const userSessions = (userData.sessions || []).filter(s => s.spot_id === spotId).slice(0, 5);
-            let sessHtml = '<div style="color:rgba(255,255,255,0.3);font-size:0.75rem;padding:8px 0">Aucune session ici</div>';
+            let sessHtml = '<div style="color:rgba(0,0,0,0.3);font-size:0.75rem;padding:8px 0">Aucune session ici</div>';
             if (userSessions.length > 0) {
                 sessHtml = userSessions.map(s => {
                     const date = new Date(s.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-                    return `<div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:8px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center">
-                        <span style="color:#f0f4ff;font-size:0.75rem">${date}</span>
-                        <span style="color:#f0f4ff;font-size:0.75rem">${'⭐'.repeat(s.rating || 0)}</span>
+                    return `<div style="background:rgba(0,0,0,0.04);border-radius:8px;padding:8px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center">
+                        <span style="color:#1a1a1a;font-size:0.75rem">${date}</span>
+                        <span style="color:#1a1a1a;font-size:0.75rem">${'⭐'.repeat(s.rating || 0)}</span>
                     </div>`;
                 }).join('');
             }
@@ -2988,21 +3027,21 @@ select option { background: #0d2137; color: #f0f4ff; }
                 <div style="padding:12px">
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
                         <div>
-                            <div onclick="backToSpotsList()" style="color:rgba(255,255,255,0.4);font-size:0.75rem;cursor:pointer;margin-bottom:8px">← Spots</div>
-                            <div style="color:#f0f4ff;font-size:1.1rem;font-weight:700">${spot.name}</div>
-                            <div style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:2px">${loc}</div>
+                            <div onclick="backToSpotsList()" style="color:rgba(0,0,0,0.4);font-size:0.75rem;cursor:pointer;margin-bottom:8px">← Spots</div>
+                            <div style="color:#1a1a1a;font-size:1.1rem;font-weight:700">${spot.name}</div>
+                            <div style="color:rgba(0,0,0,0.4);font-size:0.75rem;margin-top:2px">${loc}</div>
                         </div>
                         <div style="display:flex;gap:8px;align-items:center">
-                            ${score ? `<div style="background:${scoreColor};color:#0a0e27;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem">${score}</div>` : ''}
-                            <button onclick="toggleFavorite('${spotId}', this)" style="background:${isFav ? 'rgba(77,255,145,0.15)' : 'rgba(255,255,255,0.05)'};border:1px solid ${isFav ? '#4dff91' : 'rgba(255,255,255,0.15)'};border-radius:8px;padding:4px 10px;color:${isFav ? '#4dff91' : 'rgba(255,255,255,0.4)'};font-size:0.75rem;cursor:pointer" class="${isFav ? 'active' : ''}">${isFav ? '⭐ Favori' : '☆ Favori'}</button>
+                            ${score ? `<div style="background:${scoreBadgeBg(score)};color:#fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem">${score}</div>` : ''}
+                            <button onclick="toggleFavorite('${spotId}', this)" style="background:${isFav ? 'rgba(37,99,235,0.15)' : 'rgba(0,0,0,0.05)'};border:1px solid ${isFav ? '#2563EB' : 'rgba(0,0,0,0.15)'};border-radius:8px;padding:4px 10px;color:${isFav ? '#2563EB' : 'rgba(0,0,0,0.4)'};font-size:0.75rem;cursor:pointer" class="${isFav ? 'active' : ''}">${isFav ? '⭐ Favori' : '☆ Favori'}</button>
                         </div>
                     </div>
                     ${charsHtml}
                     ${windHtml}
                     <a href="${gmapsUrl}" target="_blank" rel="noopener" class="gmaps-btn">📍 S'y rendre (Google Maps)</a>
-                    <div style="color:rgba(255,255,255,0.4);font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;margin:12px 0 8px">📅 Prévisions 5 jours</div>
+                    <div style="color:rgba(0,0,0,0.4);font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;margin:12px 0 8px">📅 Prévisions 5 jours</div>
                     ${predsHtml}
-                    <div style="color:rgba(255,255,255,0.4);font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px">🏄 Mes sessions ici</div>
+                    <div style="color:rgba(0,0,0,0.4);font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px">🏄 Mes sessions ici</div>
                     ${sessHtml}
                 </div>`;
         }
@@ -3092,7 +3131,7 @@ select option { background: #0d2137; color: #f0f4ff; }
             _spotPickerCallback = (id, name) => {
                 document.getElementById(hiddenInputId).value = id;
                 const display = document.getElementById(displayId);
-                if (display) { display.textContent = name; display.style.color = '#f0f4ff'; }
+                if (display) { display.textContent = name; display.style.color = '#1a1a1a'; }
                 overlay.style.display = 'none';
             };
 
@@ -3124,34 +3163,34 @@ select option { background: #0d2137; color: #f0f4ff; }
 
             const favsHtml = _spotPickerFavs.length ? `
                 <div style="margin-bottom:12px">
-                    <div style="color:#4dff91;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">⭐ Mes favoris</div>
+                    <div style="color:#2563EB;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">⭐ Mes favoris</div>
                     ${_spotPickerFavs.map(s => `
                         <div onclick="_spotPickerCallback('${s.id}','${(s.name||'').replace(/'/g,"\\'")}')"
-                             style="padding:10px;background:rgba(77,255,145,0.06);border:1px solid rgba(77,255,145,0.15);border-radius:8px;margin-bottom:4px;cursor:pointer;color:#f0f4ff;font-size:0.85rem">
-                            ${s.name} <span style="color:rgba(255,255,255,0.4)">${s.city || ''}</span>
+                             style="padding:10px;background:rgba(37,99,235,0.06);border:1px solid rgba(37,99,235,0.15);border-radius:8px;margin-bottom:4px;cursor:pointer;color:#1a1a1a;font-size:0.85rem">
+                            ${s.name} <span style="color:rgba(0,0,0,0.4)">${s.city || ''}</span>
                         </div>
                     `).join('')}
                 </div>` : '';
 
             const countriesHtml = _spotPickerCountries.length ? `
                 <div style="margin-bottom:10px">
-                    <div style="color:rgba(255,255,255,0.4);font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Pays</div>
+                    <div style="color:rgba(0,0,0,0.4);font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Pays</div>
                     <div style="display:flex;gap:6px;flex-wrap:wrap">
                         ${_spotPickerCountries.map(c => `
                             <div onclick="spotPickerFilterCountry('${c}')"
-                                 style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)">${c}</div>
+                                 style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(0,0,0,0.15);background:rgba(0,0,0,0.06);color:rgba(0,0,0,0.5)">${c}</div>
                         `).join('')}
                     </div>
                 </div>` : '';
 
             const spotsListHtml = spots ? `
                 <div style="margin-bottom:10px">
-                    ${filterLabel ? '<div style="color:#00cfff;font-size:0.7rem;text-transform:uppercase;margin-bottom:6px">' + filterLabel + '</div>' : ''}
+                    ${filterLabel ? '<div style="color:#3B82F6;font-size:0.7rem;text-transform:uppercase;margin-bottom:6px">' + filterLabel + '</div>' : ''}
                     <div style="max-height:300px;overflow-y:auto">
                         ${spots.map(s => `
                             <div onclick="_spotPickerCallback('${s.id}','${(s.name||'').replace(/'/g,"\\'")}')"
-                                 style="padding:8px;cursor:pointer;color:#f0f4ff;font-size:0.85rem;border-bottom:1px solid rgba(255,255,255,0.05)">
-                                ${s.name} <span style="color:rgba(255,255,255,0.4);font-size:0.75rem">${s.city || ''} · ${s.surf_zone || s.country || ''}</span>
+                                 style="padding:8px;cursor:pointer;color:#1a1a1a;font-size:0.85rem;border-bottom:1px solid rgba(0,0,0,0.05)">
+                                ${s.name} <span style="color:rgba(0,0,0,0.4);font-size:0.75rem">${s.city || ''} · ${s.surf_zone || s.country || ''}</span>
                             </div>
                         `).join('')}
                     </div>
@@ -3159,12 +3198,12 @@ select option { background: #0d2137; color: #f0f4ff; }
 
             overlay.innerHTML = `
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-                    <div style="color:#f0f4ff;font-size:1rem;font-weight:600">Choisir un spot</div>
+                    <div style="color:#1a1a1a;font-size:1rem;font-weight:600">Choisir un spot</div>
                     <div onclick="document.getElementById('spot-picker-overlay').style.display='none'"
-                         style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:1.2rem;padding:4px 8px">✕</div>
+                         style="color:rgba(0,0,0,0.4);cursor:pointer;font-size:1.2rem;padding:4px 8px">✕</div>
                 </div>
                 <input type="text" id="spot-picker-search" placeholder="🔍 Rechercher un spot..."
-                       style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#f0f4ff;font-size:0.9rem;margin-bottom:12px;outline:none">
+                       style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.15);background:rgba(0,0,0,0.06);color:#1a1a1a;font-size:0.9rem;margin-bottom:12px;outline:none">
                 <div style="flex:1;overflow-y:auto">
                     ${favsHtml}
                     ${spotsListHtml || countriesHtml}
@@ -3206,11 +3245,11 @@ select option { background: #0d2137; color: #f0f4ff; }
                 const container = overlay.querySelector('[style*="overflow-y:auto"]') || overlay.lastElementChild;
                 const zonesHtml = `
                     <div style="margin-bottom:10px">
-                        <div style="color:rgba(255,255,255,0.4);font-size:0.7rem;text-transform:uppercase;margin-bottom:6px">${country} — Zones</div>
+                        <div style="color:rgba(0,0,0,0.4);font-size:0.7rem;text-transform:uppercase;margin-bottom:6px">${country} — Zones</div>
                         <div style="display:flex;gap:6px;flex-wrap:wrap">
                             ${zones.map(z => `
                                 <div onclick="spotPickerFilterZone('${z.replace(/'/g,"\\'")}')"
-                                     style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(0,207,255,0.3);background:rgba(0,207,255,0.08);color:#00cfff">${z}</div>
+                                     style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(37,99,235,0.3);background:rgba(37,99,235,0.08);color:#2563EB">${z}</div>
                             `).join('')}
                         </div>
                     </div>`;
@@ -3373,29 +3412,29 @@ select option { background: #0d2137; color: #f0f4ff; }
                 ? `<img src="${b.photo_url}" style="width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0">`
                 : `<div style="width:36px;height:36px;border-radius:6px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0">${getBoardTypeIcon(b.type)}</div>`;
               return `
-              <div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,0.05)">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid rgba(0,0,0,0.05)">
                 ${miniPhoto}
                 <div style="flex:1;min-width:0">
-                  <div style="color:#f0f4ff;font-size:0.85rem;font-weight:500">${b.nickname || b.name}</div>
-                  <div style="color:rgba(255,255,255,0.4);font-size:0.7rem">${[b.length_ft || b.size, b.type, b.volume_l ? b.volume_l+'L' : ''].filter(Boolean).join(' · ')}</div>
+                  <div style="color:#1a1a1a;font-size:0.85rem;font-weight:500">${b.nickname || b.name}</div>
+                  <div style="color:rgba(0,0,0,0.4);font-size:0.7rem">${[b.length_ft || b.size, b.type, b.volume_l ? b.volume_l+'L' : ''].filter(Boolean).join(' · ')}</div>
                 </div>
               </div>`;
             }).join('')
-            : '<div style="color:rgba(255,255,255,0.4);font-size:0.8rem;padding:10px 4px">Aucune board enregistrée</div>';
+            : '<div style="color:rgba(0,0,0,0.4);font-size:0.8rem;padding:10px 4px">Aucune board enregistrée</div>';
 
           const boardsHtml = `
             <div style="margin-bottom:12px">
-              <div onclick="toggleProfilBoards()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer;background:rgba(0,207,255,0.08);border:1px solid rgba(0,207,255,0.2);border-radius:10px">
+              <div onclick="toggleProfilBoards()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer;background:rgba(37,99,235,0.06);border:1px solid rgba(37,99,235,0.15);border-radius:10px">
                 <div style="display:flex;align-items:center;gap:8px">
                   <span style="font-size:1.1rem">🏄</span>
-                  <span style="color:#00cfff;font-size:0.9rem;font-weight:600">Mes boards</span>
-                  <span style="background:rgba(0,207,255,0.2);color:#00cfff;border-radius:12px;padding:1px 8px;font-size:0.7rem;font-weight:700">${boards.length}</span>
+                  <span style="color:#2563EB;font-size:0.9rem;font-weight:600">Mes boards</span>
+                  <span style="background:rgba(37,99,235,0.1);color:#2563EB;border-radius:12px;padding:1px 8px;font-size:0.7rem;font-weight:700">${boards.length}</span>
                 </div>
-                <div id="profil-boards-arrow" style="color:#00cfff;font-size:0.8rem;transition:transform 0.2s">▾</div>
+                <div id="profil-boards-arrow" style="color:#2563EB;font-size:0.8rem;transition:transform 0.2s">▾</div>
               </div>
               <div id="profil-boards-list" style="display:none;padding:0 4px">
                 ${boardsDropdownHtml}
-                <div onclick="showTab('boards', document.querySelectorAll('.nav-tab')[4])" style="padding:10px 4px;cursor:pointer;color:#4dff91;font-size:0.8rem;text-align:center;border-top:1px solid rgba(255,255,255,0.06)">Gérer mes boards</div>
+                <div onclick="showTab('boards', document.querySelectorAll('.nav-tab')[4])" style="padding:10px 4px;cursor:pointer;color:#2563EB;font-size:0.8rem;text-align:center;border-top:1px solid rgba(0,0,0,0.06)">Gérer mes boards</div>
               </div>
             </div>`;
 
@@ -3430,12 +3469,12 @@ select option { background: #0d2137; color: #f0f4ff; }
               <span class="section-label">Notifications</span>
               <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0">
                 <div style="flex:1">
-                  <div style="color:#f0f4ff;font-size:0.85rem;font-weight:500">Predictions par email</div>
-                  <div style="color:rgba(255,255,255,0.4);font-size:0.72rem;margin-top:2px">Dimanche + jeudi</div>
+                  <div style="color:#1a1a1a;font-size:0.85rem;font-weight:500">Predictions par email</div>
+                  <div style="color:rgba(0,0,0,0.4);font-size:0.72rem;margin-top:2px">Dimanche + jeudi</div>
                 </div>
                 <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
                   <input type="checkbox" id="toggle-email-predictions" ${emailPredictions ? 'checked' : ''} onchange="toggleEmailPredictions(this.checked)" style="opacity:0;width:0;height:0">
-                  <span style="position:absolute;top:0;left:0;right:0;bottom:0;background:${emailPredictions ? '#4dff91' : 'rgba(255,255,255,0.15)'};border-radius:12px;transition:0.3s"></span>
+                  <span style="position:absolute;top:0;left:0;right:0;bottom:0;background:${emailPredictions ? '#2563EB' : 'rgba(0,0,0,0.15)'};border-radius:12px;transition:0.3s"></span>
                   <span style="position:absolute;top:2px;left:${emailPredictions ? '22px' : '2px'};width:20px;height:20px;background:#fff;border-radius:50%;transition:0.3s"></span>
                 </label>
               </div>
@@ -3450,8 +3489,8 @@ select option { background: #0d2137; color: #f0f4ff; }
               </div>
               ${!isOAuth ? `
               <button onclick="togglePasswordForm()" style="width:100%;padding:10px;
-                background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);
-                border-radius:8px;color:#00cfff;cursor:pointer;font-size:0.85rem;margin-bottom:8px">
+                background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.1);
+                border-radius:8px;color:#2563EB;cursor:pointer;font-size:0.85rem;margin-bottom:8px">
                 Changer le mot de passe
               </button>
               <div id="password-change-form" style="display:none;margin-bottom:10px">
@@ -3549,7 +3588,7 @@ select option { background: #0d2137; color: #f0f4ff; }
               const sweetSpot = formatSweetSpot(b);
               const photoHtml = b.photo_url
                 ? `<img src="${b.photo_url}" style="width:80px;height:80px;border-radius:10px;object-fit:cover;flex-shrink:0">`
-                : `<div style="width:80px;height:80px;border-radius:10px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0">${getBoardTypeIcon(b.type)}</div>`;
+                : `<div style="width:80px;height:80px;border-radius:10px;background:rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0">${getBoardTypeIcon(b.type)}</div>`;
               const dims = [b.length_ft || b.size, b.width_in ? b.width_in + '"' : '', b.thickness_in ? b.thickness_in + '"' : ''].filter(Boolean).join(' × ');
               const volTxt = b.volume_l ? b.volume_l + 'L' : '';
               const typeTxt = b.type ? b.type.charAt(0).toUpperCase() + b.type.slice(1) : '';
@@ -3561,18 +3600,18 @@ select option { background: #0d2137; color: #f0f4ff; }
                 <div style="display:flex;gap:12px">
                   ${photoHtml}
                   <div style="flex:1;min-width:0">
-                    <div style="color:#f0f4ff;font-size:0.95rem;font-weight:600">${b.nickname || b.name}</div>
-                    <div style="color:rgba(255,255,255,0.5);font-size:0.78rem;margin-top:2px">${[dims, volTxt, typeTxt].filter(Boolean).join(' · ')}</div>
-                    ${shaperTxt ? `<div style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:2px">🔨 ${shaperTxt}</div>` : ''}
-                    ${setupParts ? `<div style="color:rgba(255,255,255,0.35);font-size:0.72rem;margin-top:1px">${setupParts}</div>` : ''}
+                    <div style="color:#1a1a1a;font-size:0.95rem;font-weight:600">${b.nickname || b.name}</div>
+                    <div style="color:rgba(0,0,0,0.5);font-size:0.78rem;margin-top:2px">${[dims, volTxt, typeTxt].filter(Boolean).join(' · ')}</div>
+                    ${shaperTxt ? `<div style="color:rgba(0,0,0,0.4);font-size:0.75rem;margin-top:2px">🔨 ${shaperTxt}</div>` : ''}
+                    ${setupParts ? `<div style="color:rgba(0,0,0,0.35);font-size:0.72rem;margin-top:1px">${setupParts}</div>` : ''}
                   </div>
                 </div>
-                ${sweetSpot ? `<div style="margin-top:8px;padding:6px 10px;background:rgba(77,255,145,0.06);border:1px solid rgba(77,255,145,0.15);border-radius:6px;font-size:0.75rem;color:#4dff91">★ Sweet spot : ${sweetSpot}</div>` : ''}
+                ${sweetSpot ? `<div style="margin-top:8px;padding:6px 10px;background:rgba(45,138,78,0.06);border:1px solid rgba(45,138,78,0.15);border-radius:6px;font-size:0.75rem;color:#2D8A4E">★ Sweet spot : ${sweetSpot}</div>` : ''}
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-                  <div style="color:rgba(255,255,255,0.35);font-size:0.72rem">${stats.count ? `📊 ${stats.count} session${stats.count > 1 ? 's' : ''} · ${stats.lastDate}` : 'Pas encore de session'}</div>
+                  <div style="color:rgba(0,0,0,0.35);font-size:0.72rem">${stats.count ? `📊 ${stats.count} session${stats.count > 1 ? 's' : ''} · ${stats.lastDate}` : 'Pas encore de session'}</div>
                   <div style="display:flex;gap:6px">
-                    <button onclick="editBoard('${b.id}')" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:4px 8px;color:rgba(255,255,255,0.5);font-size:0.75rem;cursor:pointer">✏️</button>
-                    <button onclick="openBoardShareOverlay('${b.id}')" style="background:none;border:1px solid rgba(0,207,255,0.2);border-radius:6px;padding:4px 8px;color:#00cfff;font-size:0.75rem;cursor:pointer">📤</button>
+                    <button onclick="editBoard('${b.id}')" style="background:none;border:1px solid rgba(0,0,0,0.12);border-radius:6px;padding:4px 8px;color:rgba(0,0,0,0.5);font-size:0.75rem;cursor:pointer">✏️</button>
+                    <button onclick="openBoardShareOverlay('${b.id}')" style="background:none;border:1px solid rgba(37,99,235,0.2);border-radius:6px;padding:4px 8px;color:#2563EB;font-size:0.75rem;cursor:pointer">📤</button>
                     <button onclick="deleteBoard('${b.id}')" style="background:none;border:1px solid rgba(255,77,77,0.15);border-radius:6px;padding:4px 8px;color:rgba(255,77,77,0.4);font-size:0.75rem;cursor:pointer">🗑️</button>
                   </div>
                 </div>
@@ -3583,27 +3622,27 @@ select option { background: #0d2137; color: #f0f4ff; }
           container.innerHTML = `
             <div style="padding:12px 14px">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-                <div style="color:#f0f4ff;font-size:1.1rem;font-weight:700">Mon Quiver <span style="color:rgba(255,255,255,0.3);font-size:0.8rem;font-weight:400">${boards.length} board${boards.length !== 1 ? 's' : ''}</span></div>
-                <div onclick="showTab('profil', document.querySelectorAll('.nav-tab')[3])" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:0.8rem;padding:4px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:6px">← Profil</div>
+                <div style="color:#1a1a1a;font-size:1.1rem;font-weight:700">Mon Quiver <span style="color:rgba(0,0,0,0.3);font-size:0.8rem;font-weight:400">${boards.length} board${boards.length !== 1 ? 's' : ''}</span></div>
+                <div onclick="showTab('profil', document.querySelectorAll('.nav-tab')[3])" style="color:rgba(0,0,0,0.4);cursor:pointer;font-size:0.8rem;padding:4px 10px;border:1px solid rgba(0,0,0,0.15);border-radius:6px">← Profil</div>
               </div>
               ${boardsList}
               <div style="margin-top:14px">
-                <div onclick="toggleAddBoard()" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;background:rgba(77,255,145,0.08);border:1px solid rgba(77,255,145,0.2);border-radius:10px">
+                <div onclick="toggleAddBoard()" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);border-radius:10px">
                   <div style="display:flex;align-items:center;gap:8px">
-                    <span style="color:#4dff91;font-size:0.9rem;font-weight:600">+ Ajouter une board</span>
+                    <span style="color:#2563EB;font-size:0.9rem;font-weight:600">+ Ajouter une board</span>
                   </div>
-                  <div id="add-board-arrow" style="color:#4dff91;font-size:0.8rem;transition:transform 0.2s">▾</div>
+                  <div id="add-board-arrow" style="color:#2563EB;font-size:0.8rem;transition:transform 0.2s">▾</div>
                 </div>
               </div>
               <div id="add-board-form" class="card" style="display:none;margin-top:6px;padding:14px">
 
                 <!-- Section 1 : L'essentiel -->
-                <div style="color:#4dff91;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">L'essentiel</div>
+                <div style="color:#2563EB;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">L'essentiel</div>
                 <div class="form-group"><label>Nom</label><input type="text" id="board-name" placeholder="La Bleue, Mon fish..."></div>
                 <div class="form-group">
                   <label>Photo</label>
                   <div id="board-photo-preview" style="display:none;margin-bottom:8px"></div>
-                  <input type="file" id="board-photo-input" accept="image/*" onchange="previewBoardPhoto(this)" style="font-size:0.8rem;color:rgba(255,255,255,0.5)">
+                  <input type="file" id="board-photo-input" accept="image/*" onchange="previewBoardPhoto(this)" style="font-size:0.8rem;color:rgba(0,0,0,0.5)">
                 </div>
                 <div class="datetime-row">
                   <div class="form-group" style="margin:0;flex:1">
@@ -3628,7 +3667,7 @@ select option { background: #0d2137; color: #f0f4ff; }
                 </div>
 
                 <!-- Section 2 : Les détails -->
-                <div style="color:#00cfff;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px">Les détails</div>
+                <div style="color:#3B82F6;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px">Les détails</div>
                 <div class="datetime-row">
                   <div class="form-group" style="margin:0;flex:1"><label>Volume (L)</label><input type="number" id="board-volume" step="0.1" placeholder="32"></div>
                   <div class="form-group" style="margin:0;flex:1"><label>Largeur (")</label><input type="text" id="board-width" placeholder="20.5"></div>
@@ -3685,16 +3724,16 @@ select option { background: #0d2137; color: #f0f4ff; }
                 <div class="form-group">
                   <label>Marée</label>
                   <div id="board-tide-chips" style="display:flex;gap:6px;flex-wrap:wrap">
-                    <div onclick="selectChip(this,'board-tide')" data-value="haute" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)">Haute</div>
-                    <div onclick="selectChip(this,'board-tide')" data-value="basse" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)">Basse</div>
-                    <div onclick="selectChip(this,'board-tide')" data-value="mi-maree" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)">Mi-marée</div>
-                    <div onclick="selectChip(this,'board-tide')" data-value="any" class="chip-option chip-selected" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(77,255,145,0.3);background:rgba(77,255,145,0.1);color:#4dff91">Peu importe</div>
+                    <div onclick="selectChip(this,'board-tide')" data-value="haute" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(0,0,0,0.15);background:rgba(0,0,0,0.04);color:rgba(0,0,0,0.5)">Haute</div>
+                    <div onclick="selectChip(this,'board-tide')" data-value="basse" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(0,0,0,0.15);background:rgba(0,0,0,0.04);color:rgba(0,0,0,0.5)">Basse</div>
+                    <div onclick="selectChip(this,'board-tide')" data-value="mi-maree" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(0,0,0,0.15);background:rgba(0,0,0,0.04);color:rgba(0,0,0,0.5)">Mi-marée</div>
+                    <div onclick="selectChip(this,'board-tide')" data-value="any" class="chip-option chip-selected" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid #2563EB;background:rgba(37,99,235,0.08);color:#2563EB">Peu importe</div>
                   </div>
                 </div>
                 <div class="form-group">
                   <label>Mes spots avec cette board</label>
                   <div id="board-spots-list" style="margin-bottom:6px"></div>
-                  <div onclick="openBoardSpotPicker()" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);font-size:0.85rem;cursor:pointer;text-align:center">+ Ajouter un spot</div>
+                  <div onclick="openBoardSpotPicker()" style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.15);background:rgba(0,0,0,0.04);color:rgba(0,0,0,0.4);font-size:0.85rem;cursor:pointer;text-align:center">+ Ajouter un spot</div>
                 </div>
 
                 <button class="btn-primary" onclick="addBoard()" style="margin-top:8px">Ajouter cette board</button>
@@ -3716,14 +3755,14 @@ select option { background: #0d2137; color: #f0f4ff; }
           const parent = el.parentElement;
           parent.querySelectorAll('.chip-option').forEach(c => {
             c.classList.remove('chip-selected');
-            c.style.border = '1px solid rgba(255,255,255,0.15)';
-            c.style.background = 'rgba(255,255,255,0.06)';
-            c.style.color = 'rgba(255,255,255,0.5)';
+            c.style.border = '1px solid rgba(0,0,0,0.15)';
+            c.style.background = 'rgba(0,0,0,0.04)';
+            c.style.color = 'rgba(0,0,0,0.5)';
           });
           el.classList.add('chip-selected');
-          el.style.border = '1px solid rgba(77,255,145,0.3)';
-          el.style.background = 'rgba(77,255,145,0.1)';
-          el.style.color = '#4dff91';
+          el.style.border = '1px solid #2563EB';
+          el.style.background = 'rgba(37,99,235,0.08)';
+          el.style.color = '#2563EB';
         }
 
         function getSelectedChip(group) {
@@ -3873,49 +3912,49 @@ select option { background: #0d2137; color: #f0f4ff; }
 
           function windChip(val, label) {
             const sel = (b.sweet_spot_wind || 'any') === val;
-            return `<div onclick="selectChip(this,'edit-wind-${boardId}')" data-value="${val}" class="chip-option ${sel?'chip-selected':''}" style="padding:5px 12px;border-radius:18px;font-size:0.78rem;cursor:pointer;border:1px solid ${sel?'rgba(77,255,145,0.3)':'rgba(255,255,255,0.15)'};background:${sel?'rgba(77,255,145,0.1)':'rgba(255,255,255,0.06)'};color:${sel?'#4dff91':'rgba(255,255,255,0.5)'}">${label}</div>`;
+            return `<div onclick="selectChip(this,'edit-wind-${boardId}')" data-value="${val}" class="chip-option ${sel?'chip-selected':''}" style="padding:5px 12px;border-radius:18px;font-size:0.78rem;cursor:pointer;border:1px solid ${sel?'#2563EB':'rgba(0,0,0,0.15)'};background:${sel?'rgba(37,99,235,0.08)':'rgba(0,0,0,0.04)'};color:${sel?'#2563EB':'rgba(0,0,0,0.5)'}">${label}</div>`;
           }
           function tideChip(val, label) {
             const sel = (b.sweet_spot_tide || 'any') === val;
-            return `<div onclick="selectChip(this,'edit-tide-${boardId}')" data-value="${val}" class="chip-option ${sel?'chip-selected':''}" style="padding:5px 12px;border-radius:18px;font-size:0.78rem;cursor:pointer;border:1px solid ${sel?'rgba(77,255,145,0.3)':'rgba(255,255,255,0.15)'};background:${sel?'rgba(77,255,145,0.1)':'rgba(255,255,255,0.06)'};color:${sel?'#4dff91':'rgba(255,255,255,0.5)'}">${label}</div>`;
+            return `<div onclick="selectChip(this,'edit-tide-${boardId}')" data-value="${val}" class="chip-option ${sel?'chip-selected':''}" style="padding:5px 12px;border-radius:18px;font-size:0.78rem;cursor:pointer;border:1px solid ${sel?'#2563EB':'rgba(0,0,0,0.15)'};background:${sel?'rgba(37,99,235,0.08)':'rgba(0,0,0,0.04)'};color:${sel?'#2563EB':'rgba(0,0,0,0.5)'}">${label}</div>`;
           }
 
           row.innerHTML = `
             <div style="width:100%;padding:4px">
               ${photoPreview}
-              <input type="file" id="edit-board-photo-${boardId}" accept="image/*" style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-bottom:8px">
+              <input type="file" id="edit-board-photo-${boardId}" accept="image/*" style="font-size:0.75rem;color:rgba(0,0,0,0.4);margin-bottom:8px">
               <div class="form-group" style="margin-bottom:6px"><input type="text" id="edit-board-name-${boardId}" value="${b.nickname || b.name || ''}" placeholder="Nom"></div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
                 <select id="edit-board-type-${boardId}">${typeOptions}</select>
                 <input type="text" id="edit-board-size-${boardId}" value="${b.length_ft || b.size || ''}" placeholder="Taille">
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">
-                <input type="number" id="edit-board-volume-${boardId}" value="${b.volume_l || ''}" placeholder="Volume L" step="0.1" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem;outline:none">
-                <input type="text" id="edit-board-width-${boardId}" value="${b.width_in || ''}" placeholder="Larg." style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem;outline:none">
-                <input type="text" id="edit-board-thick-${boardId}" value="${b.thickness_in || ''}" placeholder="Épais." style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem;outline:none">
+                <input type="number" id="edit-board-volume-${boardId}" value="${b.volume_l || ''}" placeholder="Volume L" step="0.1" style="background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.12);border-radius:8px;color:#1a1a1a;padding:8px;font-size:0.82rem;outline:none">
+                <input type="text" id="edit-board-width-${boardId}" value="${b.width_in || ''}" placeholder="Larg." style="background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.12);border-radius:8px;color:#1a1a1a;padding:8px;font-size:0.82rem;outline:none">
+                <input type="text" id="edit-board-thick-${boardId}" value="${b.thickness_in || ''}" placeholder="Épais." style="background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.12);border-radius:8px;color:#1a1a1a;padding:8px;font-size:0.82rem;outline:none">
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
-                <select id="edit-board-fins-${boardId}" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem">${finsOptions}</select>
-                <select id="edit-board-tail-${boardId}" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem">${tailOptions}</select>
+                <select id="edit-board-fins-${boardId}" style="background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.12);border-radius:8px;color:#1a1a1a;padding:8px;font-size:0.82rem">${finsOptions}</select>
+                <select id="edit-board-tail-${boardId}" style="background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.12);border-radius:8px;color:#1a1a1a;padding:8px;font-size:0.82rem">${tailOptions}</select>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
-                <input type="text" id="edit-board-shaper-${boardId}" value="${b.shaper || ''}" placeholder="Shaper" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem;outline:none">
-                <input type="text" id="edit-board-brand-${boardId}" value="${b.brand || ''}" placeholder="Marque" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem;outline:none">
+                <input type="text" id="edit-board-shaper-${boardId}" value="${b.shaper || ''}" placeholder="Shaper" style="background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.12);border-radius:8px;color:#1a1a1a;padding:8px;font-size:0.82rem;outline:none">
+                <input type="text" id="edit-board-brand-${boardId}" value="${b.brand || ''}" placeholder="Marque" style="background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.12);border-radius:8px;color:#1a1a1a;padding:8px;font-size:0.82rem;outline:none">
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
-                <input type="number" id="edit-board-year-${boardId}" value="${b.year_made || ''}" placeholder="Année" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem;outline:none">
-                <select id="edit-board-cond-${boardId}" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem">${condOptions}</select>
+                <input type="number" id="edit-board-year-${boardId}" value="${b.year_made || ''}" placeholder="Année" style="background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.12);border-radius:8px;color:#1a1a1a;padding:8px;font-size:0.82rem;outline:none">
+                <select id="edit-board-cond-${boardId}" style="background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.12);border-radius:8px;color:#1a1a1a;padding:8px;font-size:0.82rem">${condOptions}</select>
               </div>
               <div style="color:#ed8936;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;margin:8px 0 6px">Sweet spot</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
-                <input type="number" id="edit-board-wmin-${boardId}" value="${b.sweet_spot_wave_min || ''}" placeholder="Houle min" step="0.1" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem;outline:none">
-                <input type="number" id="edit-board-wmax-${boardId}" value="${b.sweet_spot_wave_max || ''}" placeholder="Houle max" step="0.1" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0f4ff;padding:8px;font-size:0.82rem;outline:none">
+                <input type="number" id="edit-board-wmin-${boardId}" value="${b.sweet_spot_wave_min || ''}" placeholder="Houle min" step="0.1" style="background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.12);border-radius:8px;color:#1a1a1a;padding:8px;font-size:0.82rem;outline:none">
+                <input type="number" id="edit-board-wmax-${boardId}" value="${b.sweet_spot_wave_max || ''}" placeholder="Houle max" step="0.1" style="background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.12);border-radius:8px;color:#1a1a1a;padding:8px;font-size:0.82rem;outline:none">
               </div>
               <div style="margin-bottom:6px"><div id="edit-wind-${boardId}-chips" style="display:flex;gap:4px;flex-wrap:wrap">${windChip('offshore','Offshore')}${windChip('onshore','Onshore')}${windChip('any','Peu importe')}</div></div>
               <div style="margin-bottom:8px"><div id="edit-tide-${boardId}-chips" style="display:flex;gap:4px;flex-wrap:wrap">${tideChip('haute','Haute')}${tideChip('basse','Basse')}${tideChip('mi-maree','Mi-marée')}${tideChip('any','Peu importe')}</div></div>
               <div style="display:flex;gap:6px">
                 <button class="btn-primary" style="margin:0;padding:8px;font-size:0.82rem" onclick="saveBoard('${boardId}')">Sauvegarder</button>
-                <button onclick="loadBoardsTab()" style="flex:0.5;padding:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f0f4ff;cursor:pointer;font-size:0.82rem">Annuler</button>
+                <button onclick="loadBoardsTab()" style="flex:0.5;padding:8px;background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.1);border-radius:8px;color:#1a1a1a;cursor:pointer;font-size:0.82rem">Annuler</button>
               </div>
             </div>`;
         }
@@ -4002,27 +4041,27 @@ select option { background: #0d2137; color: #f0f4ff; }
           if (overlay) overlay.remove();
           overlay = document.createElement('div');
           overlay.id = 'board-share-overlay';
-          overlay.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;z-index:999;background:#0a0e27;display:flex;flex-direction:column;padding:20px;overflow-y:auto';
+          overlay.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;z-index:999;background:#EBF2FF;display:flex;flex-direction:column;padding:20px;overflow-y:auto';
           document.querySelector('.app').appendChild(overlay);
           overlay.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-              <div style="color:#f0f4ff;font-size:1rem;font-weight:600">Partager "${b.nickname || b.name}"</div>
-              <div onclick="document.getElementById('board-share-overlay')?.remove()" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:1.2rem;padding:4px 8px">✕</div>
+              <div style="color:#1a1a1a;font-size:1rem;font-weight:600">Partager "${b.nickname || b.name}"</div>
+              <div onclick="document.getElementById('board-share-overlay')?.remove()" style="color:rgba(0,0,0,0.4);cursor:pointer;font-size:1.2rem;padding:4px 8px">✕</div>
             </div>
-            <div onclick="shareBoardFlex('${boardId}')" style="padding:16px;margin-bottom:10px;background:rgba(77,255,145,0.06);border:1px solid rgba(77,255,145,0.2);border-radius:12px;cursor:pointer">
+            <div onclick="shareBoardFlex('${boardId}')" style="padding:16px;margin-bottom:10px;background:rgba(45,138,78,0.06);border:1px solid rgba(45,138,78,0.2);border-radius:12px;cursor:pointer">
               <div style="font-size:1.2rem;margin-bottom:4px">📸</div>
-              <div style="color:#4dff91;font-size:0.9rem;font-weight:600">Montrer ma board</div>
-              <div style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin-top:2px">Partage lifestyle — montre ton quiver</div>
+              <div style="color:#2563EB;font-size:0.9rem;font-weight:600">Montrer ma board</div>
+              <div style="color:rgba(0,0,0,0.4);font-size:0.78rem;margin-top:2px">Partage lifestyle — montre ton quiver</div>
             </div>
             <div onclick="shareBoardSellForm('${boardId}')" style="padding:16px;margin-bottom:10px;background:rgba(237,137,54,0.06);border:1px solid rgba(237,137,54,0.2);border-radius:12px;cursor:pointer">
               <div style="font-size:1.2rem;margin-bottom:4px">💰</div>
               <div style="color:#ed8936;font-size:0.9rem;font-weight:600">Vendre ma board</div>
-              <div style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin-top:2px">Crée une annonce pour Instagram</div>
+              <div style="color:rgba(0,0,0,0.4);font-size:0.78rem;margin-top:2px">Crée une annonce pour Instagram</div>
             </div>
-            <div onclick="shareBoardRepairForm('${boardId}')" style="padding:16px;margin-bottom:10px;background:rgba(0,207,255,0.06);border:1px solid rgba(0,207,255,0.2);border-radius:12px;cursor:pointer">
+            <div onclick="shareBoardRepairForm('${boardId}')" style="padding:16px;margin-bottom:10px;background:rgba(37,99,235,0.06);border:1px solid rgba(37,99,235,0.2);border-radius:12px;cursor:pointer">
               <div style="font-size:1.2rem;margin-bottom:4px">🔧</div>
-              <div style="color:#00cfff;font-size:0.9rem;font-weight:600">Réparer ma board</div>
-              <div style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin-top:2px">Trouve un réparateur via ton réseau</div>
+              <div style="color:#3B82F6;font-size:0.9rem;font-weight:600">Réparer ma board</div>
+              <div style="color:rgba(0,0,0,0.4);font-size:0.78rem;margin-top:2px">Trouve un réparateur via ton réseau</div>
             </div>`;
         }
 
@@ -4039,12 +4078,12 @@ select option { background: #0d2137; color: #f0f4ff; }
           overlay.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
               <div style="color:#ed8936;font-size:1rem;font-weight:600">Vendre ma board</div>
-              <div onclick="openBoardShareOverlay('${boardId}')" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:0.8rem;padding:4px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:6px">← Retour</div>
+              <div onclick="openBoardShareOverlay('${boardId}')" style="color:rgba(0,0,0,0.4);cursor:pointer;font-size:0.8rem;padding:4px 10px;border:1px solid rgba(0,0,0,0.15);border-radius:6px">← Retour</div>
             </div>
             <div class="form-group"><label>Prix (€)</label><input type="number" id="sell-price" placeholder="350"></div>
             <div class="form-group"><label>Localisation</label><input type="text" id="sell-location" placeholder="Biarritz"></div>
             <div class="form-group"><label>Message (optionnel)</label><textarea id="sell-message" rows="2" placeholder="Vendue car j'ai changé de niveau"></textarea></div>
-            <button class="btn-primary" onclick="prepareBoardSell('${boardId}')" style="background:#ed8936">Suivant — choisir une photo</button>`;
+            <button class="btn-primary" onclick="prepareBoardSell('${boardId}')" style="background:#ed8936;color:#fff">Suivant — choisir une photo</button>`;
         }
 
         function prepareBoardSell(boardId) {
@@ -4063,20 +4102,20 @@ select option { background: #0d2137; color: #f0f4ff; }
           if (!overlay) return;
           overlay.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-              <div style="color:#00cfff;font-size:1rem;font-weight:600">Réparer ma board</div>
-              <div onclick="openBoardShareOverlay('${boardId}')" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:0.8rem;padding:4px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:6px">← Retour</div>
+              <div style="color:#3B82F6;font-size:1rem;font-weight:600">Réparer ma board</div>
+              <div onclick="openBoardShareOverlay('${boardId}')" style="color:rgba(0,0,0,0.4);cursor:pointer;font-size:0.8rem;padding:4px 10px;border:1px solid rgba(0,0,0,0.15);border-radius:6px">← Retour</div>
             </div>
             <div class="form-group"><label>Description du problème</label><textarea id="repair-desc" rows="3" placeholder="Ding sur le nose, fissure rail droit..."></textarea></div>
             <div class="form-group"><label>Localisation</label><input type="text" id="repair-location" placeholder="Biarritz"></div>
             <div class="form-group">
               <label>Urgence</label>
               <div id="repair-urgency-chips" style="display:flex;gap:6px">
-                <div onclick="selectChip(this,'repair-urgency')" data-value="tranquille" class="chip-option chip-selected" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(77,255,145,0.3);background:rgba(77,255,145,0.1);color:#4dff91">Tranquille</div>
-                <div onclick="selectChip(this,'repair-urgency')" data-value="rapide" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)">Rapide</div>
-                <div onclick="selectChip(this,'repair-urgency')" data-value="urgent" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)">Urgent</div>
+                <div onclick="selectChip(this,'repair-urgency')" data-value="tranquille" class="chip-option chip-selected" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid #2563EB;background:rgba(37,99,235,0.08);color:#2563EB">Tranquille</div>
+                <div onclick="selectChip(this,'repair-urgency')" data-value="rapide" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(0,0,0,0.15);background:rgba(0,0,0,0.04);color:rgba(0,0,0,0.5)">Rapide</div>
+                <div onclick="selectChip(this,'repair-urgency')" data-value="urgent" class="chip-option" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid rgba(0,0,0,0.15);background:rgba(0,0,0,0.04);color:rgba(0,0,0,0.5)">Urgent</div>
               </div>
             </div>
-            <button class="btn-primary" onclick="prepareBoardRepair('${boardId}')" style="background:#00cfff;color:#0a0e27">Suivant — choisir une photo</button>`;
+            <button class="btn-primary" onclick="prepareBoardRepair('${boardId}')" style="background:#3B82F6;color:#fff">Suivant — choisir une photo</button>`;
         }
 
         function prepareBoardRepair(boardId) {
@@ -4109,8 +4148,8 @@ select option { background: #0d2137; color: #f0f4ff; }
           if (!container) return;
           if (!_boardSpots.length) { container.innerHTML = ''; return; }
           container.innerHTML = _boardSpots.map((s, i) => `
-            <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(77,255,145,0.06);border:1px solid rgba(77,255,145,0.15);border-radius:6px;margin-bottom:4px">
-              <div style="flex:1;color:#f0f4ff;font-size:0.82rem">${s.name}</div>
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(37,99,235,0.06);border:1px solid rgba(37,99,235,0.15);border-radius:6px;margin-bottom:4px">
+              <div style="flex:1;color:#1a1a1a;font-size:0.82rem">${s.name}</div>
               <div onclick="_boardSpots.splice(${i},1);renderBoardSpotsList()" style="color:rgba(255,77,77,0.5);cursor:pointer;font-size:0.8rem;padding:2px 6px">✕</div>
             </div>
           `).join('');
@@ -4124,8 +4163,8 @@ select option { background: #0d2137; color: #f0f4ff; }
           overlay.innerHTML = `
             <div class="share-card" style="text-align:center;padding:30px 16px">
               <div class="share-check">📸</div>
-              <h2 style="color:#f0f4ff;font-size:1rem;margin:12px 0">${boardName}</h2>
-              <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-bottom:20px">Choisis une photo pour ta story Instagram</p>
+              <h2 style="color:#1a1a1a;font-size:1rem;margin:12px 0">${boardName}</h2>
+              <p style="color:rgba(0,0,0,0.5);font-size:0.85rem;margin-bottom:20px">Choisis une photo pour ta story Instagram</p>
               <button class="share-btn-primary" id="board-share-pick-photo">Choisir une photo</button>
               <input type="file" accept="image/*" id="board-share-file-input" style="display:none">
               <button class="share-btn-skip" onclick="document.getElementById('board-share-overlay')?.remove()">Annuler</button>
@@ -4143,7 +4182,7 @@ select option { background: #0d2137; color: #f0f4ff; }
         async function generateBoardShareCard(photoFile) {
           const overlay = document.getElementById('board-share-overlay');
           if (!overlay) return;
-          overlay.innerHTML = '<div style="text-align:center;padding:40px"><p style="color:rgba(255,255,255,0.6)">Generation en cours...</p></div>';
+          overlay.innerHTML = '<div style="text-align:center;padding:40px"><p style="color:rgba(0,0,0,0.6)">Generation en cours...</p></div>';
 
           const b = (userData.boards || []).find(x => x.id == _boardShareId);
           if (!b) return;
@@ -4232,9 +4271,9 @@ select option { background: #0d2137; color: #f0f4ff; }
 
           // Gradient overlay
           const grad = ctx.createLinearGradient(0, 500, 0, 1350);
-          grad.addColorStop(0, 'rgba(10,14,39,0)');
-          grad.addColorStop(0.4, 'rgba(10,14,39,0.6)');
-          grad.addColorStop(1, 'rgba(10,14,39,0.92)');
+          grad.addColorStop(0, 'rgba(235,242,255,0)');
+          grad.addColorStop(0.4, 'rgba(235,242,255,0.6)');
+          grad.addColorStop(1, 'rgba(235,242,255,0.92)');
           ctx.fillStyle = grad;
           ctx.fillRect(0, 500, 1080, 850);
 
@@ -4243,19 +4282,19 @@ select option { background: #0d2137; color: #f0f4ff; }
           let curY = 1290;
 
           // Accent couleur selon mode
-          const accentColors = { flex: '#4dff91', sell: '#ed8936', repair: '#00cfff' };
-          const accent = accentColors[mode] || '#4dff91';
+          const accentColors = { flex: '#56AB2F', sell: '#ed8936', repair: '#3B82F6' };
+          const accent = accentColors[mode] || '#56AB2F';
 
           // Bottom line (SurfAI ou message)
           ctx.font = '22px -apple-system, BlinkMacSystemFont, sans-serif';
-          ctx.fillStyle = 'rgba(255,255,255,0.5)';
+          ctx.fillStyle = 'rgba(0,0,0,0.5)';
           ctx.fillText(bottomLine, cx, curY);
           curY -= 50;
 
           // Detail line
           if (detailLine) {
             ctx.font = '24px -apple-system, BlinkMacSystemFont, sans-serif';
-            ctx.fillStyle = '#f0f4ff';
+            ctx.fillStyle = '#1a1a1a';
             ctx.fillText(detailLine, cx, curY);
             curY -= 50;
           }
@@ -4271,7 +4310,7 @@ select option { background: #0d2137; color: #f0f4ff; }
           // Date/shaper
           if (data.date) {
             ctx.font = '28px -apple-system, BlinkMacSystemFont, sans-serif';
-            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
             ctx.fillText(data.date, cx, curY);
             curY -= 45;
           }
@@ -4279,20 +4318,20 @@ select option { background: #0d2137; color: #f0f4ff; }
           // Subtitle (dims)
           if (data.spotCity) {
             ctx.font = '28px -apple-system, BlinkMacSystemFont, sans-serif';
-            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
             ctx.fillText(data.spotCity, cx, curY);
             curY -= 45;
           }
 
           // Title (board name)
           ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, sans-serif';
-          ctx.fillStyle = '#f0f4ff';
+          ctx.fillStyle = '#1a1a1a';
           ctx.fillText(data.spotName, cx, curY);
           curY -= 55;
 
           // Logo SurfAI en haut
           ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, sans-serif';
-          ctx.fillStyle = 'rgba(255,255,255,0.3)';
+          ctx.fillStyle = 'rgba(0,0,0,0.3)';
           ctx.fillText('SurfAI', cx, 40);
 
           return canvas;
@@ -4308,13 +4347,13 @@ select option { background: #0d2137; color: #f0f4ff; }
 
           // Fond dégradé
           const grad = ctx.createLinearGradient(0, 0, 0, 1920);
-          grad.addColorStop(0, '#0a0e27');
-          grad.addColorStop(1, '#1a1e3a');
+          grad.addColorStop(0, '#EBF2FF');
+          grad.addColorStop(1, '#D4E4FB');
           ctx.fillStyle = grad;
           ctx.fillRect(0, 0, 1080, 1920);
 
           // Couleur accent selon le mode
-          const accentColors = { flex: '#4dff91', sell: '#ed8936', repair: '#00cfff' };
+          const accentColors = { flex: '#56AB2F', sell: '#ed8936', repair: '#3B82F6' };
           const accent = accentColors[mode];
 
           let y = 80;
@@ -4327,7 +4366,7 @@ select option { background: #0d2137; color: #f0f4ff; }
             ctx.fillText('À VENDRE', 540, y);
             y += 60;
           } else if (mode === 'repair') {
-            ctx.fillStyle = '#00cfff';
+            ctx.fillStyle = '#3B82F6';
             ctx.font = 'bold 42px -apple-system, sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText('🔧 BESOIN DE RÉPARATION', 540, y);
@@ -4353,19 +4392,19 @@ select option { background: #0d2137; color: #f0f4ff; }
               y += drawH + 40;
             } catch(e) {
               // Placeholder si image ne charge pas
-              ctx.fillStyle = 'rgba(255,255,255,0.05)';
+              ctx.fillStyle = 'rgba(0,0,0,0.05)';
               ctx.fillRect(90, y, 900, 500);
-              ctx.fillStyle = 'rgba(255,255,255,0.2)';
+              ctx.fillStyle = 'rgba(0,0,0,0.2)';
               ctx.font = '120px sans-serif';
               ctx.textAlign = 'center';
               ctx.fillText(getBoardTypeIcon(board.type), 540, y + 300);
               y += 560;
             }
           } else {
-            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            ctx.fillStyle = 'rgba(0,0,0,0.05)';
             roundRect(ctx, 90, y, 900, 400, 20);
             ctx.fill();
-            ctx.fillStyle = 'rgba(255,255,255,0.15)';
+            ctx.fillStyle = 'rgba(0,0,0,0.15)';
             ctx.font = '120px sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(getBoardTypeIcon(board.type), 540, y + 260);
@@ -4373,7 +4412,7 @@ select option { background: #0d2137; color: #f0f4ff; }
           }
 
           // Nom
-          ctx.fillStyle = '#f0f4ff';
+          ctx.fillStyle = '#1a1a1a';
           ctx.font = 'bold 52px -apple-system, sans-serif';
           ctx.textAlign = 'center';
           ctx.fillText(`"${board.nickname || board.name}"`, 540, y);
@@ -4381,7 +4420,7 @@ select option { background: #0d2137; color: #f0f4ff; }
 
           // Dims + type
           const dims = [board.length_ft || board.size, board.type ? board.type.charAt(0).toUpperCase() + board.type.slice(1) : ''].filter(Boolean).join(' · ');
-          ctx.fillStyle = 'rgba(255,255,255,0.5)';
+          ctx.fillStyle = 'rgba(0,0,0,0.5)';
           ctx.font = '36px -apple-system, sans-serif';
           ctx.fillText(dims, 540, y + 30);
           y += 70;
@@ -4389,7 +4428,7 @@ select option { background: #0d2137; color: #f0f4ff; }
           // Shaper
           const shaperLine = [board.shaper, board.brand].filter(Boolean).join(' — ');
           if (shaperLine) {
-            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
             ctx.font = '32px -apple-system, sans-serif';
             ctx.fillText('🔨 ' + shaperLine, 540, y);
             y += 50;
@@ -4398,7 +4437,7 @@ select option { background: #0d2137; color: #f0f4ff; }
           // Volume + setup
           const techLine = [board.volume_l ? board.volume_l + 'L' : '', board.fins_setup, board.tail_shape].filter(Boolean).join(' · ');
           if (techLine) {
-            ctx.fillStyle = 'rgba(255,255,255,0.35)';
+            ctx.fillStyle = 'rgba(0,0,0,0.35)';
             ctx.font = '30px -apple-system, sans-serif';
             ctx.fillText(techLine, 540, y);
             y += 50;
@@ -4421,7 +4460,7 @@ select option { background: #0d2137; color: #f0f4ff; }
             }
           } else if (mode === 'sell') {
             if (board.condition) {
-              ctx.fillStyle = 'rgba(255,255,255,0.4)';
+              ctx.fillStyle = 'rgba(0,0,0,0.4)';
               ctx.font = '30px -apple-system, sans-serif';
               ctx.fillText('État : ' + board.condition, 540, y);
               y += 45;
@@ -4433,29 +4472,29 @@ select option { background: #0d2137; color: #f0f4ff; }
               y += 70;
             }
             if (extras.location) {
-              ctx.fillStyle = 'rgba(255,255,255,0.5)';
+              ctx.fillStyle = 'rgba(0,0,0,0.5)';
               ctx.font = '30px -apple-system, sans-serif';
               ctx.fillText('📍 ' + extras.location, 540, y);
               y += 45;
             }
             if (extras.message) {
-              ctx.fillStyle = 'rgba(255,255,255,0.35)';
+              ctx.fillStyle = 'rgba(0,0,0,0.35)';
               ctx.font = 'italic 28px -apple-system, sans-serif';
               ctx.fillText('"' + extras.message + '"', 540, y);
               y += 45;
             }
-            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
             ctx.font = '28px -apple-system, sans-serif';
             ctx.fillText('💬 Me contacter sur SurfAI', 540, y + 20);
           } else if (mode === 'repair') {
             if (extras.location) {
-              ctx.fillStyle = 'rgba(255,255,255,0.5)';
+              ctx.fillStyle = 'rgba(0,0,0,0.5)';
               ctx.font = '30px -apple-system, sans-serif';
               ctx.fillText('📍 ' + extras.location, 540, y);
               y += 45;
             }
             if (extras.description) {
-              ctx.fillStyle = 'rgba(255,255,255,0.4)';
+              ctx.fillStyle = 'rgba(0,0,0,0.4)';
               ctx.font = 'italic 28px -apple-system, sans-serif';
               // Wrap text
               const words = extras.description.split(' ');
@@ -4479,7 +4518,7 @@ select option { background: #0d2137; color: #f0f4ff; }
               ctx.fillText('⚡ ' + extras.urgency.toUpperCase(), 540, y);
               y += 45;
             }
-            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
             ctx.font = '28px -apple-system, sans-serif';
             ctx.fillText('💬 Contactez-moi sur SurfAI', 540, y + 20);
           }
@@ -4513,8 +4552,8 @@ select option { background: #0d2137; color: #f0f4ff; }
           if (!overlay) return;
           overlay.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-              <div style="color:#f0f4ff;font-size:1rem;font-weight:600">Aperçu Instagram Story</div>
-              <div onclick="document.getElementById('board-share-overlay')?.remove()" style="color:rgba(255,255,255,0.4);cursor:pointer;font-size:1.2rem;padding:4px 8px">✕</div>
+              <div style="color:#1a1a1a;font-size:1rem;font-weight:600">Aperçu Instagram Story</div>
+              <div onclick="document.getElementById('board-share-overlay')?.remove()" style="color:rgba(0,0,0,0.4);cursor:pointer;font-size:1.2rem;padding:4px 8px">✕</div>
             </div>
             <div style="flex:1;overflow-y:auto;display:flex;justify-content:center">
               <div id="card-preview-container" style="width:100%;max-width:300px"></div>
@@ -4762,9 +4801,9 @@ select option { background: #0d2137; color: #f0f4ff; }
 
           // Chips tri
           const sortChips = `<div style="display:flex;gap:8px;margin-bottom:10px">
-            <div onclick="_sessionHistorySort='date';renderSessionHistory()" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid ${_sessionHistorySort==='date'?'#4dff91':'rgba(255,255,255,0.15)'};background:${_sessionHistorySort==='date'?'rgba(77,255,145,0.15)':'rgba(255,255,255,0.06)'};color:${_sessionHistorySort==='date'?'#4dff91':'rgba(255,255,255,0.4)'}">Date</div>
-            <div onclick="_sessionHistorySort='rating';renderSessionHistory()" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid ${_sessionHistorySort==='rating'?'#4dff91':'rgba(255,255,255,0.15)'};background:${_sessionHistorySort==='rating'?'rgba(77,255,145,0.15)':'rgba(255,255,255,0.06)'};color:${_sessionHistorySort==='rating'?'#4dff91':'rgba(255,255,255,0.4)'}">★ Note</div>
-            <div onclick="_sessionHistorySort='spot';renderSessionHistory()" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid ${_sessionHistorySort==='spot'?'#4dff91':'rgba(255,255,255,0.15)'};background:${_sessionHistorySort==='spot'?'rgba(77,255,145,0.15)':'rgba(255,255,255,0.06)'};color:${_sessionHistorySort==='spot'?'#4dff91':'rgba(255,255,255,0.4)'}">Spot</div>
+            <div onclick="_sessionHistorySort='date';renderSessionHistory()" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid ${_sessionHistorySort==='date'?'#2563EB':'rgba(0,0,0,0.15)'};background:${_sessionHistorySort==='date'?'rgba(37,99,235,0.1)':'rgba(0,0,0,0.04)'};color:${_sessionHistorySort==='date'?'#2563EB':'rgba(0,0,0,0.4)'}">Date</div>
+            <div onclick="_sessionHistorySort='rating';renderSessionHistory()" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid ${_sessionHistorySort==='rating'?'#2563EB':'rgba(0,0,0,0.15)'};background:${_sessionHistorySort==='rating'?'rgba(37,99,235,0.1)':'rgba(0,0,0,0.04)'};color:${_sessionHistorySort==='rating'?'#2563EB':'rgba(0,0,0,0.4)'}">★ Note</div>
+            <div onclick="_sessionHistorySort='spot';renderSessionHistory()" style="padding:6px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:1px solid ${_sessionHistorySort==='spot'?'#2563EB':'rgba(0,0,0,0.15)'};background:${_sessionHistorySort==='spot'?'rgba(37,99,235,0.1)':'rgba(0,0,0,0.04)'};color:${_sessionHistorySort==='spot'?'#2563EB':'rgba(0,0,0,0.4)'}">Spot</div>
           </div>`;
 
           const rows = filtered.map(s => {
@@ -4775,17 +4814,17 @@ select option { background: #0d2137; color: #f0f4ff; }
             const meteo = wh != null ? ` · 🌊 ${Number(wh).toFixed(1)}m` : '';
             return `<div class="session-compact" style="position:relative">
               <div style="flex:1" onclick="openSessionEdit('${s.id}')">
-                <div style="font-size:0.82rem;color:#f0f4ff">${date} · ${spot}</div>
-                <div style="font-size:0.72rem;color:rgba(255,255,255,0.45)">${stars}${meteo}</div>
+                <div style="font-size:0.82rem;color:#1a1a1a">${date} · ${spot}</div>
+                <div style="font-size:0.72rem;color:rgba(0,0,0,0.45)">${stars}${meteo}</div>
               </div>
               <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
-                <div onclick="openSessionEdit('${s.id}')" style="cursor:pointer;padding:4px 8px;border-radius:6px;background:rgba(0,207,255,0.1);color:#00cfff;font-size:0.7rem">✏️</div>
-                <div onclick="confirmDeleteSession('${s.id}')" style="cursor:pointer;padding:4px 8px;border-radius:6px;background:rgba(255,90,90,0.1);color:#ff5a5a;font-size:0.7rem">🗑</div>
+                <div onclick="openSessionEdit('${s.id}')" style="cursor:pointer;padding:4px 8px;border-radius:6px;background:rgba(37,99,235,0.1);color:#2563EB;font-size:0.7rem">✏️</div>
+                <div onclick="confirmDeleteSession('${s.id}')" style="cursor:pointer;padding:4px 8px;border-radius:6px;background:rgba(255,90,90,0.1);color:#D44860;font-size:0.7rem">🗑</div>
               </div>
             </div>`;
           }).join('');
 
-          const moreBtn = hasMore ? `<button onclick="_sessionHistoryShowAll=true;renderSessionHistory()" style="width:100%;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:rgba(255,255,255,0.5);cursor:pointer;font-size:0.8rem;margin-top:8px">Voir toutes les sessions (${sessions.length})</button>` : '';
+          const moreBtn = hasMore ? `<button onclick="_sessionHistoryShowAll=true;renderSessionHistory()" style="width:100%;padding:10px;background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.1);border-radius:8px;color:rgba(0,0,0,0.5);cursor:pointer;font-size:0.8rem;margin-top:8px">Voir toutes les sessions (${sessions.length})</button>` : '';
 
           container.innerHTML = `
             ${sortChips}
@@ -4821,28 +4860,28 @@ select option { background: #0d2137; color: #f0f4ff; }
 
           container.innerHTML = `
             <div style="margin-bottom:12px">
-              <div onclick="renderSessionHistory()" style="display:inline-block;color:rgba(255,255,255,0.5);font-size:0.8rem;cursor:pointer;margin-bottom:10px;padding:6px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:6px">← Retour</div>
+              <div onclick="renderSessionHistory()" style="display:inline-block;color:rgba(0,0,0,0.5);font-size:0.8rem;cursor:pointer;margin-bottom:10px;padding:6px 12px;border:1px solid rgba(0,0,0,0.15);border-radius:6px">← Retour</div>
               <div class="card">
                 <span class="section-label">✏️ Modifier session — ${spotName}</span>
                 <div style="margin-top:12px">
-                  <label style="color:rgba(255,255,255,0.5);font-size:0.75rem;display:block;margin-bottom:4px">Date</label>
-                  <input type="date" id="edit-session-date" value="${dateStr}" style="width:100%;padding:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#f0f4ff;font-size:0.85rem;margin-bottom:12px">
+                  <label style="color:rgba(0,0,0,0.5);font-size:0.75rem;display:block;margin-bottom:4px">Date</label>
+                  <input type="date" id="edit-session-date" value="${dateStr}" style="width:100%;padding:8px;background:rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.15);border-radius:6px;color:#1a1a1a;font-size:0.85rem;margin-bottom:12px">
 
-                  <label style="color:rgba(255,255,255,0.5);font-size:0.75rem;display:block;margin-bottom:4px">Note (1-5)</label>
+                  <label style="color:rgba(0,0,0,0.5);font-size:0.75rem;display:block;margin-bottom:4px">Note (1-5)</label>
                   <div id="edit-session-rating" style="display:flex;gap:8px;margin-bottom:12px">
-                    ${[1,2,3,4,5].map(r => `<div onclick="document.querySelectorAll('#edit-session-rating div').forEach(d=>d.style.background='rgba(255,255,255,0.06)');this.style.background='rgba(77,255,145,0.2)';this.dataset.selected='1';document.querySelectorAll('#edit-session-rating div').forEach(d=>{if(parseInt(d.textContent)<=${r})d.style.background='rgba(77,255,145,0.2)';else d.style.background='rgba(255,255,255,0.06)'});document.getElementById('edit-session-rating').dataset.value='${r}'" data-val="${r}" style="flex:1;text-align:center;padding:8px;border-radius:6px;cursor:pointer;font-size:1rem;background:${(session.rating || 0) >= r ? 'rgba(77,255,145,0.2)' : 'rgba(255,255,255,0.06)'};border:1px solid rgba(255,255,255,0.1)">${'★'.repeat(r)}</div>`).join('')}
+                    ${[1,2,3,4,5].map(r => `<div onclick="document.querySelectorAll('#edit-session-rating div').forEach(d=>d.style.background='rgba(0,0,0,0.06)');this.style.background='rgba(247,183,51,0.2)';this.dataset.selected='1';document.querySelectorAll('#edit-session-rating div').forEach(d=>{if(parseInt(d.textContent)<=${r})d.style.background='rgba(247,183,51,0.2)';else d.style.background='rgba(0,0,0,0.06)'});document.getElementById('edit-session-rating').dataset.value='${r}'" data-val="${r}" style="flex:1;text-align:center;padding:8px;border-radius:6px;cursor:pointer;font-size:1rem;color:#F7B733;background:${(session.rating || 0) >= r ? 'rgba(247,183,51,0.2)' : 'rgba(0,0,0,0.06)'};border:1px solid rgba(0,0,0,0.1)">${'★'.repeat(r)}</div>`).join('')}
                   </div>
 
-                  <label style="color:rgba(255,255,255,0.5);font-size:0.75rem;display:block;margin-bottom:4px">Notes</label>
-                  <textarea id="edit-session-notes" rows="3" style="width:100%;padding:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#f0f4ff;font-size:0.85rem;resize:vertical;margin-bottom:12px">${session.notes || ''}</textarea>
+                  <label style="color:rgba(0,0,0,0.5);font-size:0.75rem;display:block;margin-bottom:4px">Notes</label>
+                  <textarea id="edit-session-notes" rows="3" style="width:100%;padding:8px;background:rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.15);border-radius:6px;color:#1a1a1a;font-size:0.85rem;resize:vertical;margin-bottom:12px">${session.notes || ''}</textarea>
 
-                  ${session.meteo ? `<div style="color:rgba(255,255,255,0.4);font-size:0.72rem;padding:8px;background:rgba(255,255,255,0.03);border-radius:6px;margin-bottom:12px">
+                  ${session.meteo ? `<div style="color:rgba(0,0,0,0.4);font-size:0.72rem;padding:8px;background:rgba(0,0,0,0.03);border-radius:6px;margin-bottom:12px">
                     📡 Météo capturée : 🌊 ${session.meteo.waveHeight?.toFixed(1) || '?'}m · 💨 ${Math.round(session.meteo.windSpeed || 0)}km/h · ⏱ ${session.meteo.wavePeriod || '?'}s
                   </div>` : ''}
 
                   <div style="display:flex;gap:8px">
-                    <button onclick="saveSessionEdit('${sessionId}')" style="flex:1;padding:10px;background:linear-gradient(135deg,#4dff91,#00cfff);border:none;border-radius:8px;color:#0a0e27;font-weight:700;cursor:pointer;font-size:0.85rem">Enregistrer</button>
-                    <button onclick="confirmDeleteSession('${sessionId}')" style="padding:10px 16px;background:rgba(255,90,90,0.15);border:1px solid rgba(255,90,90,0.3);border-radius:8px;color:#ff5a5a;cursor:pointer;font-size:0.85rem">Supprimer</button>
+                    <button onclick="saveSessionEdit('${sessionId}')" style="flex:1;padding:10px;background:linear-gradient(135deg,#2563EB,#3B82F6);border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;font-size:0.85rem">Enregistrer</button>
+                    <button onclick="confirmDeleteSession('${sessionId}')" style="padding:10px 16px;background:rgba(255,90,90,0.15);border:1px solid rgba(255,90,90,0.3);border-radius:8px;color:#D44860;cursor:pointer;font-size:0.85rem">Supprimer</button>
                   </div>
                 </div>
               </div>
@@ -4914,7 +4953,7 @@ select option { background: #0d2137; color: #f0f4ff; }
                     const meteo = s.meteo ? `🌊 ${s.meteo.waveHeight?.toFixed(1)}m • 💨 ${s.meteo.windSpeed?.toFixed(0)}km/h` : '';
                     const notes = s.notes ? `<p style="color:#666;font-size:0.9rem;margin-top:6px">${s.notes}</p>` : '';
                     return `
-                        <div class="card" style="margin-bottom:12px;border-left:4px solid #00cfff">
+                        <div class="card" style="margin-bottom:12px;border-left:4px solid #3B82F6">
                             <div style="display:flex;justify-content:space-between;align-items:center">
                                 <strong>📍 ${spotName}</strong>
                                 <span style="color:#666;font-size:0.9rem">${date}</span>
@@ -5038,7 +5077,7 @@ select option { background: #0d2137; color: #f0f4ff; }
                 if (toggle) {
                     const track = toggle.nextElementSibling;
                     const knob = track.nextElementSibling;
-                    if (track) track.style.background = enabled ? '#4dff91' : 'rgba(255,255,255,0.15)';
+                    if (track) track.style.background = enabled ? '#2563EB' : 'rgba(0,0,0,0.15)';
                     if (knob) knob.style.left = enabled ? '22px' : '2px';
                 }
             } catch (err) {
@@ -5204,9 +5243,9 @@ select option { background: #0d2137; color: #f0f4ff; }
 
           // 2. Gradient overlay on bottom half
           const grad = ctx.createLinearGradient(0, 600, 0, 1350);
-          grad.addColorStop(0, 'rgba(10,14,39,0)');
-          grad.addColorStop(0.4, 'rgba(10,14,39,0.6)');
-          grad.addColorStop(1, 'rgba(10,14,39,0.9)');
+          grad.addColorStop(0, 'rgba(235,242,255,0)');
+          grad.addColorStop(0.4, 'rgba(235,242,255,0.6)');
+          grad.addColorStop(1, 'rgba(235,242,255,0.9)');
           ctx.fillStyle = grad;
           ctx.fillRect(0, 600, 1080, 750);
 
@@ -5218,7 +5257,7 @@ select option { background: #0d2137; color: #f0f4ff; }
           // Date
           const dateStr = formatSessionDate(sessionData.date);
           ctx.font = '22px -apple-system, BlinkMacSystemFont, sans-serif';
-          ctx.fillStyle = 'rgba(255,255,255,0.5)';
+          ctx.fillStyle = 'rgba(0,0,0,0.5)';
           ctx.fillText(dateStr, cx, curY);
           curY -= 50;
 
@@ -5232,7 +5271,7 @@ select option { background: #0d2137; color: #f0f4ff; }
           }
           if (parts.length > 0) {
             ctx.font = '24px -apple-system, BlinkMacSystemFont, sans-serif';
-            ctx.fillStyle = '#f0f4ff';
+            ctx.fillStyle = '#1a1a1a';
             ctx.fillText(parts.join('  ·  '), cx, curY);
             curY -= 50;
           }
@@ -5250,7 +5289,7 @@ select option { background: #0d2137; color: #f0f4ff; }
             if (m.wavePeriod != null) condParts.push(m.wavePeriod + 's');
             if (condParts.length > 0) {
               ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
-              ctx.fillStyle = '#4dff91';
+              ctx.fillStyle = '#56AB2F';
               ctx.fillText(condParts.join('  ·  '), cx, curY);
               curY -= 55;
             }
@@ -5259,20 +5298,20 @@ select option { background: #0d2137; color: #f0f4ff; }
           // City
           if (sessionData.spotCity) {
             ctx.font = '28px -apple-system, BlinkMacSystemFont, sans-serif';
-            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
             ctx.fillText(sessionData.spotCity, cx, curY);
             curY -= 45;
           }
 
           // Spot name
           ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, sans-serif';
-          ctx.fillStyle = '#f0f4ff';
+          ctx.fillStyle = '#1a1a1a';
           ctx.fillText(sessionData.spotName, cx, curY);
           curY -= 55;
 
           // SurfAI logo text
           ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, sans-serif';
-          ctx.fillStyle = '#00cfff';
+          ctx.fillStyle = '#3B82F6';
           ctx.fillText('SurfAI', cx, curY);
 
           return canvas;
