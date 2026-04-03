@@ -75,7 +75,8 @@ body {
   font-weight: 700;
 }
 
-.nav-icon { font-size: 1.3rem; line-height: 1; }
+.nav-icon { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; }
+.nav-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .nav-label { font-size: 0.58rem; letter-spacing: 0.5px; }
 
 /* ---- Panels ---- */
@@ -663,6 +664,13 @@ select option { background: #fff; color: #1a1a1a; }
     </style>
 </head>
 <body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="10" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="8" y="2" width="8" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="7" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="i-board" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="4" ry="10" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="4" x2="12" y2="20" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+</svg>
 <div class="app">
   <div class="tab-content">
 
@@ -796,19 +804,19 @@ select option { background: #fff; color: #1a1a1a; }
   <!-- Navigation bas -->
   <nav class="bottom-nav">
     <button class="nav-tab active" onclick="showTab('accueil', this)">
-      <span class="nav-icon">🎯</span><span class="nav-label">Prédictions</span>
+      <span class="nav-icon"><svg><use href="#i-target"/></svg></span><span class="nav-label">Prédictions</span>
     </button>
     <button class="nav-tab" onclick="showTab('spots', this)">
-      <span class="nav-icon">📍</span><span class="nav-label">Spots</span>
+      <span class="nav-icon"><svg><use href="#i-pin"/></svg></span><span class="nav-label">Spots</span>
     </button>
     <button class="nav-tab" onclick="showTab('session', this)">
-      <span class="nav-icon">➕</span><span class="nav-label">Session</span>
+      <span class="nav-icon"><svg><use href="#i-clipboard"/></svg></span><span class="nav-label">Sessions</span>
     </button>
     <button class="nav-tab" onclick="showTab('profil', this)">
-      <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
+      <span class="nav-icon"><svg><use href="#i-user"/></svg></span><span class="nav-label">Profil</span>
     </button>
     <button class="nav-tab" onclick="showTab('boards', this)" id="nav-boards">
-      <span class="nav-icon">🏄</span><span class="nav-label">Boards</span>
+      <span class="nav-icon"><svg><use href="#i-board"/></svg></span><span class="nav-label">Boards</span>
     </button>
   </nav>
 </div>
