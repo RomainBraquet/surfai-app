@@ -100,6 +100,7 @@ body {
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  color: #2563EB;
   color: rgba(0,0,0,0.3);
   margin-bottom: 8px;
   display: block;
@@ -141,7 +142,7 @@ body {
 /* ---- Grille météo 4 metrics ---- */
 .meteo-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 6px;
   text-align: center;
 }
@@ -1841,9 +1842,10 @@ select option { background: #fff; color: #1a1a1a; }
               </div>
               <div id="meteo-bloc">
                 <div class="meteo-grid">
-                  <div><div class="meteo-val" id="m-water">–</div><div class="meteo-lbl">🌡️ eau</div></div>
+                  <div><div class="meteo-val" id="m-air">–</div><div class="meteo-lbl" id="m-air-lbl">🌡️ air</div></div>
                   <div><div class="meteo-val" id="m-wind">–</div><div class="meteo-lbl">💨 vent</div></div>
                   <div><div class="meteo-val" id="m-wave">–</div><div class="meteo-lbl">🌊 vagues</div></div>
+                  <div><div class="meteo-val" id="m-water">–</div><div class="meteo-lbl">🌡️ eau</div></div>
                   <div><div class="meteo-val" id="m-tide">–</div><div class="meteo-lbl">🌙 marée</div></div>
                 </div>
                 <div class="meteo-loc" id="meteo-loc">📍 Localisation en cours...</div>
@@ -1925,7 +1927,24 @@ select option { background: #fff; color: #1a1a1a; }
         }
 
         async function loadGeoWeather() {
+          const weatherCodeIcon = (code) => {
+            if (code == null) return '🌡️';
+            if (code <= 1) return '☀️';
+            if (code <= 3) return '⛅';
+            if (code <= 48) return '☁️';
+            if (code <= 57) return '🌧️';
+            if (code <= 67) return '🌧️';
+            if (code <= 77) return '🌨️';
+            if (code <= 82) return '🌧️';
+            if (code <= 86) return '🌨️';
+            if (code <= 99) return '⛈️';
+            return '🌡️';
+          };
           const updateMeteo = (weather, locLabel) => {
+            const airEl = document.getElementById('m-air');
+            const airLbl = document.getElementById('m-air-lbl');
+            if (airEl) airEl.textContent = weather.airTemp != null ? weather.airTemp + '°' : '–';
+            if (airLbl) airLbl.textContent = weatherCodeIcon(weather.weatherCode) + ' air';
             document.getElementById('m-water').textContent = weather.waterTemp != null ? Math.round(weather.waterTemp) + '°' : '–';
             document.getElementById('m-wind').textContent  = weather.windSpeed  != null ? Math.round(weather.windSpeed)  + 'km/h' : '–';
             document.getElementById('m-wave').textContent  = weather.waveHeight != null ? weather.waveHeight.toFixed(1) + 'm' : '–';
@@ -2094,7 +2113,7 @@ select option { background: #fff; color: #1a1a1a; }
               </div>`;
             }).join('');
             return `<div style="margin-bottom:12px">
-              <div style="color:rgba(0,0,0,0.4);font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">${dayLabel}</div>
+              <div style="color:#2563EB;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;font-weight:600">${dayLabel}</div>
               ${tidesSummary ? `<div style="color:rgba(0,0,0,0.3);font-size:0.68rem;margin-bottom:6px">🌙 ${tidesSummary}</div>` : ''}
               ${hoursHtml}
             </div>`;
@@ -2137,7 +2156,7 @@ select option { background: #fff; color: #1a1a1a; }
             ${whyHtml ? `<div style="margin-bottom:8px">${whyHtml}</div>` : ''}
             ${boardHtml}
 
-            <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:2.5px;color:rgba(0,0,0,0.2);font-weight:700;margin:18px 0 10px">Heure par heure</div>
+            <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:2.5px;color:#2563EB;font-weight:700;margin:18px 0 10px">Heure par heure</div>
             ${daysHtml}`;
         }
 
