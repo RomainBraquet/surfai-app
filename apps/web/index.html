@@ -1856,7 +1856,12 @@ select option { background: #fff; color: #1a1a1a; }
 
           const windowsHtml = `
             <div class="card">
-              <span class="section-label">🎯 Meilleurs créneaux — ${PREDICTION_DAYS} jours</span>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <span class="section-label" style="margin:0">🎯 Meilleurs créneaux — ${PREDICTION_DAYS} jours</span>
+                <div id="pred-toggle" style="display:none;background:rgba(0,0,0,0.06);border-radius:8px;padding:2px;cursor:pointer;flex-shrink:0" onclick="togglePredSort()">
+                  <span id="pred-toggle-score" style="display:inline-block;padding:4px 10px;border-radius:6px;font-size:0.7rem;font-weight:700;background:#2563EB;color:#fff;transition:all 0.2s">Score</span><span id="pred-toggle-date" style="display:inline-block;padding:4px 10px;border-radius:6px;font-size:0.7rem;font-weight:600;color:rgba(0,0,0,0.4);transition:all 0.2s">Date</span>
+                </div>
+              </div>
               <div id="accueil-windows"><div class="loading">Analyse IA en cours...</div></div>
             </div>`;
 
@@ -2254,11 +2259,85 @@ select option { background: #fff; color: #1a1a1a; }
               </div>`;
             }).join('');
 
+            // Stocker les deux vues pour le toggle
+            window._predScoreHtml = html;
+            window._predSpotCards = spotCards;
+            window._predSortMode = 'score';
             container.innerHTML = html;
+
+            // Construire la vue Date (groupee par jour, triee par score dans chaque jour)
+            const allWindows = spotCards.map(item => ({ ...item.best, spot: item.spot, resultIdx: item.resultIdx }));
+            const byDate = {};
+            allWindows.forEach(w => {
+              const d = w.date;
+              if (!byDate[d]) byDate[d] = [];
+              byDate[d].push(w);
+            });
+            // Trier chaque jour par score desc
+            Object.values(byDate).forEach(arr => arr.sort((a, b) => b.score - a.score));
+            // Trier les jours chronologiquement
+            const sortedDates = Object.keys(byDate).sort();
+
+            const today = new Date(); today.setHours(0,0,0,0);
+            function relativeDay(dateStr) {
+              const d = new Date(dateStr); d.setHours(0,0,0,0);
+              const diff = Math.round((d - today) / 86400000);
+              if (diff === 0) return "Aujourd'hui";
+              if (diff === 1) return 'Demain';
+              return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
+            }
+
+            window._predDateHtml = sortedDates.map(dateKey => {
+              const dayLabel = relativeDay(dateKey);
+              const header = `<div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:2px;color:rgba(0,0,0,0.25);font-weight:700;margin:12px 0 8px;display:flex;align-items:center;gap:8px"><span style="flex:1;height:1px;background:rgba(0,0,0,0.08)"></span>${dayLabel}<span style="flex:1;height:1px;background:rgba(0,0,0,0.08)"></span></div>`;
+              const cards = byDate[dateKey].map(w => {
+                const spotName = w.spot?.name || '';
+                return `<div onclick="showSpotPredictionDetail(${w.resultIdx})" style="background:${scoreCardBg(w.score || 0)};border-radius:16px;padding:16px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:14px">
+                  <div style="font-size:2.1rem;font-weight:800;color:#1a1a1a;min-width:50px">${w.score}</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:0.85rem;font-weight:700;color:#1a1a1a">${spotName}</div>
+                    <div style="font-size:0.7rem;color:rgba(0,0,0,0.4);margin-top:2px">${w.timeWindow || ''} · 🌊 ${(w.conditions?.waveHeight || 0).toFixed(1)}m${w.conditions?.wavePeriod ? ' · ' + Math.round(w.conditions.wavePeriod) + 's' : ''}</div>
+                    ${w.whyGood?.length ? `<div style="font-size:0.7rem;color:rgba(0,0,0,0.5);font-weight:600;margin-top:3px">${w.whyGood[0]}</div>` : w.whyNotPerfect?.length ? `<div style="font-size:0.7rem;color:rgba(0,0,0,0.5);font-weight:600;margin-top:3px">${w.whyNotPerfect[0]}</div>` : ''}
+                  </div>
+                </div>`;
+              }).join('');
+              return header + cards;
+            }).join('');
+
+            // Afficher le toggle maintenant qu'on a des donnees
+            const toggleEl = document.getElementById('pred-toggle');
+            if (toggleEl) toggleEl.style.display = '';
 
           } catch (e) {
             const container2 = document.getElementById('accueil-windows');
             if (container2) container2.innerHTML = '<div class="empty">Erreur chargement créneaux.</div>';
+          }
+        }
+
+        function togglePredSort() {
+          const container = document.getElementById('accueil-windows');
+          const btnScore = document.getElementById('pred-toggle-score');
+          const btnDate = document.getElementById('pred-toggle-date');
+          if (!container || !btnScore || !btnDate) return;
+
+          if (window._predSortMode === 'score') {
+            window._predSortMode = 'date';
+            container.innerHTML = window._predDateHtml || '';
+            btnScore.style.background = 'transparent';
+            btnScore.style.color = 'rgba(0,0,0,0.4)';
+            btnScore.style.fontWeight = '600';
+            btnDate.style.background = '#2563EB';
+            btnDate.style.color = '#fff';
+            btnDate.style.fontWeight = '700';
+          } else {
+            window._predSortMode = 'score';
+            container.innerHTML = window._predScoreHtml || '';
+            btnScore.style.background = '#2563EB';
+            btnScore.style.color = '#fff';
+            btnScore.style.fontWeight = '700';
+            btnDate.style.background = 'transparent';
+            btnDate.style.color = 'rgba(0,0,0,0.4)';
+            btnDate.style.fontWeight = '600';
           }
         }
 
