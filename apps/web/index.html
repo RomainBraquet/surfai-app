@@ -3037,6 +3037,7 @@ select option { background: #fff; color: #1a1a1a; }
                             if (c.wavePeriod != null) chips.push(`⏱ ${Math.round(c.wavePeriod)}s`);
                             if (c.windSpeed != null) chips.push(`💨 ${Math.round(c.windSpeed)}km/h${c.windDirection ? ' ' + degreesToCompass(c.windDirection) : ''}`);
                             if (c.tidePhase) chips.push(`🌙 ${c.tidePhase}`);
+                            if (w.tideCoeff != null) chips.push(`coef : ${w.tideCoeff}`);
                             if (c.waterTemp != null) chips.push(`🌡 ${Math.round(c.waterTemp)}°`);
                             const chipsHtml = chips.map(ch => `<span style="background:rgba(37,99,235,0.08);color:#2563EB;padding:2px 8px;border-radius:10px;font-size:0.65rem;white-space:nowrap">${ch}</span>`).join('');
 
