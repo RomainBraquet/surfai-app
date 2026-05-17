@@ -2027,6 +2027,7 @@ select option { background: #fff; color: #1a1a1a; }
         // Helpers globaux pour les prédictions
         function scoreColor(s) { return s >= 8 ? '#2D8A4E' : s >= 6 ? '#E89A1E' : s >= 4 ? '#E06B30' : 'rgba(0,0,0,0.2)'; }
         function scoreBadgeBg(s) { return s >= 8 ? 'linear-gradient(135deg, #A8E063, #56AB2F)' : s >= 6 ? 'linear-gradient(135deg, #F7CE68, #F7B733)' : s >= 4 ? 'linear-gradient(135deg, #FFB347, #FF8C42)' : 'linear-gradient(135deg, #F9A8B0, #E8667A)'; }
+        function degreesToCompass(deg) { if (deg == null) return ''; const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW']; return dirs[Math.round(deg / 22.5) % 16]; }
         function scoreCardBg(s) { return s >= 8 ? 'linear-gradient(135deg, #D4ECC4, #E8F5D8)' : s >= 6 ? 'linear-gradient(135deg, #FFF3D0, #FFE8A0)' : s >= 4 ? 'linear-gradient(135deg, #FFE0C0, #FFD0A0)' : 'linear-gradient(135deg, #FCCCD0, #F5B0B8)'; }
         function heroCardBg(s) { return s >= 8 ? 'linear-gradient(155deg, #A8E063 0%, #56AB2F 40%, #2D8A4E 100%)' : s >= 6 ? 'linear-gradient(155deg, #F7CE68 0%, #F7B733 40%, #E89A1E 100%)' : s >= 4 ? 'linear-gradient(155deg, #FFB347 0%, #FF8C42 40%, #E06B30 100%)' : 'linear-gradient(155deg, #F9A8B0 0%, #E8667A 50%, #D44860 100%)'; }
         function narrativeStyle(score) {
@@ -3023,15 +3024,42 @@ select option { background: #fff; color: #1a1a1a; }
                     const res = await fetch(`${backendUrl}/api/v1/predictions/spot/${spotId}?userId=${userId}&days=5`);
                     const pData = await res.json();
                     if (pData.success && pData.windows?.length) {
-                        predsHtml = pData.windows.slice(0, 5).map(w => {
+                        predsHtml = pData.windows.slice(0, 10).map((w, idx) => {
                             const wColor = scoreBadgeBg(w.score);
                             const narColor = scoreColor(w.score);
                             const date = new Date(w.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-                            return `<div style="background:rgba(0,0,0,0.04);border-radius:8px;padding:8px;margin-bottom:4px;display:flex;align-items:center;gap:8px">
-                                <div style="background:${wColor};color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.7rem;flex-shrink:0">${w.score}</div>
-                                <div style="flex:1">
-                                    <div style="color:#1a1a1a;font-size:0.75rem;font-weight:600">${date} · ${w.startTime || ''}–${w.endTime || ''}</div>
-                                    <div style="color:${narColor};font-size:0.65rem">${w.narrative || ''}</div>
+                            const c = w.conditions || {};
+                            const uid = `pred-detail-${spotId}-${idx}`;
+
+                            // Conditions chips
+                            const chips = [];
+                            if (c.waveHeight != null) chips.push(`🌊 ${c.waveHeight.toFixed(1)}m`);
+                            if (c.wavePeriod != null) chips.push(`⏱ ${Math.round(c.wavePeriod)}s`);
+                            if (c.windSpeed != null) chips.push(`💨 ${Math.round(c.windSpeed)}km/h${c.windDirection ? ' ' + degreesToCompass(c.windDirection) : ''}`);
+                            if (c.tidePhase) chips.push(`🌙 ${c.tidePhase}`);
+                            if (c.waterTemp != null) chips.push(`🌡 ${Math.round(c.waterTemp)}°`);
+                            const chipsHtml = chips.map(ch => `<span style="background:rgba(37,99,235,0.08);color:#2563EB;padding:2px 8px;border-radius:10px;font-size:0.65rem;white-space:nowrap">${ch}</span>`).join('');
+
+                            // WhyGood / WhyNotPerfect
+                            const goodHtml = (w.whyGood || []).map(r => `<div style="color:#2D8A4E;font-size:0.7rem">+ ${r}</div>`).join('');
+                            const notPerfectHtml = (w.whyNotPerfect || []).map(r => `<div style="color:#E89A1E;font-size:0.7rem">- ${r}</div>`).join('');
+
+                            // Board suggestion
+                            const boardHtml = w.boardSuggestion ? `<div style="color:#2D8A4E;font-size:0.7rem;font-style:italic;margin-top:4px">🏄 ${w.boardSuggestion}</div>` : '';
+
+                            return `<div style="background:rgba(0,0,0,0.04);border-radius:10px;margin-bottom:6px;overflow:hidden">
+                                <div onclick="document.getElementById('${uid}').style.display = document.getElementById('${uid}').style.display === 'none' ? 'block' : 'none'" style="padding:10px;display:flex;align-items:center;gap:8px;cursor:pointer">
+                                    <div style="background:${wColor};color:#fff;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem;flex-shrink:0">${w.score}</div>
+                                    <div style="flex:1;min-width:0">
+                                        <div style="color:#1a1a1a;font-size:0.8rem;font-weight:600">${date} · ${w.timeWindow || w.startTime || ''}${w.peakHour ? ' (peak ' + w.peakHour + ')' : ''}</div>
+                                        <div style="color:${narColor};font-size:0.7rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${w.scoreLabel || ''} — ${w.narrative || ''}</div>
+                                    </div>
+                                    <div style="color:rgba(0,0,0,0.3);font-size:0.7rem;flex-shrink:0">▼</div>
+                                </div>
+                                <div id="${uid}" style="display:none;padding:0 10px 10px 10px;border-top:1px solid rgba(0,0,0,0.06)">
+                                    <div style="display:flex;flex-wrap:wrap;gap:4px;margin:8px 0">${chipsHtml}</div>
+                                    ${goodHtml}${notPerfectHtml}
+                                    ${boardHtml}
                                 </div>
                             </div>`;
                         }).join('');
