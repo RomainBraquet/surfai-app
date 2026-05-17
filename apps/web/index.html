@@ -4900,6 +4900,7 @@ select option { background: #fff; color: #1a1a1a; }
             const data = await res.json();
             if (data.success) {
               userData.sessions = userData.sessions.filter(s => s.id !== sessionId);
+              await loadSessions();
               renderSessionHistory();
             } else {
               alert('Erreur : ' + (data.error || 'Impossible de supprimer'));
@@ -4915,6 +4916,7 @@ select option { background: #fff; color: #1a1a1a; }
           const container = document.getElementById('session-history-view');
           if (!container) return;
 
+          const currentRating = session.rating || 0;
           container.innerHTML = `
             <div style="margin-bottom:12px">
               <div onclick="renderSessionHistory()" style="display:inline-block;color:rgba(0,0,0,0.5);font-size:0.8rem;cursor:pointer;margin-bottom:10px;padding:6px 12px;border:1px solid rgba(0,0,0,0.15);border-radius:6px">← Retour</div>
@@ -4924,9 +4926,9 @@ select option { background: #fff; color: #1a1a1a; }
                   <label style="color:rgba(0,0,0,0.5);font-size:0.75rem;display:block;margin-bottom:4px">Date</label>
                   <input type="date" id="edit-session-date" value="${dateStr}" style="width:100%;padding:8px;background:rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.15);border-radius:6px;color:#1a1a1a;font-size:0.85rem;margin-bottom:12px">
 
-                  <label style="color:rgba(0,0,0,0.5);font-size:0.75rem;display:block;margin-bottom:4px">Note (1-5)</label>
-                  <div id="edit-session-rating" style="display:flex;gap:8px;margin-bottom:12px">
-                    ${[1,2,3,4,5].map(r => `<div onclick="document.querySelectorAll('#edit-session-rating div').forEach(d=>d.style.background='rgba(0,0,0,0.06)');this.style.background='rgba(247,183,51,0.2)';this.dataset.selected='1';document.querySelectorAll('#edit-session-rating div').forEach(d=>{if(parseInt(d.textContent)<=${r})d.style.background='rgba(247,183,51,0.2)';else d.style.background='rgba(0,0,0,0.06)'});document.getElementById('edit-session-rating').dataset.value='${r}'" data-val="${r}" style="flex:1;text-align:center;padding:8px;border-radius:6px;cursor:pointer;font-size:1rem;color:#F7B733;background:${(session.rating || 0) >= r ? 'rgba(247,183,51,0.2)' : 'rgba(0,0,0,0.06)'};border:1px solid rgba(0,0,0,0.1)">${'★'.repeat(r)}</div>`).join('')}
+                  <label style="color:rgba(0,0,0,0.5);font-size:0.75rem;display:block;margin-bottom:4px">Note</label>
+                  <div id="edit-session-rating" data-value="${currentRating}" style="display:flex;gap:4px;margin-bottom:12px">
+                    ${[1,2,3,4,5].map(r => `<span onclick="setEditRating(${r})" style="cursor:pointer;font-size:1.6rem;color:${currentRating >= r ? '#F7B733' : 'rgba(0,0,0,0.15)'}" data-star="${r}">${currentRating >= r ? '★' : '☆'}</span>`).join('')}
                   </div>
 
                   <label style="color:rgba(0,0,0,0.5);font-size:0.75rem;display:block;margin-bottom:4px">Notes</label>
@@ -4943,8 +4945,17 @@ select option { background: #fff; color: #1a1a1a; }
                 </div>
               </div>
             </div>`;
+        }
 
-          document.getElementById('edit-session-rating').dataset.value = session.rating || 3;
+        function setEditRating(val) {
+          const container = document.getElementById('edit-session-rating');
+          if (!container) return;
+          container.dataset.value = val;
+          container.querySelectorAll('span[data-star]').forEach(star => {
+            const s = parseInt(star.dataset.star);
+            star.textContent = s <= val ? '★' : '☆';
+            star.style.color = s <= val ? '#F7B733' : 'rgba(0,0,0,0.15)';
+          });
         }
 
         async function saveSessionEdit(sessionId) {
@@ -4964,6 +4975,8 @@ select option { background: #fff; color: #1a1a1a; }
               if (idx >= 0) {
                 userData.sessions[idx] = { ...userData.sessions[idx], rating, notes, date };
               }
+              // Recharger les sessions pour que le moteur de prediction prenne en compte la modif
+              await loadSessions();
               renderSessionHistory();
             } else {
               alert('Erreur : ' + (data.error || 'Impossible de modifier'));
