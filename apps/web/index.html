@@ -2233,7 +2233,6 @@ select option { background: #fff; color: #1a1a1a; }
                       <span style="padding:4px 10px;background:${heroTagBg};border-radius:16px;font-size:0.7rem;font-weight:600">💨 ${Math.round(w.conditions?.windSpeed || 0)}km/h ${windDir}</span>
                       ${w.conditions?.wavePeriod ? `<span style="padding:4px 10px;background:${heroTagBg};border-radius:16px;font-size:0.7rem;font-weight:600">⏱ ${Math.round(w.conditions.wavePeriod)}s</span>` : ''}
                       ${tideIcon ? `<span style="padding:4px 10px;background:${heroTagBg};border-radius:16px;font-size:0.7rem;font-weight:600">🌙 ${tideIcon}</span>` : ''}
-                      ${w.tideCoeff != null ? `<span style="padding:4px 10px;background:${heroTagBg};border-radius:16px;font-size:0.7rem;font-weight:600">coef : ${w.tideCoeff}</span>` : ''}
                     </div>
                     ${w.conditions?.airTemp != null || w.conditions?.waterTemp != null ? `<div style="font-size:0.72rem;opacity:0.55;margin-bottom:6px">${w.conditions?.airTemp != null ? '🌡 Air ' + w.conditions.airTemp + '°C' : ''}${w.conditions?.waterTemp != null ? ' · 💧 Eau ' + w.conditions.waterTemp + '°C' : ''}</div>` : ''}
                     ${w.narrative ? `<div style="margin-top:8px;font-size:0.88rem;font-weight:700;font-style:italic;opacity:0.9">"${w.narrative}"</div>` : ''}
@@ -2249,7 +2248,7 @@ select option { background: #fff; color: #1a1a1a; }
                 <div style="font-size:2.1rem;font-weight:800;color:#1a1a1a;min-width:50px">${w.score}</div>
                 <div style="flex:1;min-width:0">
                   <div style="font-size:0.85rem;font-weight:700;color:#1a1a1a">${spotName}</div>
-                  <div style="font-size:0.7rem;color:rgba(0,0,0,0.4);margin-top:2px">${date} · ${w.timeWindow || ''} · 🌊 ${(w.conditions?.waveHeight || 0).toFixed(1)}m${w.conditions?.wavePeriod ? ' · ' + Math.round(w.conditions.wavePeriod) + 's' : ''}${w.tideCoeff != null ? ' · coef : ' + w.tideCoeff : ''}</div>
+                  <div style="font-size:0.7rem;color:rgba(0,0,0,0.4);margin-top:2px">${date} · ${w.timeWindow || ''} · 🌊 ${(w.conditions?.waveHeight || 0).toFixed(1)}m${w.conditions?.wavePeriod ? ' · ' + Math.round(w.conditions.wavePeriod) + 's' : ''}</div>
                   ${w.whyGood?.length ? `<div style="font-size:0.7rem;color:rgba(0,0,0,0.5);font-weight:600;margin-top:3px">${w.whyGood[0]}</div>` : w.whyNotPerfect?.length ? `<div style="font-size:0.7rem;color:rgba(0,0,0,0.5);font-weight:600;margin-top:3px">${w.whyNotPerfect[0]}</div>` : ''}
                 </div>
               </div>`;
@@ -3038,7 +3037,6 @@ select option { background: #fff; color: #1a1a1a; }
                             if (c.wavePeriod != null) chips.push(`⏱ ${Math.round(c.wavePeriod)}s`);
                             if (c.windSpeed != null) chips.push(`💨 ${Math.round(c.windSpeed)}km/h${c.windDirection ? ' ' + degreesToCompass(c.windDirection) : ''}`);
                             if (c.tidePhase) chips.push(`🌙 ${c.tidePhase}`);
-                            if (w.tideCoeff != null) chips.push(`coef : ${w.tideCoeff}`);
                             if (c.waterTemp != null) chips.push(`🌡 ${Math.round(c.waterTemp)}°`);
                             const chipsHtml = chips.map(ch => `<span style="background:rgba(37,99,235,0.08);color:#2563EB;padding:2px 8px;border-radius:10px;font-size:0.65rem;white-space:nowrap">${ch}</span>`).join('');
 
