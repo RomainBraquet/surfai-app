@@ -1274,6 +1274,9 @@ select option { background: #fff; color: #1a1a1a; }
         let backendApiKey = null;
         const DEFAULT_SUPABASE_URL = 'https://zssiqpxlqshsmhpqjzgb.supabase.co';
         const DEFAULT_SUPABASE_KEY = 'sb_publishable_3C5uSVKx16FeKH7qlSGsRw_DYHWQlBC';
+
+        // Previsions : 5 jours (sera 3j pour free, 5j pour premium a terme)
+        const PREDICTION_DAYS = 5;
         let supabaseClient = null;
         let dataManager = null;
         let userData = {
@@ -1853,7 +1856,7 @@ select option { background: #fff; color: #1a1a1a; }
 
           const windowsHtml = `
             <div class="card">
-              <span class="section-label">🎯 Meilleurs créneaux — 3 jours</span>
+              <span class="section-label">🎯 Meilleurs créneaux — ${PREDICTION_DAYS} jours</span>
               <div id="accueil-windows"><div class="loading">Analyse IA en cours...</div></div>
             </div>`;
 
@@ -2163,7 +2166,7 @@ select option { background: #fff; color: #1a1a1a; }
           const container = document.getElementById('accueil-windows');
           if (!container) return;
           try {
-            const res = await fetch(`${backendUrl}/api/v1/predictions/best-windows?userId=${userId}&days=3`);
+            const res = await fetch(`${backendUrl}/api/v1/predictions/best-windows?userId=${userId}&days=${PREDICTION_DAYS}`);
             const data = await res.json();
 
             if (!data.success || !data.results?.length) {
@@ -2190,7 +2193,7 @@ select option { background: #fff; color: #1a1a1a; }
               .sort((a, b) => b.adjustedScore - a.adjustedScore);
 
             if (!spotCards.length) {
-              container.innerHTML = '<div class="empty">Aucun créneau favorable sur 3 jours.</div>';
+              container.innerHTML = `<div class="empty">Aucun créneau favorable sur ${PREDICTION_DAYS} jours.</div>`;
               return;
             }
 
@@ -2837,7 +2840,7 @@ select option { background: #fff; color: #1a1a1a; }
         async function prefetchSpotScores(userId) {
           if (!userId) return;
           try {
-            const res = await fetch(`${backendUrl}/api/v1/predictions/best-windows?userId=${userId}&days=2`);
+            const res = await fetch(`${backendUrl}/api/v1/predictions/best-windows?userId=${userId}&days=${PREDICTION_DAYS}`);
             const data = await res.json();
             if (!data.success || !data.results) return;
             _spotScoresCache = {};
