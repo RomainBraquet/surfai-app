@@ -2036,7 +2036,9 @@ select option { background: #fff; color: #1a1a1a; }
 
         async function sharePrediction(spotName, date, timeWindow, score, narrative) {
           const dateLabel = new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-          const text = `Je surfe ${spotName} ${dateLabel}${timeWindow ? ' ' + timeWindow : ''} — SurfAI dit ${score}/10${narrative ? ' : "' + narrative + '"' : ''}\n\nDecouvre tes propres predictions : https://surfai-app.vercel.app`;
+          const scoreNum = parseFloat(score);
+          const vibe = scoreNum >= 8 ? 'Ca va envoyer' : scoreNum >= 6 ? 'Ca devrait etre bien' : 'Ca peut le faire';
+          const text = `${vibe} a ${spotName} ${dateLabel}${timeWindow ? ' (' + timeWindow + ')' : ''} — ${score}/10 ! Tu viens ?\n\nhttps://surfai-app.vercel.app`;
           if (navigator.share) {
             try {
               await navigator.share({ text });
