@@ -3098,11 +3098,14 @@ select option { background: #fff; color: #1a1a1a; }
 
             // Predictions (existing backend call)
             let predsHtml = '<div class="empty">Prévisions indisponibles.</div>';
+            window._spotDetailWindows = [];
+            window._spotDetailId = spotId;
             if (userId) {
                 try {
                     const res = await fetch(`${backendUrl}/api/v1/predictions/spot/${spotId}?userId=${userId}&days=5`);
                     const pData = await res.json();
                     if (pData.success && pData.windows?.length) {
+                        window._spotDetailWindows = pData.windows.slice(0, 10);
                         predsHtml = pData.windows.slice(0, 10).map((w, idx) => {
                             const wColor = scoreBadgeBg(w.score);
                             const narColor = scoreColor(w.score);
@@ -3175,8 +3178,13 @@ select option { background: #fff; color: #1a1a1a; }
                     ${charsHtml}
                     ${windHtml}
                     <a href="${gmapsUrl}" target="_blank" rel="noopener" class="gmaps-btn">📍 S'y rendre (Google Maps)</a>
-                    <div style="color:rgba(0,0,0,0.4);font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;margin:12px 0 8px">📅 Prévisions 5 jours</div>
-                    ${predsHtml}
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin:12px 0 8px">
+                        <div style="color:rgba(0,0,0,0.4);font-size:0.65rem;text-transform:uppercase;letter-spacing:1px">📅 Prévisions 5 jours</div>
+                        <div id="spot-pred-toggle" style="${window._spotDetailWindows?.length ? '' : 'display:none;'}background:rgba(0,0,0,0.06);border-radius:8px;padding:2px;cursor:pointer;flex-shrink:0" onclick="toggleSpotPredSort()">
+                            <span id="spot-pred-toggle-score" style="display:inline-block;padding:3px 8px;border-radius:6px;font-size:0.65rem;font-weight:700;background:#2563EB;color:#fff;transition:all 0.2s">Score</span><span id="spot-pred-toggle-date" style="display:inline-block;padding:3px 8px;border-radius:6px;font-size:0.65rem;font-weight:600;color:rgba(0,0,0,0.4);transition:all 0.2s">Date</span>
+                        </div>
+                    </div>
+                    <div id="spot-pred-container">${predsHtml}</div>
                     <div style="color:rgba(0,0,0,0.4);font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px">🏄 Mes sessions ici</div>
                     ${sessHtml}
                 </div>`;
@@ -3185,6 +3193,87 @@ select option { background: #fff; color: #1a1a1a; }
         function backToSpotsList() {
             document.querySelector('.spot-list-view')?.classList.remove('hidden');
             document.getElementById('spot-detail')?.classList.remove('active');
+        }
+
+        let _spotPredSortMode = 'score';
+
+        function renderSpotPredWindows(windows, spotId, mode) {
+            if (!windows.length) return '<div class="empty">Aucun creneau prevu.</div>';
+
+            let sorted = [...windows];
+            if (mode === 'date') {
+                sorted.sort((a, b) => new Date(a.date + 'T' + (a.timeWindow || '00:00')).getTime() - new Date(b.date + 'T' + (b.timeWindow || '00:00')).getTime());
+            }
+            // mode 'score' = deja trie par score depuis le backend
+
+            const today = new Date(); today.setHours(0,0,0,0);
+            function relDay(dateStr) {
+                const d = new Date(dateStr); d.setHours(0,0,0,0);
+                const diff = Math.round((d - today) / 86400000);
+                if (diff === 0) return "Aujourd'hui";
+                if (diff === 1) return 'Demain';
+                return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
+            }
+
+            let lastDate = '';
+            return sorted.map((w, idx) => {
+                const wColor = scoreBadgeBg(w.score);
+                const narColor = scoreColor(w.score);
+                const date = new Date(w.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+                const c = w.conditions || {};
+                const uid = `spred-${spotId}-${mode}-${idx}`;
+
+                const chips = [];
+                if (c.waveHeight != null) chips.push(`🌊 ${c.waveHeight.toFixed(1)}m`);
+                if (c.wavePeriod != null) chips.push(`⏱ ${Math.round(c.wavePeriod)}s`);
+                if (c.windSpeed != null) chips.push(`💨 ${Math.round(c.windSpeed)}km/h${c.windDirection ? ' ' + degreesToCompass(c.windDirection) : ''}`);
+                if (c.tidePhase) chips.push(`🌙 ${c.tidePhase}`);
+                if (c.waterTemp != null) chips.push(`🌡 ${Math.round(c.waterTemp)}°`);
+                const chipsHtml = chips.map(ch => `<span style="background:rgba(37,99,235,0.08);color:#2563EB;padding:2px 8px;border-radius:10px;font-size:0.65rem;white-space:nowrap">${ch}</span>`).join('');
+                const goodHtml = (w.whyGood || []).map(r => `<div style="color:#2D8A4E;font-size:0.7rem">+ ${r}</div>`).join('');
+                const notPerfectHtml = (w.whyNotPerfect || []).map(r => `<div style="color:#E89A1E;font-size:0.7rem">- ${r}</div>`).join('');
+                const boardHtml = w.boardSuggestion ? `<div style="color:#2D8A4E;font-size:0.7rem;font-style:italic;margin-top:4px">🏄 ${w.boardSuggestion}</div>` : '';
+
+                // Date header en mode date
+                let dateHeader = '';
+                if (mode === 'date' && w.date !== lastDate) {
+                    lastDate = w.date;
+                    dateHeader = `<div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:2px;color:rgba(0,0,0,0.25);font-weight:700;margin:${idx > 0 ? '10px' : '0'} 0 6px;display:flex;align-items:center;gap:8px"><span style="flex:1;height:1px;background:rgba(0,0,0,0.08)"></span>${relDay(w.date)}<span style="flex:1;height:1px;background:rgba(0,0,0,0.08)"></span></div>`;
+                }
+
+                return dateHeader + `<div style="background:rgba(0,0,0,0.04);border-radius:10px;margin-bottom:6px;overflow:hidden">
+                    <div onclick="document.getElementById('${uid}').style.display = document.getElementById('${uid}').style.display === 'none' ? 'block' : 'none'" style="padding:10px;display:flex;align-items:center;gap:8px;cursor:pointer">
+                        <div style="background:${wColor};color:#fff;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem;flex-shrink:0">${w.score}</div>
+                        <div style="flex:1;min-width:0">
+                            <div style="color:#1a1a1a;font-size:0.8rem;font-weight:600">${date} · ${w.timeWindow || w.startTime || ''}${w.peakHour ? ' (peak ' + w.peakHour + ')' : ''}</div>
+                            <div style="color:${narColor};font-size:0.7rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${w.scoreLabel || ''} — ${w.narrative || ''}</div>
+                        </div>
+                        <div style="color:rgba(0,0,0,0.3);font-size:0.7rem;flex-shrink:0">▼</div>
+                    </div>
+                    <div id="${uid}" style="display:none;padding:0 10px 10px 10px;border-top:1px solid rgba(0,0,0,0.06)">
+                        <div style="display:flex;flex-wrap:wrap;gap:4px;margin:8px 0">${chipsHtml}</div>
+                        ${goodHtml}${notPerfectHtml}
+                        ${boardHtml}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function toggleSpotPredSort() {
+            _spotPredSortMode = _spotPredSortMode === 'score' ? 'date' : 'score';
+            const btnScore = document.getElementById('spot-pred-toggle-score');
+            const btnDate = document.getElementById('spot-pred-toggle-date');
+            const container = document.getElementById('spot-pred-container');
+            if (!btnScore || !btnDate || !container) return;
+
+            if (_spotPredSortMode === 'date') {
+                btnScore.style.background = 'transparent'; btnScore.style.color = 'rgba(0,0,0,0.4)'; btnScore.style.fontWeight = '600';
+                btnDate.style.background = '#2563EB'; btnDate.style.color = '#fff'; btnDate.style.fontWeight = '700';
+            } else {
+                btnScore.style.background = '#2563EB'; btnScore.style.color = '#fff'; btnScore.style.fontWeight = '700';
+                btnDate.style.background = 'transparent'; btnDate.style.color = 'rgba(0,0,0,0.4)'; btnDate.style.fontWeight = '600';
+            }
+            container.innerHTML = renderSpotPredWindows(window._spotDetailWindows || [], window._spotDetailId || '', _spotPredSortMode);
         }
 
         // Set global des IDs favoris (chargé au démarrage)
