@@ -2033,6 +2033,24 @@ select option { background: #fff; color: #1a1a1a; }
         function scoreColor(s) { return s >= 8 ? '#2D8A4E' : s >= 6 ? '#E89A1E' : s >= 4 ? '#E06B30' : 'rgba(0,0,0,0.2)'; }
         function scoreBadgeBg(s) { return s >= 8 ? 'linear-gradient(135deg, #A8E063, #56AB2F)' : s >= 6 ? 'linear-gradient(135deg, #F7CE68, #F7B733)' : s >= 4 ? 'linear-gradient(135deg, #FFB347, #FF8C42)' : 'linear-gradient(135deg, #F9A8B0, #E8667A)'; }
         function degreesToCompass(deg) { if (deg == null) return ''; const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW']; return dirs[Math.round(deg / 22.5) % 16]; }
+
+        async function sharePrediction(spotName, date, timeWindow, score, narrative) {
+          const dateLabel = new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+          const text = `Je surfe ${spotName} ${dateLabel}${timeWindow ? ' ' + timeWindow : ''} — SurfAI dit ${score}/10${narrative ? ' : "' + narrative + '"' : ''}\n\nDecouvre tes propres predictions : https://surfai-app.vercel.app`;
+          if (navigator.share) {
+            try {
+              await navigator.share({ text });
+              return;
+            } catch (e) { /* user cancelled or error, fallback */ }
+          }
+          // Fallback : copier dans le presse-papier
+          try {
+            await navigator.clipboard.writeText(text);
+            const btn = document.activeElement;
+            const orig = btn?.textContent;
+            if (btn) { btn.textContent = 'Copie !'; setTimeout(() => { btn.textContent = orig; }, 1500); }
+          } catch (e) { alert(text); }
+        }
         function scoreCardBg(s) { return s >= 8 ? 'linear-gradient(135deg, #D4ECC4, #E8F5D8)' : s >= 6 ? 'linear-gradient(135deg, #FFF3D0, #FFE8A0)' : s >= 4 ? 'linear-gradient(135deg, #FFE0C0, #FFD0A0)' : 'linear-gradient(135deg, #FCCCD0, #F5B0B8)'; }
         function heroCardBg(s) { return s >= 8 ? 'linear-gradient(155deg, #A8E063 0%, #56AB2F 40%, #2D8A4E 100%)' : s >= 6 ? 'linear-gradient(155deg, #F7CE68 0%, #F7B733 40%, #E89A1E 100%)' : s >= 4 ? 'linear-gradient(155deg, #FFB347 0%, #FF8C42 40%, #E06B30 100%)' : 'linear-gradient(155deg, #F9A8B0 0%, #E8667A 50%, #D44860 100%)'; }
         function narrativeStyle(score) {
@@ -2241,6 +2259,7 @@ select option { background: #fff; color: #1a1a1a; }
                     </div>
                     ${w.conditions?.airTemp != null || w.conditions?.waterTemp != null ? `<div style="font-size:0.72rem;opacity:0.55;margin-bottom:6px">${w.conditions?.airTemp != null ? '🌡 Air ' + w.conditions.airTemp + '°C' : ''}${w.conditions?.waterTemp != null ? ' · 💧 Eau ' + w.conditions.waterTemp + '°C' : ''}</div>` : ''}
                     ${w.narrative ? `<div style="margin-top:8px;font-size:0.88rem;font-weight:700;font-style:italic;opacity:0.9">"${w.narrative}"</div>` : ''}
+                    <div onclick="event.stopPropagation();sharePrediction('${spotName.replace(/'/g,"\\'")}','${w.date}','${(w.timeWindow||'').replace(/'/g,"\\'")}',${w.score},'${(w.narrative||'').replace(/'/g,"\\'")}')" style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:${heroTagBg};border-radius:12px;font-size:0.72rem;font-weight:600;cursor:pointer;backdrop-filter:blur(8px)">Envoyer a un pote</div>
                   </div>
                 </div>
                 ${whyHtml ? `<div style="padding:0 4px;margin-bottom:6px">${whyHtml}</div>` : ''}
@@ -3173,6 +3192,7 @@ select option { background: #fff; color: #1a1a1a; }
                         <div style="display:flex;gap:8px;align-items:center">
                             ${score ? `<div style="background:${scoreBadgeBg(score)};color:#fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem">${score}</div>` : ''}
                             <button onclick="toggleFavorite('${spotId}', this)" style="background:${isFav ? 'rgba(37,99,235,0.15)' : 'rgba(0,0,0,0.05)'};border:1px solid ${isFav ? '#2563EB' : 'rgba(0,0,0,0.15)'};border-radius:8px;padding:4px 10px;color:${isFav ? '#2563EB' : 'rgba(0,0,0,0.4)'};font-size:0.75rem;cursor:pointer" class="${isFav ? 'active' : ''}">${isFav ? '⭐ Favori' : '☆ Favori'}</button>
+                            <button onclick="shareSpotPrediction('${spot.name.replace(/'/g,"\\'")}','${spotId}')" style="background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.15);border-radius:8px;padding:4px 10px;color:rgba(0,0,0,0.4);font-size:0.75rem;cursor:pointer">Partager</button>
                         </div>
                     </div>
                     ${charsHtml}
@@ -3262,6 +3282,16 @@ select option { background: #fff; color: #1a1a1a; }
                     </div>
                 </div>`;
             }).join('');
+        }
+
+        function shareSpotPrediction(spotName, spotId) {
+            const windows = window._spotDetailWindows || [];
+            if (windows.length > 0) {
+                const best = windows[0]; // deja trie par score
+                sharePrediction(spotName, best.date, best.timeWindow || '', best.score, best.narrative || '');
+            } else {
+                sharePrediction(spotName, new Date().toISOString().split('T')[0], '', '', '');
+            }
         }
 
         function toggleSpotPredSort() {
