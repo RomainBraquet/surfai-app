@@ -702,11 +702,6 @@ select option { background: #fff; color: #1a1a1a; }
 
         <!-- Contenu Autour de moi -->
         <div id="spots-nearby-content">
-          <div id="spots-nearby-toggle" style="display:none;margin-bottom:10px">
-            <div style="display:inline-flex;background:rgba(0,0,0,0.06);border-radius:8px;padding:2px;cursor:pointer" onclick="toggleNearbySort()">
-              <span id="nearby-toggle-dist" style="display:inline-block;padding:4px 10px;border-radius:6px;font-size:0.7rem;font-weight:700;background:#2563EB;color:#fff;transition:all 0.2s">Distance</span><span id="nearby-toggle-score" style="display:inline-block;padding:4px 10px;border-radius:6px;font-size:0.7rem;font-weight:600;color:rgba(0,0,0,0.4);transition:all 0.2s">Score</span>
-            </div>
-          </div>
           <div id="spots-nearby-list"></div>
         </div>
 
@@ -2475,9 +2470,6 @@ select option { background: #fff; color: #1a1a1a; }
             if (arrow) arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
         }
 
-        let _nearbySortMode = 'dist';
-        let _nearbySpots = [];
-
         async function loadNearbySpots() {
             const container = document.getElementById('spots-nearby-list');
             if (!container) return;
@@ -2491,24 +2483,24 @@ select option { background: #fff; color: #1a1a1a; }
                         .select('id, name, city, region, country, lat, lng, wave_type, surf_zone')
                         .not('lat', 'is', null)
                         .limit(200);
-                    let nearby = (data || [])
+                    const nearby = (data || [])
                         .map(s => ({ ...s, _dist: haversineKm(s.lat, s.lng, _userLat, _userLng) }))
-                        .filter(s => s._dist <= 10);
+                        .filter(s => s._dist <= 10)
+                        .sort((a, b) => a._dist - b._dist);
 
                     if (nearby.length === 0) {
-                        nearby = (data || [])
+                        // Aucun spot à 10km — montrer les 5 plus proches
+                        const closest = (data || [])
                             .map(s => ({ ...s, _dist: haversineKm(s.lat, s.lng, _userLat, _userLng) }))
                             .sort((a, b) => a._dist - b._dist)
                             .slice(0, 5);
-                    }
-
-                    _nearbySpots = nearby;
-                    renderNearbySpots();
-
-                    // Afficher le toggle si on a des scores
-                    const toggleEl = document.getElementById('spots-nearby-toggle');
-                    if (toggleEl && Object.keys(_spotScoresCache || {}).length > 0) {
-                      toggleEl.style.display = '';
+                        container.innerHTML = `
+                            <div style="color:rgba(0,0,0,0.4);font-size:0.8rem;margin-bottom:10px">Aucun spot à moins de 10km. Voici les plus proches :</div>
+                            ${renderSpotRows(closest)}`;
+                    } else {
+                        container.innerHTML = `
+                            <div style="color:rgba(0,0,0,0.4);font-size:0.7rem;margin-bottom:8px">${nearby.length} spot${nearby.length > 1 ? 's' : ''} à moins de 10km</div>
+                            ${renderSpotRows(nearby)}`;
                     }
                 } catch(e) {
                     container.innerHTML = '<div class="empty">Erreur de chargement.</div>';
@@ -2541,43 +2533,6 @@ select option { background: #fff; color: #1a1a1a; }
                     }
                 );
             }
-        }
-
-        function renderNearbySpots() {
-            const container = document.getElementById('spots-nearby-list');
-            if (!container || !_nearbySpots.length) return;
-
-            let sorted;
-            if (_nearbySortMode === 'score') {
-                sorted = [..._nearbySpots].sort((a, b) => {
-                    const sa = _spotScoresCache?.[a.id]?.score || 0;
-                    const sb = _spotScoresCache?.[b.id]?.score || 0;
-                    return sb - sa;
-                });
-            } else {
-                sorted = [..._nearbySpots].sort((a, b) => a._dist - b._dist);
-            }
-
-            const label = _nearbySortMode === 'score'
-                ? `${sorted.length} spot${sorted.length > 1 ? 's' : ''} tries par score`
-                : `${sorted.length} spot${sorted.length > 1 ? 's' : ''} a moins de 10km`;
-            container.innerHTML = `
-                <div style="color:rgba(0,0,0,0.4);font-size:0.7rem;margin-bottom:8px">${label}</div>
-                ${renderSpotRows(sorted)}`;
-        }
-
-        function toggleNearbySort() {
-            _nearbySortMode = _nearbySortMode === 'dist' ? 'score' : 'dist';
-            const btnDist = document.getElementById('nearby-toggle-dist');
-            const btnScore = document.getElementById('nearby-toggle-score');
-            if (_nearbySortMode === 'score') {
-                btnDist.style.background = 'transparent'; btnDist.style.color = 'rgba(0,0,0,0.4)'; btnDist.style.fontWeight = '600';
-                btnScore.style.background = '#2563EB'; btnScore.style.color = '#fff'; btnScore.style.fontWeight = '700';
-            } else {
-                btnDist.style.background = '#2563EB'; btnDist.style.color = '#fff'; btnDist.style.fontWeight = '700';
-                btnScore.style.background = 'transparent'; btnScore.style.color = 'rgba(0,0,0,0.4)'; btnScore.style.fontWeight = '600';
-            }
-            renderNearbySpots();
         }
 
         function renderSpotRows(spots) {
