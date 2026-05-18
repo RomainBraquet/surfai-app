@@ -2037,7 +2037,7 @@ select option { background: #fff; color: #1a1a1a; }
         async function sharePrediction(spotName, date, timeWindow, score, narrative) {
           const dateLabel = new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
           const scoreNum = parseFloat(score);
-          const vibe = scoreNum >= 8 ? 'Ca va envoyer' : scoreNum >= 6 ? 'Ca devrait etre bien' : 'Ca peut le faire';
+          const vibe = scoreNum >= 8 ? 'Tres bonne session prevue' : scoreNum >= 6 ? 'Ca devrait etre bien' : 'Session pas ouf mais envie d\'aller a l\'eau';
           const text = `${vibe} a ${spotName} ${dateLabel}${timeWindow ? ' (' + timeWindow + ')' : ''} — ${score}/10 ! Tu viens ?\n\nhttps://surfai-app.vercel.app`;
           if (navigator.share) {
             try {
@@ -3121,6 +3121,7 @@ select option { background: #fff; color: #1a1a1a; }
             let predsHtml = '<div class="empty">Prévisions indisponibles.</div>';
             window._spotDetailWindows = [];
             window._spotDetailId = spotId;
+            window._spotDetailName = spot.name || '';
             if (userId) {
                 try {
                     const res = await fetch(`${backendUrl}/api/v1/predictions/spot/${spotId}?userId=${userId}&days=5`);
@@ -3194,7 +3195,6 @@ select option { background: #fff; color: #1a1a1a; }
                         <div style="display:flex;gap:8px;align-items:center">
                             ${score ? `<div style="background:${scoreBadgeBg(score)};color:#fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem">${score}</div>` : ''}
                             <button onclick="toggleFavorite('${spotId}', this)" style="background:${isFav ? 'rgba(37,99,235,0.15)' : 'rgba(0,0,0,0.05)'};border:1px solid ${isFav ? '#2563EB' : 'rgba(0,0,0,0.15)'};border-radius:8px;padding:4px 10px;color:${isFav ? '#2563EB' : 'rgba(0,0,0,0.4)'};font-size:0.75rem;cursor:pointer" class="${isFav ? 'active' : ''}">${isFav ? '⭐ Favori' : '☆ Favori'}</button>
-                            <button onclick="shareSpotPrediction('${spot.name.replace(/'/g,"\\'")}','${spotId}')" style="background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.15);border-radius:8px;padding:4px 10px;color:rgba(0,0,0,0.4);font-size:0.75rem;cursor:pointer">Partager</button>
                         </div>
                     </div>
                     ${charsHtml}
@@ -3219,7 +3219,7 @@ select option { background: #fff; color: #1a1a1a; }
 
         let _spotPredSortMode = 'score';
 
-        function renderSpotPredWindows(windows, spotId, mode) {
+        function renderSpotPredWindows(windows, spotId, mode, spotName) {
             if (!windows.length) return '<div class="empty">Aucun creneau prevu.</div>';
 
             let sorted = [...windows];
@@ -3275,6 +3275,7 @@ select option { background: #fff; color: #1a1a1a; }
                             <div style="color:#1a1a1a;font-size:0.8rem;font-weight:600">${date} · ${w.timeWindow || w.startTime || ''}${w.peakHour ? ' (peak ' + w.peakHour + ')' : ''}</div>
                             <div style="color:${narColor};font-size:0.7rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${w.scoreLabel || ''} — ${w.narrative || ''}</div>
                         </div>
+                        <div onclick="event.stopPropagation();sharePrediction('${spotName.replace(/'/g,"\\'")}','${w.date}','${(w.timeWindow||'').replace(/'/g,"\\'")}',${w.score},'${(w.narrative||'').replace(/'/g,"\\'")}')" style="color:rgba(0,0,0,0.25);font-size:0.85rem;flex-shrink:0;padding:2px 4px;cursor:pointer" title="Partager">↗</div>
                         <div style="color:rgba(0,0,0,0.3);font-size:0.7rem;flex-shrink:0">▼</div>
                     </div>
                     <div id="${uid}" style="display:none;padding:0 10px 10px 10px;border-top:1px solid rgba(0,0,0,0.06)">
@@ -3310,7 +3311,7 @@ select option { background: #fff; color: #1a1a1a; }
                 btnScore.style.background = '#2563EB'; btnScore.style.color = '#fff'; btnScore.style.fontWeight = '700';
                 btnDate.style.background = 'transparent'; btnDate.style.color = 'rgba(0,0,0,0.4)'; btnDate.style.fontWeight = '600';
             }
-            container.innerHTML = renderSpotPredWindows(window._spotDetailWindows || [], window._spotDetailId || '', _spotPredSortMode);
+            container.innerHTML = renderSpotPredWindows(window._spotDetailWindows || [], window._spotDetailId || '', _spotPredSortMode, window._spotDetailName || '');
         }
 
         // Set global des IDs favoris (chargé au démarrage)
