@@ -2286,8 +2286,13 @@ select option { background: #fff; color: #1a1a1a; }
             window._predSortMode = 'score';
             container.innerHTML = html;
 
-            // Construire la vue Date (groupee par jour, triee par score dans chaque jour)
-            const allWindows = spotCards.map(item => ({ ...item.best, spot: item.spot, resultIdx: item.resultIdx }));
+            // Construire la vue Date a partir de TOUS les creneaux de tous les spots
+            const allWindows = [];
+            data.results.forEach((r, rIdx) => {
+              (r.windows || []).forEach(w => {
+                allWindows.push({ ...w, spot: r.spot, resultIdx: rIdx });
+              });
+            });
             const byDate = {};
             allWindows.forEach(w => {
               const d = w.date;
