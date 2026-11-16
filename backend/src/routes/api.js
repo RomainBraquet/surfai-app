@@ -213,21 +213,41 @@ router.post('/sessions/quick', async (req, res) => {
       try {
         const spot = await db.getSpotById(spotId);
         if (spot) {
-          const weatherData = await stormglassService.getForecast(spot.lat, spot.lng, 1);
-          // Trouver le point météo le plus proche de l'heure de session
-          const sessionTime = time ? new Date(`${date?.split('T')[0]}T${time}`) : new Date(date);
-          const sessionTimestamp = sessionTime.getTime() / 1000;
-          const closest = weatherData.forecast?.reduce((best, p) =>
-            Math.abs(p.timestamp - sessionTimestamp) < Math.abs((best?.timestamp || 0) - sessionTimestamp) ? p : best
-          , null);
+          // Heure de la session : l'heure saisie est l'heure locale du spot
+          const { spotTimeZone, localParts } = require('../services/timeUtils');
+          const day = (date || new Date().toISOString()).split('T')[0];
+          let sessionMs;
+          if (time) {
+            // On cherche l'instant UTC dont l'heure locale au spot correspond à l'heure saisie
+            const tz = spotTimeZone(spot.lat, spot.lng);
+            const wanted = parseInt(String(time).split(':')[0], 10);
+            const minutes = parseInt(String(time).split(':')[1] || '0', 10);
+            sessionMs = new Date(`${day}T${String(wanted).padStart(2, '0')}:00:00Z`).getTime();
+            for (let shift = -14; shift <= 14; shift++) {
+              const candidate = sessionMs + shift * 3600000;
+              const local = localParts(candidate, tz);
+              if (local.date === day && local.hour === wanted) { sessionMs = candidate; break; }
+            }
+            sessionMs += minutes * 60000;
+          } else {
+            sessionMs = date ? new Date(date).getTime() : Date.now();
+          }
+
+          // Météo du jour et de l'heure réellement surfés (et non celle du jour de saisie)
+          const closest = sessionMs <= Date.now() + 5 * 86400000
+            ? await stormglassService.getConditionsAt(spot.lat, spot.lng, sessionMs)
+            : null;
 
           if (closest) {
             meteo = {
               waveHeight: closest.waveHeight,
               wavePeriod: closest.wavePeriod,
-              windSpeed: closest.windSpeed,
+              waveDirection: closest.waveDirection,
+              windSpeed: closest.windSpeed,      // km/h
               windDirection: closest.windDirection,
               swellHeight: closest.swellHeight,
+              swellDirection: closest.swellDirection,
+              capturedFor: new Date(sessionMs).toISOString(),
             };
             console.log(`📡 Météo capturée pour session: ${JSON.stringify(meteo)}`);
           }
@@ -513,6 +533,21 @@ router.get('/weather/current', async (req, res) => {
       }
     } catch (e) { /* fallback silencieux */ }
 
+    // Météo atmosphérique via Open-Meteo (température air + conditions)
+    let airTempOM = null;
+    let weatherCode = null;
+    try {
+      const axios = require('axios');
+      const omRes = await axios.get('https://api.open-meteo.com/v1/forecast', {
+        params: { latitude: lat, longitude: lng, current: 'temperature_2m,weather_code' },
+        timeout: 5000,
+      });
+      airTempOM = omRes.data?.current?.temperature_2m ?? null;
+      weatherCode = omRes.data?.current?.weather_code ?? null;
+    } catch (e) { /* fallback silencieux */ }
+
+    const airTemp = current?.airTemp ?? airTempOM;
+
     res.json({
       success: true,
       lat, lng,
@@ -522,6 +557,8 @@ router.get('/weather/current', async (req, res) => {
         windDirection: degreesToCompass(current.windDirection),
         wavePeriod:    current.wavePeriod,
         waterTemp:     current.waterTemp != null ? current.waterTemp : null,
+        airTemp:       airTemp != null ? Math.round(airTemp) : null,
+        weatherCode:   weatherCode,
         nextTide,
       } : null
     });

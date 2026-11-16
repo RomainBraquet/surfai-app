@@ -85,7 +85,7 @@ class StormglassService {
     try {
       // Vérifier le cache mémoire (rapide)
       const todayStr = new Date().toISOString().split('T')[0];
-      const cacheKey = `${lat.toFixed(4)}-${lng.toFixed(4)}-${days}-${todayStr}`;
+      const cacheKey = `v2-${Number(lat).toFixed(4)}-${Number(lng).toFixed(4)}-${days}-${todayStr}`;
       const cached = this.cache.get(cacheKey);
       if (cached && (Date.now() - cached.timestamp) < this.CACHE_DURATION_MS) {
         const ageMin = Math.round((Date.now() - cached.timestamp) / 60000);
@@ -104,7 +104,7 @@ class StormglassService {
 
       // Calcul des timestamps — commencer au debut du jour pour inclure les creneaux d'aujourd'hui
       const todayMidnight = new Date();
-      todayMidnight.setHours(0, 0, 0, 0);
+      todayMidnight.setUTCHours(0, 0, 0, 0);
       const startTime = Math.floor(todayMidnight.getTime() / 1000);
       const endTime = Math.floor((todayMidnight.getTime() + (days * 24 * 60 * 60 * 1000)) / 1000);
 
@@ -191,6 +191,7 @@ class StormglassService {
         const windDirection = getFirstValue('windDirection');
         const swellHeight = getFirstValue('swellHeight');
         const swellPeriod = getFirstValue('swellPeriod');
+        const swellDirection = getFirstValue('swellDirection');
         const waterTemp = getFirstValue('waterTemperature');
         const airTemp = getFirstValue('airTemperature');
         const seaLevel = getFirstValue('seaLevel');
@@ -217,6 +218,7 @@ class StormglassService {
           // Données de houle
           swellHeight: swellHeight ? Math.round(swellHeight * 10) / 10 : null,
           swellPeriod: swellPeriod ? Math.round(swellPeriod) : null,
+          swellDirection: swellDirection != null ? Math.round(swellDirection) : null,
           waterTemp: waterTemp ? Math.round(waterTemp * 10) / 10 : null,
           airTemp: airTemp ? Math.round(airTemp * 10) / 10 : null,
           seaLevel: seaLevel != null ? Math.round(seaLevel * 100) / 100 : null,
@@ -360,16 +362,26 @@ class StormglassService {
 
   // 🌊 Récupère les prochaines marées hautes/basses via l'endpoint dédié Stormglass
   async getTideExtremes(lat, lng, days = 2) {
-    const cacheKey = `tide-${parseFloat(lat).toFixed(4)}-${parseFloat(lng).toFixed(4)}-${days}`;
+    // La fenêtre démarre 12h avant le début de la journée : chaque heure de prévision
+    // a ainsi une marée avant ET après elle (sinon le matin reste « inconnu »).
+    const todayStr = new Date().toISOString().split('T')[0];
+    const cacheKey = `tide-v2-${parseFloat(lat).toFixed(4)}-${parseFloat(lng).toFixed(4)}-${days}-${todayStr}`;
     const cached = this.cache.get(cacheKey);
-    if (cached && (Date.now() - cached.timestamp) < 6 * 3600 * 1000) {
+    if (cached && (Date.now() - cached.timestamp) < this.CACHE_DURATION_MS) {
       return cached.data;
     }
+    const supabaseCached = await this.getFromSupabaseCache(cacheKey);
+    if (supabaseCached) {
+      this.cache.set(cacheKey, { data: supabaseCached, timestamp: Date.now() });
+      return supabaseCached;
+    }
     try {
-      const now = Math.floor(Date.now() / 1000);
-      const end = now + 86400 * days;
+      const todayMidnight = new Date();
+      todayMidnight.setUTCHours(0, 0, 0, 0);
+      const start = Math.floor(todayMidnight.getTime() / 1000) - 12 * 3600;
+      const end = Math.floor(todayMidnight.getTime() / 1000) + 86400 * days + 12 * 3600;
       const response = await this.client.get('/tide/extremes/point', {
-        params: { lat: parseFloat(lat), lng: parseFloat(lng), start: now, end }
+        params: { lat: parseFloat(lat), lng: parseFloat(lng), start, end }
       });
       const extremes = (response.data.data || []).map(e => ({
         time:   e.time,
@@ -377,13 +389,37 @@ class StormglassService {
         type:   e.type,         // 'high' | 'low'
         height: Math.round(e.height * 100) / 100,
         label:  (e.type === 'high' ? '⬆' : '⬇') + ' ' + new Date(e.time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' })
-      }));
-      this.cache.set(cacheKey, { data: extremes, timestamp: Date.now() });
+      })).sort((x, y) => x.timestamp - y.timestamp);
+      if (extremes.length > 0) {
+        this.cache.set(cacheKey, { data: extremes, timestamp: Date.now() });
+        this.writeToSupabaseCache(cacheKey, extremes); // async, non bloquant
+      }
       return extremes;
     } catch (e) {
       console.warn('⚠️ Stormglass tide extremes indisponible:', e.message);
       return [];
     }
+  }
+
+  // 📅 Conditions à un instant précis (passé compris) — pour la météo d'une session saisie après coup
+  async getConditionsAt(lat, lng, dateTime) {
+    const target = Math.floor(new Date(dateTime).getTime() / 1000);
+    if (!Number.isFinite(target)) return null;
+    const response = await this.client.get('/weather/point', {
+      params: {
+        lat: parseFloat(lat),
+        lng: parseFloat(lng),
+        params: 'waveHeight,wavePeriod,waveDirection,windSpeed,windDirection,swellHeight,swellPeriod,swellDirection,waterTemperature,airTemperature',
+        start: target - 3600,
+        end: target + 3600,
+        source: 'sg',
+      },
+    });
+    const points = this.processStormglassData(response.data);
+    if (!points.length) return null;
+    return points.reduce((best, p) =>
+      Math.abs(p.timestamp - target) < Math.abs(best.timestamp - target) ? p : best
+    );
   }
 
   // ⏭️ Prochain high ou low à partir d'un timestamp
