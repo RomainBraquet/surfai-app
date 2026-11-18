@@ -205,6 +205,8 @@ router.post('/sessions/quick', async (req, res) => {
     const db = require('../services/supabaseService');
     const stormglassService = require('../services/stormglassService');
     const { userId, spotId, date, time, rating, notes, boardId } = req.body;
+    // Ressenti sur la taille des vagues : 'too_small' | 'perfect' | 'too_big' (facultatif)
+    const sizeFeel = ['too_small', 'perfect', 'too_big'].includes(req.body.sizeFeel) ? req.body.sizeFeel : null;
 
     let meteo = null;
 
@@ -256,6 +258,9 @@ router.post('/sessions/quick', async (req, res) => {
         console.warn('⚠️ Capture météo échouée (session sauvegardée sans météo):', meteoError.message);
       }
     }
+
+    // Le ressenti est rangé avec la météo de la session : c'est lui qui apprend la fourchette
+    if (sizeFeel) meteo = { ...(meteo || {}), sizeFeel };
 
     const session = await db.createSession({
       user_id: userId,

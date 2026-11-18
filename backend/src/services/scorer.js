@@ -1,26 +1,94 @@
 // 🎯 Scorer SurfAI — Score composite 0-10 par créneau horaire
 // Spec : docs/superpowers/specs/2026-03-22-moteur-prediction-ia-design.md
 
-// Poids de base (somme = 1.0)
-const BASE_WEIGHTS = {
-  wind:    0.30,
-  waves:   0.20,
-  period:  0.15,
-  history: 0.20,
-  spot:    0.15,
+// Poids des facteurs (somme = 1.0)
+// La personnalisation ne passe plus par un facteur « sessions proches » (qui ne faisait que
+// refléter la moyenne des notes récentes) mais par la fourchette de vagues apprise des sessions.
+const WEIGHTS = {
+  wind:   0.375,
+  waves:  0.25,
+  period: 0.1875,
+  spot:   0.1875,
 };
 
-// Calcul du poids historique progressif selon le nombre de sessions réelles avec météo
-function computeWeights(sessionsWithMeteoCount) {
-  const h = 0.10 + (0.10 * Math.min(sessionsWithMeteoCount, 20) / 20);
-  const remaining = 1 - h;
-  const baseWithoutHistory = 1 - BASE_WEIGHTS.history; // 0.80
+function computeWeights() {
+  return { ...WEIGHTS, history: 0 };
+}
+
+// ─── Fourchette de vagues apprise ───────────────────────
+// Ce que le surfeur déclare dans son profil n'est qu'un point de départ.
+// Dès qu'il a assez de sessions, on apprend sa vraie zone de confort :
+//   - ressenti « parfait »            → cette taille est dans sa zone (preuve forte)
+//   - session notée 4 ou 5 sans ressenti → probablement dans sa zone (preuve faible)
+//   - ressenti « trop petit »          → sa taille mini est au-dessus
+//   - ressenti « trop gros »           → sa taille maxi est en dessous
+const MIN_SESSIONS_TO_LEARN = 5;
+const FULL_CONFIDENCE_SESSIONS = 15;
+
+function sessionSizeFeel(session) {
+  return session.size_feel || session.meteo?.sizeFeel || null;
+}
+
+function sessionWaveHeight(session) {
+  const m = session.meteo;
+  if (!m || typeof m.waveHeight !== 'number') return null;
+  return Math.max(m.waveHeight, typeof m.swellHeight === 'number' ? m.swellHeight : 0);
+}
+
+function weightedQuantile(points, q) {
+  const sorted = [...points].sort((x, y) => x.h - y.h);
+  const total = sorted.reduce((sum, p) => sum + p.w, 0);
+  let acc = 0;
+  for (const p of sorted) {
+    acc += p.w;
+    if (acc >= q * total) return p.h;
+  }
+  return sorted[sorted.length - 1].h;
+}
+
+function learnWaveRange(pastSessions, profile) {
+  const declared = {
+    min: profile?.min_wave_height || 0.8,
+    max: profile?.max_wave_height || 2.0,
+  };
+  const base = { ...declared, source: 'declared', basedOnSessions: 0, confidence: 0, declared };
+
+  const good = [], tooSmall = [], tooBig = [];
+  (pastSessions || []).forEach(s => {
+    const h = sessionWaveHeight(s);
+    if (h == null) return;
+    const feel = sessionSizeFeel(s);
+    if (feel === 'perfect') good.push({ h, w: 1 });
+    else if (feel === 'too_small') tooSmall.push(h);
+    else if (feel === 'too_big') tooBig.push(h);
+    else if (s.rating >= 4) good.push({ h, w: 0.5 });
+  });
+
+  const evidence = good.length + tooSmall.length + tooBig.length;
+  if (good.length < 3 || evidence < MIN_SESSIONS_TO_LEARN) {
+    return { ...base, basedOnSessions: evidence };
+  }
+
+  let learnedMin = weightedQuantile(good, 0.1);
+  let learnedMax = weightedQuantile(good, 0.9);
+  const center = weightedQuantile(good, 0.5);
+  // Les « trop petit » remontent le mini, les « trop gros » abaissent le maxi
+  const smallBelow = tooSmall.filter(h => h < center);
+  const bigAbove = tooBig.filter(h => h > center);
+  if (smallBelow.length) learnedMin = Math.max(learnedMin, Math.max(...smallBelow) + 0.1);
+  if (bigAbove.length) learnedMax = Math.min(learnedMax, Math.min(...bigAbove) - 0.1);
+  if (learnedMax < learnedMin + 0.3) learnedMax = learnedMin + 0.3;
+
+  // On glisse progressivement du profil déclaré vers la fourchette apprise
+  const confidence = Math.min(1, evidence / FULL_CONFIDENCE_SESSIONS);
+  const round = v => Math.round(v * 10) / 10;
   return {
-    wind:    BASE_WEIGHTS.wind    * (remaining / baseWithoutHistory),
-    waves:   BASE_WEIGHTS.waves   * (remaining / baseWithoutHistory),
-    period:  BASE_WEIGHTS.period  * (remaining / baseWithoutHistory),
-    history: h,
-    spot:    BASE_WEIGHTS.spot    * (remaining / baseWithoutHistory),
+    min: round(declared.min + (learnedMin - declared.min) * confidence),
+    max: round(declared.max + (learnedMax - declared.max) * confidence),
+    source: 'learned',
+    basedOnSessions: evidence,
+    confidence: Math.round(confidence * 100) / 100,
+    declared,
   };
 }
 
@@ -82,40 +150,6 @@ function scorePeriod(period) {
   // Courbe sigmoïde : transition douce entre 6-14s, plateau au-dessus
   // 5s→2.4, 7s→3.6, 8s→4.4, 10s→6.0, 12s→7.6, 14s→8.8, 16s→9.5
   return Math.min(10, 2 + 8 / (1 + Math.exp(-0.6 * (period - 10))));
-}
-
-// ─── Facteur Historique (0-10) ──────────────────────────
-function scoreHistory(slot, pastSessions) {
-  // Inclure TOUTES les sessions notées (pas seulement 4+) → apprendre aussi des mauvaises
-  const ratedSessions = pastSessions.filter(s => s.rating >= 1 && s.meteo);
-  if (ratedSessions.length < 3) return 5; // neutre si pas assez de données
-
-  function similarity(s) {
-    const dWave = Math.abs((s.meteo.waveHeight || 0) - (slot.waveHeight || 0)) / 3;
-    const dWind = Math.abs((s.meteo.windSpeed || 0) - (slot.windSpeed || 0)) / 40;
-    const dPeriod = Math.abs((s.meteo.wavePeriod || 0) - (slot.wavePeriod || 0)) / 15;
-
-    // Décroissance temporelle : sessions récentes comptent plus (demi-vie 6 mois)
-    const ageInDays = (Date.now() - new Date(s.date).getTime()) / 86400000;
-    const recencyWeight = Math.exp(-ageInDays / 180);
-
-    // Bonus si même spot : 30% plus pertinent
-    const spotBonus = s.spot_id === slot.spotId ? 1.3 : 1.0;
-
-    return spotBonus * recencyWeight / (1 + Math.sqrt(dWave ** 2 + dWind ** 2 + dPeriod ** 2));
-  }
-
-  // Top 7 sessions les plus similaires (plus stable que 5)
-  const ranked = ratedSessions
-    .map(s => ({ session: s, sim: similarity(s) }))
-    .sort((a, b) => b.sim - a.sim)
-    .slice(0, 7);
-
-  const weightedRating = ranked.reduce((sum, { session, sim }) => sum + session.rating * sim, 0);
-  const totalSim = ranked.reduce((sum, { sim }) => sum + sim, 0);
-  const avgRating = totalSim > 0 ? weightedRating / totalSim : 3;
-
-  return (avgRating / 5) * 10; // normaliser 1-5 → 0-10
 }
 
 // ─── Facteur Adéquation Spot (0-10) ─────────────────────
@@ -273,7 +307,8 @@ function buildWhyGood(slot, windScore, wavesScore, periodScore, tideAdj, spotSco
   // --- Vent ---
   const speedKmh = slot.windSpeed || 0;
   if (windScore >= 9) {
-    reasons.push('Conditions glassy — quasi pas de vent');
+    if (speedKmh <= 8) reasons.push('Conditions glassy — quasi pas de vent');
+    else reasons.push('Vent léger de terre (' + Math.round(speedKmh) + ' km/h) — vagues propres');
   } else if (windScore >= 7) {
     // Vérifier si c'est grâce à l'offshore
     if (slot.windDirection != null && slot.waveDirection != null) {
@@ -394,14 +429,16 @@ function findSimilarSession(slot, pastSessions) {
 
 // ─── Fonction principale ─────────────────────────────────
 function scoreSlot(slot, context) {
-  const { profile, spot, pastSessions = [], boards = [], communityProfile = null } = context;
+  const { spot, pastSessions = [], boards = [], communityProfile = null } = context;
   const sessionsWithMeteo = pastSessions.filter(s => s.meteo).length;
-  const weights = computeWeights(sessionsWithMeteo);
+  const weights = computeWeights();
+  // Fourchette de vagues : apprise des sessions si possible, sinon celle du profil
+  const waveRange = context.waveRange || learnWaveRange(pastSessions, context.profile);
+  const profile = { ...context.profile, min_wave_height: waveRange.min, max_wave_height: waveRange.max };
 
   const windScore    = scoreWind(slot.windSpeed, slot.windDirection, spot.ideal_wind, slot.waveDirection);
   const wavesScore   = scoreWaves(slot.waveHeight, slot.swellHeight, profile);
   const periodScore  = scorePeriod(slot.wavePeriod);
-  const historyScore = scoreHistory(slot, pastSessions);
   const spotScore    = scoreSpot(slot, spot);
   const tideAdj      = tideBonus(slot, spot.ideal_tide);
 
@@ -411,7 +448,6 @@ function scoreSlot(slot, context) {
     windScore    * weights.wind   +
     wavesScore   * weights.waves  +
     periodScore  * weights.period +
-    historyScore * weights.history +
     spotScore    * weights.spot   +
     tideAdj +
     community.bonus;
@@ -444,7 +480,7 @@ function scoreSlot(slot, context) {
       wind:    { score: Math.round(windScore * 10) / 10,    weight: weights.wind },
       waves:   { score: Math.round(wavesScore * 10) / 10,   weight: weights.waves },
       period:  { score: Math.round(periodScore * 10) / 10,  weight: weights.period },
-      history: { score: Math.round(historyScore * 10) / 10, weight: weights.history, basedOnSessions: sessionsWithMeteo },
+      history: { score: null, weight: 0, basedOnSessions: sessionsWithMeteo },
       spot:    { score: Math.round(spotScore * 10) / 10,     weight: weights.spot },
       tide:    { bonus: tideAdj },
       community: community,
@@ -458,8 +494,9 @@ function scoreSlot(slot, context) {
     boardSuggestion,
     similarSession,
     sizeIssue,
-    calibrationLevel: Math.round(weights.history * 100) / 100,
+    waveRange,
+    calibrationLevel: waveRange.confidence,
   };
 }
 
-module.exports = { scoreSlot, computeWeights, degreesToCardinal, buildWhyGood, tideCategory, findSimilarSession };
+module.exports = { scoreSlot, learnWaveRange, computeWeights, degreesToCardinal, buildWhyGood, tideCategory, findSimilarSession };

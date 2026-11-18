@@ -1,6 +1,6 @@
 // Tests du moteur de prédiction — npm test
 const assert = require('assert');
-const { scoreSlot } = require('../src/services/scorer');
+const { scoreSlot, learnWaveRange } = require('../src/services/scorer');
 const { tideAt, normalizeSession } = (() => {
   // collector charge Stormglass et Supabase : on fournit des variables factices pour les tests
   process.env.STORMGLASS_API_KEY = process.env.STORMGLASS_API_KEY || 'test';
@@ -75,6 +75,24 @@ const res = getBestWindows({ ...ctx, forecast }, 10);
 ok(res.windows.length > 0, 'des créneaux sont proposés');
 ok(res.hourlyScores.every(h => { const s = sunTimes(h.date, spot.lat, spot.lng); return isDaylightSlot(Date.parse(h.time), s); }), 'aucune heure de nuit');
 ok(res.hourlyScores.every(h => h.hour === localParts(h.time, tz).hour), 'heures affichées = heures locales du spot');
+
+// Fourchette apprise
+const mk = (h, extra) => ({ rating: 3, date: '2026-05-01', meteo: { waveHeight: h, windSpeed: 10, wavePeriod: 9 }, ...extra });
+const feel = (h, f) => mk(h, { meteo: { waveHeight: h, windSpeed: 10, wavePeriod: 9, sizeFeel: f } });
+ok(learnWaveRange([], profile).source === 'declared', 'sans session : fourchette du profil');
+ok(learnWaveRange([feel(1.2, 'perfect'), feel(1.3, 'perfect')], profile).source === 'declared', 'trop peu de sessions : fourchette du profil');
+const small = Array.from({ length: 15 }, (_, i) => feel(0.5 + (i % 5) * 0.1, 'perfect')); // surfeur qui aime 0,5 à 0,9 m
+const lr = learnWaveRange(small, profile);
+ok(lr.source === 'learned' && lr.max <= 1.0 && lr.min <= 0.6, `débutant petites vagues : fourchette apprise ${lr.min}-${lr.max}`);
+ok(score({ ...perfect, waveHeight: 0.7, swellHeight: 0.7 }, { ...ctx, pastSessions: small }) > score({ ...perfect, waveHeight: 0.7, swellHeight: 0.7 }), '0,7 m mieux noté pour qui aime les petites vagues');
+ok(score({ ...perfect, waveHeight: 1.9, swellHeight: 1.9 }, { ...ctx, pastSessions: small }) < score({ ...perfect, waveHeight: 1.9, swellHeight: 1.9 }), '1,9 m moins bien noté pour qui aime les petites vagues');
+const withBig = [...Array.from({ length: 8 }, (_, i) => feel(1.0 + i * 0.1, 'perfect')), feel(1.6, 'too_big'), feel(1.7, 'too_big'), feel(0.6, 'too_small')];
+const lr2 = learnWaveRange(withBig, profile);
+ok(lr2.max < profile.max_wave_height, `« trop gros » à 1,6 m abaisse le maxi (obtenu ${lr2.max})`);
+ok(lr2.min >= 0.7, `« trop petit » à 0,6 m remonte le mini (obtenu ${lr2.min})`);
+const few = learnWaveRange([feel(1, 'perfect'), feel(1, 'perfect'), feel(1, 'perfect'), feel(1, 'perfect'), feel(1, 'perfect')], profile);
+ok(few.confidence < 0.5 && few.max > 1.5, 'cinq sessions : on ne bascule que partiellement vers l\'appris');
+ok(learnWaveRange([mk(1.5, { rating: 5 }), mk(1.4, { rating: 4 }), mk(1.6, { rating: 5 }), mk(1.2, { rating: 4 }), mk(1.5, { rating: 5 })], profile).source === 'learned', 'sans ressenti, les sessions 4 et 5 étoiles comptent');
 
 // Score toujours borné, jamais NaN
 [{}, { waveHeight: 0, windSpeed: 80 }, { waveHeight: 1.5 }, { windSpeed: null, waveHeight: null }].forEach(sl => {

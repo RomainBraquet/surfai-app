@@ -240,6 +240,10 @@ body {
 .fav-btn.active { border-color: #2563EB; color: #2563EB; }
 
 /* ---- Session form ---- */
+.size-feel { display: flex; gap: 8px; }
+.size-feel-chip { flex: 1; padding: 12px 2px; border-radius: 12px; font-family: inherit; font-size: 0.78rem; white-space: nowrap; font-weight: 600; cursor: pointer; border: 1px solid rgba(37,99,235,0.3); background: rgba(37,99,235,0.06); color: #2563EB; transition: background 0.15s, color 0.15s; }
+.size-feel-chip.selected { background: #2563EB; color: #fff; border-color: #2563EB; }
+.size-feel-hint { margin-top: 10px; font-size: 0.72rem; color: rgba(0,0,0,0.4); }
 .form-group { margin-bottom: 14px; }
 .form-group label { display: block; font-size: 0.72rem; color: rgba(0,0,0,0.3); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
 
@@ -762,6 +766,16 @@ select option { background: #fff; color: #1a1a1a; }
               <input type="radio" name="rating" id="r2" value="2"><label for="r2">★</label>
               <input type="radio" name="rating" id="r1" value="1"><label for="r1">★</label>
             </div>
+          </div>
+
+          <div class="card">
+            <span class="section-label">Pour toi, les vagues étaient</span>
+            <div class="size-feel" id="size-feel">
+              <button type="button" class="size-feel-chip" data-feel="too_small" onclick="selectSizeFeel(this)">Trop petites</button>
+              <button type="button" class="size-feel-chip" data-feel="perfect" onclick="selectSizeFeel(this)">À ma taille</button>
+              <button type="button" class="size-feel-chip" data-feel="too_big" onclick="selectSizeFeel(this)">Trop grosses</button>
+            </div>
+            <div class="size-feel-hint">Facultatif. C'est ce qui apprend à SurfAI ta vraie taille de vagues.</div>
           </div>
 
           <div class="card">
@@ -3539,6 +3553,13 @@ select option { background: #fff; color: #1a1a1a; }
             renderSpotPicker(spots || [], zone);
         }
 
+        // Ressenti sur la taille des vagues : un seul choix, on peut le retirer en recliquant
+        function selectSizeFeel(chip) {
+          const wasSelected = chip.classList.contains('selected');
+          document.querySelectorAll('#size-feel .size-feel-chip').forEach(c => c.classList.remove('selected'));
+          if (!wasSelected) chip.classList.add('selected');
+        }
+
         async function submitSession() {
           const spotId  = document.getElementById('session-spot').value;
           const date    = document.getElementById('session-date').value;
@@ -3561,7 +3582,8 @@ select option { background: #fff; color: #1a1a1a; }
               time,
               rating,
               notes: notes || '',
-              boardId: boardId || null
+              boardId: boardId || null,
+              sizeFeel: document.querySelector('#size-feel .size-feel-chip.selected')?.dataset.feel || null
             };
 
             const response = await fetch(`${backendUrl}/api/v1/sessions/quick`, {
@@ -3595,6 +3617,7 @@ select option { background: #fff; color: #1a1a1a; }
             const spotDisplay = document.getElementById('session-spot-display');
             if (spotDisplay) { spotDisplay.textContent = 'Choisir un spot...'; spotDisplay.style.color = 'rgba(255,255,255,0.4)'; }
             document.querySelectorAll('input[name="rating"]').forEach(r => r.checked = false);
+            document.querySelectorAll('#size-feel .size-feel-chip').forEach(c => c.classList.remove('selected'));
             document.getElementById('session-notes').value = '';
             document.getElementById('session-board').value = '';
             dataManager.cache.aiPreferences = null;
