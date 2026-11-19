@@ -490,8 +490,11 @@ router.get('/predictions/best-windows', async (req, res) => {
 
     // 2. Spots à découvrir : jamais surfés, pas en favori, à moins de `radius` km
     //    du surfeur (ou, sans position, de l'un de ses spots connus)
+    // Seulement quand l'app transmet la position (ou le demande) : les écrans qui ne savent pas
+    // encore présenter un « spot à découvrir » ne reçoivent que les spots connus.
+    const wantDiscovery = hasPosition || req.query.discover === '1';
     let discoveryResults = [];
-    const anchors = hasPosition ? [{ lat: userLat, lng: userLng }] : allKnown.map(s => ({ lat: Number(s.lat), lng: Number(s.lng) }));
+    const anchors = !wantDiscovery ? [] : hasPosition ? [{ lat: userLat, lng: userLng }] : allKnown.map(s => ({ lat: Number(s.lat), lng: Number(s.lng) }));
     if (anchors.length) {
       const knownIds = new Set([...allKnown.map(s => s.id), ...userData.pastSessions.map(s => s.spot_id)]);
       const pad = radius / 111;
