@@ -25,6 +25,14 @@ function computeWeights() {
 const MIN_SESSIONS_TO_LEARN = 5;
 const FULL_CONFIDENCE_SESSIONS = 15;
 
+// Poids d'une session selon son ancienneté : divisé par deux tous les `halfLifeDays` jours
+function recencyWeight(date, halfLifeDays) {
+  const t = date ? new Date(date).getTime() : NaN;
+  if (!Number.isFinite(t)) return 1;
+  const ageDays = Math.max(0, (Date.now() - t) / 86400000);
+  return Math.pow(0.5, ageDays / halfLifeDays);
+}
+
 function sessionSizeFeel(session) {
   return session.size_feel || session.meteo?.sizeFeel || null;
 }
@@ -58,10 +66,12 @@ function learnWaveRange(pastSessions, profile) {
     const h = sessionWaveHeight(s);
     if (h == null) return;
     const feel = sessionSizeFeel(s);
-    if (feel === 'perfect') good.push({ h, w: 1 });
-    else if (feel === 'too_small') tooSmall.push(h);
-    else if (feel === 'too_big') tooBig.push(h);
-    else if (s.rating >= 4) good.push({ h, w: 0.5 });
+    // Les sessions récentes pèsent plus : la fourchette suit la progression du surfeur
+    const recency = recencyWeight(s.date, 365);
+    if (feel === 'perfect') good.push({ h, w: 1 * recency });
+    else if (feel === 'too_small') { if (recency >= 0.25) tooSmall.push(h); }
+    else if (feel === 'too_big') { if (recency >= 0.25) tooBig.push(h); }
+    else if (s.rating >= 4) good.push({ h, w: 0.5 * recency });
   });
 
   const evidence = good.length + tooSmall.length + tooBig.length;
@@ -300,7 +310,7 @@ function degreesToCardinal(deg) {
 }
 
 // ─── Explications lisibles ────────────────────────────────
-function buildWhyGood(slot, windScore, wavesScore, periodScore, tideAdj, spotScore, profile, spot, similarSession) {
+function buildWhyGood(slot, windScore, wavesScore, periodScore, tideAdj, spotScore, profile, spot, similarSession, badSession) {
   const reasons = [];   // pourquoi c'est bien
   const caveats = [];   // points d'attention
 
@@ -355,11 +365,17 @@ function buildWhyGood(slot, windScore, wavesScore, periodScore, tideAdj, spotSco
     caveats.push(tideLabel + ' — pas idéale pour ce spot');
   }
 
-  // --- Session similaire ---
+  // --- Mémoire du spot : rappel d'une session vécue ici dans des conditions proches ---
+  // L'année n'est affichée que pour une session d'une autre année
+  const sessionDate = d => {
+    const date = new Date(d);
+    const sameYear = date.getUTCFullYear() === new Date().getUTCFullYear();
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', timeZone: 'UTC', ...(sameYear ? {} : { year: 'numeric' }) });
+  };
   if (similarSession) {
-    const date = new Date(similarSession.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
-    const stars = '★'.repeat(similarSession.rating || 0);
-    reasons.push('Conditions similaires à ta session du ' + date + ' (' + stars + ')');
+    reasons.push('Ressemble à ta session du ' + sessionDate(similarSession.date) + ' ici (' + '★'.repeat(similarSession.rating || 0) + ')');
+  } else if (badSession) {
+    caveats.push('Ressemble à ta session du ' + sessionDate(badSession.date) + ' ici, que tu avais notée ' + '★'.repeat(badSession.rating || 1));
   }
 
   return { whyGood: reasons, whyNotPerfect: caveats };
@@ -409,22 +425,73 @@ function scoreCommunity(slot, communityProfile) {
   };
 }
 
-// ─── Session vraiment similaire ──────────────────────────
-// On ne cite une session passée que si vagues, vent ET période sont proches.
-function findSimilarSession(slot, pastSessions) {
-  const waveH = Math.max(slot.waveHeight || 0, slot.swellHeight || 0);
-  const candidates = pastSessions
-    .filter(s => s.rating >= 4 && s.meteo && typeof s.meteo.waveHeight === 'number' && typeof s.meteo.windSpeed === 'number')
-    .map(s => {
-      const sWave = Math.max(s.meteo.waveHeight || 0, s.meteo.swellHeight || 0);
-      const dWave = Math.abs(sWave - waveH);
-      const dWind = Math.abs(s.meteo.windSpeed - (slot.windSpeed || 0));
-      const dPeriod = (s.meteo.wavePeriod && slot.wavePeriod) ? Math.abs(s.meteo.wavePeriod - slot.wavePeriod) : 0;
-      return { s, dWave, dWind, dPeriod, dist: dWave / 0.4 + dWind / 10 + dPeriod / 3 };
-    })
-    .filter(c => c.dWave <= Math.max(0.3, waveH * 0.25) && c.dWind <= 10 && c.dPeriod <= 3)
-    .sort((a, b) => a.dist - b.dist);
-  return candidates.length ? candidates[0].s : null;
+// ─── Mémoire du spot ─────────────────────────────────────
+// Ce que le surfeur a vécu SUR CE SPOT, dans des conditions proches, fait bouger la prévision.
+// Règle stricte : une session ne se compare qu'à une prévision du même spot — les mêmes chiffres
+// ne donnent pas la même vague ailleurs.
+function angleDiff(a, b) {
+  const d = Math.abs(a - b) % 360;
+  return d > 180 ? 360 - d : d;
+}
+
+// Ressemblance entre une session passée et un créneau à venir : 1 = identique, 0 = rien à voir.
+// On compare tout ce qui est connu des deux côtés : taille, période, vent (force et direction),
+// direction de houle, niveau de marée.
+function sessionSimilarity(session, slot) {
+  const m = session.meteo;
+  const diffs = [];
+  const sH = sessionWaveHeight(session);
+  const fH = Math.max(slot.waveHeight || 0, slot.swellHeight || 0);
+  if (sH == null || !fH) return 0; // sans la taille des vagues, pas de comparaison possible
+  diffs.push((sH - fH) / Math.max(0.3, fH * 0.25));
+  if (typeof m.windSpeed !== 'number' || typeof slot.windSpeed !== 'number') return 0;
+  diffs.push((m.windSpeed - slot.windSpeed) / 10);
+  if (m.wavePeriod && slot.wavePeriod) diffs.push((m.wavePeriod - slot.wavePeriod) / 3);
+  // La direction du vent ne compte que s'il y a du vent
+  if (m.windDirection != null && slot.windDirection != null && Math.max(m.windSpeed, slot.windSpeed) > 8) {
+    diffs.push(angleDiff(m.windDirection, slot.windDirection) / 45);
+  }
+  const sSwell = m.swellDirection != null ? m.swellDirection : m.waveDirection;
+  const fSwell = slot.swellDirection != null ? slot.swellDirection : slot.waveDirection;
+  if (sSwell != null && fSwell != null) diffs.push(angleDiff(sSwell, fSwell) / 30);
+  if (typeof m.tideLevel === 'number' && typeof slot.tideLevel === 'number') diffs.push((m.tideLevel - slot.tideLevel) / 0.35);
+
+  // Données anciennes mal formées (texte à la place d'un nombre) : on ignore le critère
+  const usable = diffs.filter(Number.isFinite);
+  if (usable.length < 2) return 0;
+  const distance = Math.sqrt(usable.reduce((sum, d) => sum + d * d, 0) / usable.length);
+  return Math.exp(-distance * distance);
+}
+
+const SIMILAR_THRESHOLD = 0.4;   // en dessous, la session ne ressemble pas assez
+const MEMORY_MAX_ADJUST = 1.5;   // la mémoire déplace la note de 1,5 point au plus
+
+function spotMemory(slot, pastSessions, spotId) {
+  const none = { adjustment: 0, sessionsHere: 0, similarCount: 0, bestGood: null, worstBad: null };
+  if (!spotId) return none;
+  const here = (pastSessions || []).filter(s => s.spot_id === spotId && s.rating >= 1 && s.meteo);
+  if (!here.length) return none;
+
+  const similar = here
+    .map(s => ({ s, sim: sessionSimilarity(s, slot) }))
+    .filter(x => x.sim >= SIMILAR_THRESHOLD)
+    .map(x => ({ ...x, w: x.sim * recencyWeight(x.s.date, 730) }))
+    .sort((a, b) => b.sim - a.sim);
+  if (!similar.length) return { ...none, sessionsHere: here.length };
+
+  const totalW = similar.reduce((sum, x) => sum + x.w, 0);
+  const avgRating = similar.reduce((sum, x) => sum + x.s.rating * x.w, 0) / totalW;
+  // Une seule session très proche pèse un tiers ; trois et plus pèsent plein
+  const strength = Math.min(1, totalW / 3);
+  const adjustment = Math.round(((avgRating - 3) / 2) * strength * MEMORY_MAX_ADJUST * 10) / 10;
+
+  return {
+    adjustment,
+    sessionsHere: here.length,
+    similarCount: similar.length,
+    bestGood: similar.find(x => x.s.rating >= 4)?.s || null,
+    worstBad: similar.find(x => x.s.rating <= 2)?.s || null,
+  };
 }
 
 // ─── Fonction principale ─────────────────────────────────
@@ -444,13 +511,18 @@ function scoreSlot(slot, context) {
 
   const community = scoreCommunity(slot, communityProfile);
 
+  // Mémoire : ce que le surfeur a déjà vécu sur ce spot dans des conditions proches
+  const memory = spotMemory(slot, pastSessions, slot.spotId || spot.id);
+  const similarSession = memory.bestGood;
+
   const rawScore =
     windScore    * weights.wind   +
     wavesScore   * weights.waves  +
     periodScore  * weights.period +
     spotScore    * weights.spot   +
     tideAdj +
-    community.bonus;
+    community.bonus +
+    memory.adjustment;
 
   // Conditions nécessaires : sans vagues à ta taille, ou avec un vent destructeur,
   // rien d'autre ne peut sauver le créneau. On multiplie au lieu d'additionner.
@@ -470,9 +542,8 @@ function scoreSlot(slot, context) {
   const boardSuggestion = score >= 6 ? suggestBoard(slot, pastSessions, boards) : null;
 
   // Trouver la session similaire la plus proche pour la narrative
-  const similarSession = findSimilarSession(slot, pastSessions);
 
-  const why = buildWhyGood(slot, windScore, wavesScore, periodScore, tideAdj, spotScore, profile, spot, similarSession);
+  const why = buildWhyGood(slot, windScore, wavesScore, periodScore, tideAdj, spotScore, profile, spot, similarSession, memory.worstBad);
 
   return {
     score,
@@ -484,6 +555,7 @@ function scoreSlot(slot, context) {
       spot:    { score: Math.round(spotScore * 10) / 10,     weight: weights.spot },
       tide:    { bonus: tideAdj },
       community: community,
+      memory: { adjustment: memory.adjustment, sessionsHere: memory.sessionsHere, similarCount: memory.similarCount },
     },
     whyGood: community.active && community.bonus > 0
       ? [...why.whyGood, `👥 Confirmé par ${community.sessionCount} sessions terrain (confiance ${Math.round(community.confidence * 100)}%)`]
@@ -493,10 +565,11 @@ function scoreSlot(slot, context) {
       : why.whyNotPerfect,
     boardSuggestion,
     similarSession,
+    memory,
     sizeIssue,
     waveRange,
     calibrationLevel: waveRange.confidence,
   };
 }
 
-module.exports = { scoreSlot, learnWaveRange, computeWeights, degreesToCardinal, buildWhyGood, tideCategory, findSimilarSession };
+module.exports = { scoreSlot, learnWaveRange, computeWeights, degreesToCardinal, buildWhyGood, tideCategory, spotMemory, sessionSimilarity };

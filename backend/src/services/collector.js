@@ -59,23 +59,27 @@ function normalizeSession(session) {
   return { ...session, meteo };
 }
 
-async function collectContext(spotId, userId, days = 5) {
-  console.log(`📡 Collecte contexte: spot=${spotId} user=${userId} days=${days}`);
-
-  // Récupérer toutes les données en parallèle
-  const [spot, profile, sessions, boards] = await Promise.all([
-    db.getSpotById(spotId),
+// Données du surfeur : chargées une seule fois, puis partagées entre tous les spots analysés
+async function collectUserData(userId) {
+  const [profile, sessions, boards] = await Promise.all([
     db.getProfile(userId),
     db.getSessionsWithMeteo(userId),
     db.getBoards(userId),
   ]);
+  return {
+    userId,
+    profile: profile || { surf_level: 'intermediate', min_wave_height: 0.8, max_wave_height: 2.0 },
+    pastSessions: (sessions || []).map(normalizeSession),
+    boards: boards || [],
+  };
+}
 
-  if (!spot) throw new Error(`Spot ${spotId} introuvable`);
-
-  // Prévisions météo Stormglass (5 jours)
+// Contexte complet d'un spot : prévisions + marées + données du surfeur
+async function buildContext(spot, userData, days = 5) {
+  // Prévisions météo marine (partagées par maille de 25 km, en cache à la journée)
   const weatherData = await stormglassService.getForecast(spot.lat, spot.lng, days);
 
-  // Marées via Stormglass tide/extremes, puis interpolation sur le forecast
+  // Marées : pleines et basses mers, puis niveau et phase pour chaque heure
   let forecast = weatherData.forecast;
   try {
     const tideExtremes = await stormglassService.getTideExtremes(spot.lat, spot.lng, days);
@@ -86,15 +90,14 @@ async function collectContext(spotId, userId, days = 5) {
     console.warn('⚠️ Stormglass tide indisponible:', e.message);
   }
 
-  return {
-    spot,
-    forecast,         // array de points horaires enrichis avec marée
-    profile: profile || { surf_level: 'intermediate', min_wave_height: 0.8, max_wave_height: 2.0 },
-    pastSessions: (sessions || []).map(normalizeSession),
-    boards: boards || [],
-    userId,
-    collectedAt: new Date().toISOString(),
-  };
+  return { spot, forecast, ...userData, collectedAt: new Date().toISOString() };
 }
 
-module.exports = { collectContext, tideAt, normalizeSession };
+async function collectContext(spotId, userId, days = 5) {
+  console.log(`📡 Collecte contexte: spot=${spotId} user=${userId} days=${days}`);
+  const [spot, userData] = await Promise.all([db.getSpotById(spotId), collectUserData(userId)]);
+  if (!spot) throw new Error(`Spot ${spotId} introuvable`);
+  return buildContext(spot, userData, days);
+}
+
+module.exports = { collectContext, collectUserData, buildContext, tideAt, normalizeSession };

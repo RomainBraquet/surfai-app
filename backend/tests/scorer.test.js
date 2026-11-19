@@ -46,11 +46,34 @@ ok(tideAt(11000, ext).tidePhase === 'rising' && Math.abs(tideAt(11000, ext).tide
 ok(tideAt(21800, ext).tidePhase === 'high', 'près de la pleine mer → high');
 ok(tideAt(33000, ext).tidePhase === 'falling', 'après la pleine mer → falling');
 
-// 7. Session similaire : citée seulement si elle ressemble
-const far = [{ rating: 5, date: '2026-03-26', meteo: { waveHeight: 0.9, windSpeed: 5, wavePeriod: 14 } }];
-ok(scoreSlot({ ...perfect, waveHeight: 2.6, swellHeight: 2.6, windSpeed: 30 }, { ...ctx, pastSessions: far }).similarSession === null, 'session lointaine non citée');
-const near = [{ rating: 5, date: '2026-03-26', meteo: { waveHeight: 1.5, windSpeed: 10, wavePeriod: 11 } }];
-ok(scoreSlot(perfect, { ...ctx, pastSessions: near }).similarSession !== null, 'session proche citée');
+// 7. Mémoire du spot : seulement le même spot, seulement des conditions proches
+const days = n => new Date(Date.now() - n * 86400000).toISOString();
+const sess = (rating, over = {}, spotId = 's1', age = 30) => ({ rating, spot_id: spotId, date: days(age), meteo: { waveHeight: 1.4, swellHeight: 1.3, wavePeriod: 12, windSpeed: 8, windDirection: 90, swellDirection: 280, tideLevel: 0.1, ...over } });
+const withS = list => ({ ...ctx, pastSessions: list });
+const r0 = scoreSlot(perfect, ctx);
+const mid = { ...perfect, windSpeed: 18, windDirection: 0, wavePeriod: 8, tideLevel: 0.5 }; // créneau moyen, pour voir la mémoire bouger la note
+const m0 = scoreSlot(mid, ctx).score;
+const sameMid = { windSpeed: 18, windDirection: 0, wavePeriod: 8, tideLevel: 0.5 };
+ok(scoreSlot(mid, withS([sess(5, sameMid)])).score > m0, 'une bonne session proche ici fait monter la note');
+ok(scoreSlot(mid, withS([sess(1, sameMid)])).score < m0, 'une mauvaise session proche ici fait baisser la note');
+ok(scoreSlot(mid, withS([sess(5, sameMid), sess(5, sameMid), sess(5, sameMid)])).score > scoreSlot(mid, withS([sess(5, sameMid)])).score, 'trois bonnes sessions pèsent plus qu\'une');
+ok(scoreSlot(mid, withS([sess(5, sameMid), sess(5, sameMid), sess(5, sameMid), sess(5, sameMid)])).score - m0 <= 1.6, 'la mémoire ne déplace pas la note de plus de 1,5 point');
+ok(scoreSlot(mid, withS([sess(5, sameMid, 'autre-spot')])).score === m0, 'une session sur un AUTRE spot ne change rien');
+ok(scoreSlot(mid, withS([sess(5, sameMid, 'autre-spot')])).similarSession === null, 'une session sur un autre spot n\'est jamais citée');
+ok(scoreSlot(perfect, withS([sess(5)])).similarSession !== null, 'rappel dès la première bonne session proche');
+ok(scoreSlot(perfect, withS([sess(5)])).whyGood.some(t => /Ressemble à ta session du/.test(t)), 'le rappel apparaît dans les raisons');
+ok(scoreSlot(perfect, withS([sess(5, { waveHeight: 0.6, swellHeight: 0.6 })])).similarSession === null, 'taille trop différente : pas de rappel');
+ok(scoreSlot(perfect, withS([sess(5, { tideLevel: 0.9 })])).memory.similarCount === 0 || scoreSlot(perfect, withS([sess(5, { tideLevel: 0.9 })])).memory.adjustment < scoreSlot(perfect, withS([sess(5)])).memory.adjustment, 'marée opposée : ressemblance plus faible');
+ok(scoreSlot(perfect, withS([sess(5, { windDirection: 270, windSpeed: 15 })])).memory.adjustment < scoreSlot({ ...perfect, windSpeed: 15 }, withS([sess(5, { windSpeed: 15 })])).memory.adjustment, 'vent de direction opposée : ressemblance plus faible');
+ok(scoreSlot(mid, withS([sess(1, sameMid)])).whyNotPerfect.some(t => /Ressemble à ta session du/.test(t)), 'mauvaise session proche : signalée en point d\'attention');
+ok(scoreSlot({ ...perfect, waveHeight: 5, swellHeight: 5 }, withS([sess(5, { waveHeight: 5, swellHeight: 5 })])).score < 4, 'la mémoire ne sauve pas un créneau hors de la fourchette');
+ok(r0.score >= 8.5, 'sans session, le socle seul note toujours');
+
+// Progression : les sessions récentes déplacent la fourchette
+const old = Array.from({ length: 10 }, () => ({ rating: 4, date: days(900), meteo: { waveHeight: 0.8, windSpeed: 10, wavePeriod: 9, sizeFeel: 'perfect' } }));
+const recent = Array.from({ length: 10 }, () => ({ rating: 4, date: days(20), meteo: { waveHeight: 1.6, windSpeed: 10, wavePeriod: 9, sizeFeel: 'perfect' } }));
+const prog = learnWaveRange([...old, ...recent], profile);
+ok(prog.max >= 1.5 && learnWaveRange(old, profile).max < prog.max, `la fourchette monte avec les sessions récentes (obtenu ${prog.min}-${prog.max})`);
 
 // 9. Sessions : formats anciens ramenés au format du moteur
 ok(normalizeSession({ meteo: { windSpeed: 5, airTemperature: 15, waveHeight: 1 } }).meteo.windSpeed === 18, 'format brut : m/s → km/h');

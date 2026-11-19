@@ -2202,11 +2202,20 @@ select option { background: #fff; color: #1a1a1a; }
             ${daysHtml}`;
         }
 
+        // Position transmise au moteur : il ne propose rien au-delà de 30 km
+        function predictionPositionQuery() {
+          let lat = _userLat, lng = _userLng;
+          if (lat == null) {
+            try { const home = JSON.parse(localStorage.getItem('home_spot') || '{}'); lat = home.lat; lng = home.lng; } catch (e) { /* pas de position connue */ }
+          }
+          return (typeof lat === 'number' && typeof lng === 'number') ? `&lat=${lat.toFixed(3)}&lng=${lng.toFixed(3)}` : '';
+        }
+
         async function loadAccueilWindows(userId) {
           const container = document.getElementById('accueil-windows');
           if (!container) return;
           try {
-            const res = await fetch(`${backendUrl}/api/v1/predictions/best-windows?userId=${userId}&days=${PREDICTION_DAYS}`);
+            const res = await fetch(`${backendUrl}/api/v1/predictions/best-windows?userId=${userId}&days=${PREDICTION_DAYS}${predictionPositionQuery()}`);
             const data = await res.json();
 
             if (!data.success || !data.results?.length) {
@@ -2960,7 +2969,7 @@ select option { background: #fff; color: #1a1a1a; }
         async function prefetchSpotScores(userId) {
           if (!userId) return;
           try {
-            const res = await fetch(`${backendUrl}/api/v1/predictions/best-windows?userId=${userId}&days=${PREDICTION_DAYS}`);
+            const res = await fetch(`${backendUrl}/api/v1/predictions/best-windows?userId=${userId}&days=${PREDICTION_DAYS}${predictionPositionQuery()}`);
             const data = await res.json();
             if (!data.success || !data.results) return;
             _spotScoresCache = {};
