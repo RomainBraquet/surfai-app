@@ -207,6 +207,8 @@ router.post('/sessions/quick', async (req, res) => {
     const { userId, spotId, date, time, rating, notes, boardId } = req.body;
     // Ressenti sur la taille des vagues : 'too_small' | 'perfect' | 'too_big' (facultatif)
     const sizeFeel = ['too_small', 'perfect', 'too_big'].includes(req.body.sizeFeel) ? req.body.sizeFeel : null;
+    // Ressenti sur le vent : 'clean' | 'annoying' | 'too_much' (facultatif)
+    const windFeel = ['clean', 'annoying', 'too_much'].includes(req.body.windFeel) ? req.body.windFeel : null;
 
     let meteo = null;
 
@@ -272,6 +274,7 @@ router.post('/sessions/quick', async (req, res) => {
 
     // Le ressenti est rangé avec la météo de la session : c'est lui qui apprend la fourchette
     if (sizeFeel) meteo = { ...(meteo || {}), sizeFeel };
+    if (windFeel) meteo = { ...(meteo || {}), windFeel };
 
     const session = await db.createSession({
       user_id: userId,

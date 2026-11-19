@@ -1,7 +1,7 @@
 // 🏆 Recommender SurfAI — Sélectionne les meilleurs créneaux et génère les narratives
 // Spec : docs/superpowers/specs/2026-03-22-moteur-prediction-ia-design.md
 
-const { scoreSlot, learnWaveRange } = require('./scorer');
+const { scoreSlot, learnWaveRange, learnWindTolerance } = require('./scorer');
 const { spotTimeZone, localParts, sunTimes, isDaylightSlot } = require('./timeUtils');
 
 // Labels selon score
@@ -220,10 +220,12 @@ function getBestWindows(context, maxWindows = 10) {
 
   // Fourchette de vagues du surfeur : apprise de ses sessions, sinon celle du profil
   const waveRange = learnWaveRange(pastSessions, profile);
+  // Tolérance au vent : selon le niveau, puis apprise du ressenti donné à chaque session
+  const windTolerance = learnWindTolerance(pastSessions, profile);
 
   // Scorer chaque créneau horaire
   const scored = forecast.map(point => {
-    const result = scoreSlot({ ...point, spotId: spot.id }, { profile, spot, pastSessions, boards, waveRange });
+    const result = scoreSlot({ ...point, spotId: spot.id }, { profile, spot, pastSessions, boards, waveRange, windTolerance });
     const local = localParts(point.time, timeZone);
     const timeMs = new Date(point.time).getTime();
     return {
@@ -313,6 +315,7 @@ function getBestWindows(context, maxWindows = 10) {
     windows,
     hourlyScores,
     waveRange,
+    windTolerance,
     calibrationLevel: waveRange.confidence,
     totalSessionsAnalyzed: pastSessions.filter(s => s.meteo).length,
   };

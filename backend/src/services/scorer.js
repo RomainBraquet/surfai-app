@@ -103,14 +103,75 @@ function learnWaveRange(pastSessions, profile) {
 }
 
 // ─── Facteur Vent (0-10) ────────────────────────────────
-function scoreWind(windSpeed, windDirection, idealWindDirections, waveDirection) {
+// ─── Tolérance au vent apprise ──────────────────────────
+// Le vent est le critère le plus important, et tout le monde ne le supporte pas pareil.
+// Point de départ selon le niveau, puis affinage avec le ressenti donné à chaque session
+// (« propre », « gênant », « trop fort »). Valable sur tous les spots : ça parle du surfeur.
+const WIND_SCALE_BY_LEVEL = { beginner: 20, intermediate: 25, advanced: 30, expert: 30 };
+const WIND_SCALE_MIN = 14, WIND_SCALE_MAX = 36;
+const WIND_BOTHER_RATIO = 0.83; // avec une échelle E, le vent devient gênant vers 0,83 × E km/h
+
+function sessionWindFeel(session) {
+  return session.wind_feel || session.meteo?.windFeel || null;
+}
+
+function median(values) {
+  const sorted = [...values].sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)];
+}
+
+function learnWindTolerance(pastSessions, profile) {
+  const defaultScale = WIND_SCALE_BY_LEVEL[profile?.surf_level] || 25;
+  const base = { scale: defaultScale, botherKmh: Math.round(defaultScale * WIND_BOTHER_RATIO), source: 'level', basedOnSessions: 0, confidence: 0 };
+
+  const clean = [], bother = [];
+  (pastSessions || []).forEach(s => {
+    const feel = sessionWindFeel(s);
+    const m = s.meteo;
+    if (!feel || !m || typeof m.windSpeed !== 'number') return;
+    // Un vent de terre gêne beaucoup moins : il n'apprend rien sur la tolérance au vent de mer
+    const waveDir = m.swellDirection != null ? m.swellDirection : m.waveDirection;
+    if (m.windDirection != null && waveDir != null) {
+      const d = Math.abs(m.windDirection - waveDir) % 360;
+      if ((d > 180 ? 360 - d : d) > 120) return;
+    }
+    if (feel === 'clean') clean.push(m.windSpeed);
+    else if (feel === 'annoying' || feel === 'too_much') bother.push(m.windSpeed);
+  });
+
+  const n = clean.length + bother.length;
+  if (n < 3) return { ...base, basedOnSessions: n };
+
+  let botherKmh;
+  if (bother.length) {
+    const typicalBother = median(bother);
+    const cleanBelow = clean.filter(v => v <= typicalBother);
+    botherKmh = cleanBelow.length ? (Math.max(...cleanBelow) + typicalBother) / 2 : Math.min(...bother);
+  } else {
+    // Que des sessions « propres » : il supporte au moins le vent le plus fort qu'il a trouvé propre
+    botherKmh = Math.max(defaultScale * WIND_BOTHER_RATIO, Math.max(...clean) * 1.15);
+  }
+
+  const confidence = Math.min(1, n / 10);
+  const learnedScale = botherKmh / WIND_BOTHER_RATIO;
+  const scale = Math.min(WIND_SCALE_MAX, Math.max(WIND_SCALE_MIN, defaultScale + (learnedScale - defaultScale) * confidence));
+  return {
+    scale: Math.round(scale * 10) / 10,
+    botherKmh: Math.round(scale * WIND_BOTHER_RATIO),
+    source: 'learned',
+    basedOnSessions: n,
+    confidence: Math.round(confidence * 100) / 100,
+  };
+}
+
+function scoreWind(windSpeed, windDirection, idealWindDirections, waveDirection, scale = 25) {
   if (typeof windSpeed !== 'number' || Number.isNaN(windSpeed)) windSpeed = 0;
   // windSpeed en km/h, windDirection en degrés (0-360)
   const speedKmh = windSpeed || 0; // toujours en km/h (converti a la collecte)
 
   // Courbe continue gaussienne au lieu de paliers
   // 0→10, 10→8.5, 15→7.0, 20→5.3, 25→3.7, 30→2.4, 40→0.8
-  const speedScore = 10 * Math.exp(-Math.pow(speedKmh / 25, 2));
+  const speedScore = 10 * Math.exp(-Math.pow(speedKmh / scale, 2));
 
   // Scoring offshore : compare direction vent vs direction vagues
   let offshoreBonus = 0;
@@ -310,7 +371,7 @@ function degreesToCardinal(deg) {
 }
 
 // ─── Explications lisibles ────────────────────────────────
-function buildWhyGood(slot, windScore, wavesScore, periodScore, tideAdj, spotScore, profile, spot, similarSession, badSession) {
+function buildWhyGood(slot, windScore, wavesScore, periodScore, tideAdj, spotScore, profile, spot, memory) {
   const reasons = [];   // pourquoi c'est bien
   const caveats = [];   // points d'attention
 
@@ -365,18 +426,10 @@ function buildWhyGood(slot, windScore, wavesScore, periodScore, tideAdj, spotSco
     caveats.push(tideLabel + ' — pas idéale pour ce spot');
   }
 
-  // --- Mémoire du spot : rappel d'une session vécue ici dans des conditions proches ---
-  // L'année n'est affichée que pour une session d'une autre année
-  const sessionDate = d => {
-    const date = new Date(d);
-    const sameYear = date.getUTCFullYear() === new Date().getUTCFullYear();
-    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', timeZone: 'UTC', ...(sameYear ? {} : { year: 'numeric' }) });
-  };
-  if (similarSession) {
-    reasons.push('Ressemble à ta session du ' + sessionDate(similarSession.date) + ' ici (' + '★'.repeat(similarSession.rating || 0) + ')');
-  } else if (badSession) {
-    caveats.push('Ressemble à ta session du ' + sessionDate(badSession.date) + ' ici, que tu avais notée ' + '★'.repeat(badSession.rating || 1));
-  }
+  // --- Mémoire du spot : on rappelle un vécu, pas une date ---
+  const reminder = memoryReminder(memory);
+  if (reminder?.tone === 'good') reasons.push(reminder.text);
+  else if (reminder?.tone === 'bad') caveats.push(reminder.text);
 
   return { whyGood: reasons, whyNotPerfect: caveats };
 }
@@ -439,27 +492,28 @@ function angleDiff(a, b) {
 // direction de houle, niveau de marée.
 function sessionSimilarity(session, slot) {
   const m = session.meteo;
-  const diffs = [];
+  const diffs = []; // { d: écart normalisé, w: poids du critère }
   const sH = sessionWaveHeight(session);
   const fH = Math.max(slot.waveHeight || 0, slot.swellHeight || 0);
   if (sH == null || !fH) return 0; // sans la taille des vagues, pas de comparaison possible
-  diffs.push((sH - fH) / Math.max(0.3, fH * 0.25));
+  diffs.push({ d: (sH - fH) / Math.max(0.3, fH * 0.25), w: 1.5 });
   if (typeof m.windSpeed !== 'number' || typeof slot.windSpeed !== 'number') return 0;
-  diffs.push((m.windSpeed - slot.windSpeed) / 10);
-  if (m.wavePeriod && slot.wavePeriod) diffs.push((m.wavePeriod - slot.wavePeriod) / 3);
-  // La direction du vent ne compte que s'il y a du vent
+  // Le vent, force et direction, est le critère qui pèse le plus
+  diffs.push({ d: (m.windSpeed - slot.windSpeed) / 8, w: 2 });
   if (m.windDirection != null && slot.windDirection != null && Math.max(m.windSpeed, slot.windSpeed) > 8) {
-    diffs.push(angleDiff(m.windDirection, slot.windDirection) / 45);
+    diffs.push({ d: angleDiff(m.windDirection, slot.windDirection) / 40, w: 2 });
   }
+  if (m.wavePeriod && slot.wavePeriod) diffs.push({ d: (m.wavePeriod - slot.wavePeriod) / 3, w: 1 });
   const sSwell = m.swellDirection != null ? m.swellDirection : m.waveDirection;
   const fSwell = slot.swellDirection != null ? slot.swellDirection : slot.waveDirection;
-  if (sSwell != null && fSwell != null) diffs.push(angleDiff(sSwell, fSwell) / 30);
-  if (typeof m.tideLevel === 'number' && typeof slot.tideLevel === 'number') diffs.push((m.tideLevel - slot.tideLevel) / 0.35);
+  if (sSwell != null && fSwell != null) diffs.push({ d: angleDiff(sSwell, fSwell) / 30, w: 1 });
+  if (typeof m.tideLevel === 'number' && typeof slot.tideLevel === 'number') diffs.push({ d: (m.tideLevel - slot.tideLevel) / 0.35, w: 1 });
 
   // Données anciennes mal formées (texte à la place d'un nombre) : on ignore le critère
-  const usable = diffs.filter(Number.isFinite);
+  const usable = diffs.filter(x => Number.isFinite(x.d));
   if (usable.length < 2) return 0;
-  const distance = Math.sqrt(usable.reduce((sum, d) => sum + d * d, 0) / usable.length);
+  const totalW = usable.reduce((sum, x) => sum + x.w, 0);
+  const distance = Math.sqrt(usable.reduce((sum, x) => sum + x.w * x.d * x.d, 0) / totalW);
   return Math.exp(-distance * distance);
 }
 
@@ -467,7 +521,7 @@ const SIMILAR_THRESHOLD = 0.4;   // en dessous, la session ne ressemble pas asse
 const MEMORY_MAX_ADJUST = 1.5;   // la mémoire déplace la note de 1,5 point au plus
 
 function spotMemory(slot, pastSessions, spotId) {
-  const none = { adjustment: 0, sessionsHere: 0, similarCount: 0, bestGood: null, worstBad: null };
+  const none = { adjustment: 0, sessionsHere: 0, similarCount: 0, bestGood: null, worstBad: null, goodCount: 0, badCount: 0 };
   if (!spotId) return none;
   const here = (pastSessions || []).filter(s => s.spot_id === spotId && s.rating >= 1 && s.meteo);
   if (!here.length) return none;
@@ -491,7 +545,28 @@ function spotMemory(slot, pastSessions, spotId) {
     similarCount: similar.length,
     bestGood: similar.find(x => x.s.rating >= 4)?.s || null,
     worstBad: similar.find(x => x.s.rating <= 2)?.s || null,
+    goodCount: similar.filter(x => x.s.rating >= 4).length,
+    badCount: similar.filter(x => x.s.rating <= 2).length,
   };
+}
+
+// Le rappel affiché au surfeur. Personne ne se souvient d'une date de session :
+// on rappelle ce qu'il a vécu, avec ses propres mots quand il a laissé une note.
+function memoryReminder(memory) {
+  if (!memory || !memory.similarCount) return null;
+  if (memory.adjustment > 0 && memory.bestGood) {
+    const note = (memory.bestGood.notes || '').trim().replace(/\s+/g, ' ');
+    if (note && note.length <= 70) {
+      return { tone: 'good', text: 'Tu connais ces conditions ici. Tu avais noté : « ' + note + ' »' };
+    }
+    if (memory.goodCount >= 2) return { tone: 'good', text: 'Tu as déjà eu ces conditions ici ' + memory.goodCount + ' fois, et tu avais aimé' };
+    if (memory.bestGood.rating >= 5) return { tone: 'good', text: 'Tu as déjà eu ces conditions ici, et tu avais adoré' };
+    return { tone: 'good', text: 'Tu as déjà eu ces conditions ici, et c\'était une bonne session' };
+  }
+  if (memory.adjustment < 0 && memory.worstBad) {
+    return { tone: 'bad', text: 'Tu as déjà eu ces conditions ici, et ça ne t\'avait pas plu' };
+  }
+  return null;
 }
 
 // ─── Fonction principale ─────────────────────────────────
@@ -503,7 +578,8 @@ function scoreSlot(slot, context) {
   const waveRange = context.waveRange || learnWaveRange(pastSessions, context.profile);
   const profile = { ...context.profile, min_wave_height: waveRange.min, max_wave_height: waveRange.max };
 
-  const windScore    = scoreWind(slot.windSpeed, slot.windDirection, spot.ideal_wind, slot.waveDirection);
+  const windTolerance = context.windTolerance || learnWindTolerance(pastSessions, context.profile);
+  const windScore    = scoreWind(slot.windSpeed, slot.windDirection, spot.ideal_wind, slot.waveDirection, windTolerance.scale);
   const wavesScore   = scoreWaves(slot.waveHeight, slot.swellHeight, profile);
   const periodScore  = scorePeriod(slot.wavePeriod);
   const spotScore    = scoreSpot(slot, spot);
@@ -543,7 +619,7 @@ function scoreSlot(slot, context) {
 
   // Trouver la session similaire la plus proche pour la narrative
 
-  const why = buildWhyGood(slot, windScore, wavesScore, periodScore, tideAdj, spotScore, profile, spot, similarSession, memory.worstBad);
+  const why = buildWhyGood(slot, windScore, wavesScore, periodScore, tideAdj, spotScore, profile, spot, memory);
 
   return {
     score,
@@ -568,8 +644,9 @@ function scoreSlot(slot, context) {
     memory,
     sizeIssue,
     waveRange,
+    windTolerance,
     calibrationLevel: waveRange.confidence,
   };
 }
 
-module.exports = { scoreSlot, learnWaveRange, computeWeights, degreesToCardinal, buildWhyGood, tideCategory, spotMemory, sessionSimilarity };
+module.exports = { scoreSlot, learnWaveRange, learnWindTolerance, memoryReminder, computeWeights, degreesToCardinal, buildWhyGood, tideCategory, spotMemory, sessionSimilarity };

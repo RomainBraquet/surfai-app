@@ -1,6 +1,6 @@
 // Tests du moteur de prédiction — npm test
 const assert = require('assert');
-const { scoreSlot, learnWaveRange } = require('../src/services/scorer');
+const { scoreSlot, learnWaveRange, learnWindTolerance } = require('../src/services/scorer');
 const { tideAt, normalizeSession } = (() => {
   // collector charge Stormglass et Supabase : on fournit des variables factices pour les tests
   process.env.STORMGLASS_API_KEY = process.env.STORMGLASS_API_KEY || 'test';
@@ -61,13 +61,32 @@ ok(scoreSlot(mid, withS([sess(5, sameMid), sess(5, sameMid), sess(5, sameMid), s
 ok(scoreSlot(mid, withS([sess(5, sameMid, 'autre-spot')])).score === m0, 'une session sur un AUTRE spot ne change rien');
 ok(scoreSlot(mid, withS([sess(5, sameMid, 'autre-spot')])).similarSession === null, 'une session sur un autre spot n\'est jamais citée');
 ok(scoreSlot(perfect, withS([sess(5)])).similarSession !== null, 'rappel dès la première bonne session proche');
-ok(scoreSlot(perfect, withS([sess(5)])).whyGood.some(t => /Ressemble à ta session du/.test(t)), 'le rappel apparaît dans les raisons');
+const remind = list => scoreSlot(perfect, withS(list)).whyGood.find(t => /ces conditions ici/.test(t)) || '';
+ok(/tu avais adoré/.test(remind([sess(5)])), 'rappel d\'une session 5 étoiles : « tu avais adoré »');
+ok(/bonne session/.test(remind([sess(4)])), 'rappel d\'une session 4 étoiles : « une bonne session »');
+ok(/2 fois/.test(remind([sess(5), sess(4)])), 'plusieurs bonnes sessions : on dit combien de fois');
+ok(/« Glassy, personne à l\'eau »/.test(remind([{ ...sess(5), notes: 'Glassy, personne à l\'eau' }])), 'le rappel reprend la note du surfeur');
+ok(!/\d{4}|janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre/.test(remind([sess(5)]) + remind([sess(5), sess(4)])), 'le rappel ne cite jamais de date');
 ok(scoreSlot(perfect, withS([sess(5, { waveHeight: 0.6, swellHeight: 0.6 })])).similarSession === null, 'taille trop différente : pas de rappel');
 ok(scoreSlot(perfect, withS([sess(5, { tideLevel: 0.9 })])).memory.similarCount === 0 || scoreSlot(perfect, withS([sess(5, { tideLevel: 0.9 })])).memory.adjustment < scoreSlot(perfect, withS([sess(5)])).memory.adjustment, 'marée opposée : ressemblance plus faible');
 ok(scoreSlot(perfect, withS([sess(5, { windDirection: 270, windSpeed: 15 })])).memory.adjustment < scoreSlot({ ...perfect, windSpeed: 15 }, withS([sess(5, { windSpeed: 15 })])).memory.adjustment, 'vent de direction opposée : ressemblance plus faible');
-ok(scoreSlot(mid, withS([sess(1, sameMid)])).whyNotPerfect.some(t => /Ressemble à ta session du/.test(t)), 'mauvaise session proche : signalée en point d\'attention');
+ok(scoreSlot(mid, withS([sess(1, sameMid)])).whyNotPerfect.some(t => /ne t'avait pas plu/.test(t)), 'mauvaise session proche : signalée en point d\'attention');
 ok(scoreSlot({ ...perfect, waveHeight: 5, swellHeight: 5 }, withS([sess(5, { waveHeight: 5, swellHeight: 5 })])).score < 4, 'la mémoire ne sauve pas un créneau hors de la fourchette');
 ok(r0.score >= 8.5, 'sans session, le socle seul note toujours');
+
+// Vent : tolérance selon le niveau, puis apprise
+const lvl = l => learnWindTolerance([], { surf_level: l }).scale;
+ok(lvl('beginner') < lvl('intermediate') && lvl('intermediate') < lvl('advanced'), 'un débutant tolère moins de vent qu\'un confirmé');
+const onshore20 = { ...perfect, windSpeed: 20, windDirection: 280 };
+ok(scoreSlot(onshore20, { ...ctx, profile: { ...profile, surf_level: 'beginner' } }).score < scoreSlot(onshore20, { ...ctx, profile: { ...profile, surf_level: 'advanced' } }).score, '20 km/h de mer : moins bien noté pour un débutant');
+const windS = (speed, feel, dir = 280) => ({ rating: 3, spot_id: 'x', date: days(10), meteo: { waveHeight: 1.2, windSpeed: speed, windDirection: dir, waveDirection: 280, wavePeriod: 9, windFeel: feel } });
+const sensitive = learnWindTolerance([windS(12, 'annoying'), windS(14, 'too_much'), windS(13, 'annoying'), windS(6, 'clean'), windS(15, 'too_much'), windS(11, 'annoying'), windS(5, 'clean'), windS(16, 'too_much'), windS(12, 'annoying'), windS(7, 'clean')], profile);
+ok(sensitive.source === 'learned' && sensitive.scale < 20, `gêné dès 12 km/h : tolérance abaissée (échelle ${sensitive.scale})`);
+const tough = learnWindTolerance(Array.from({ length: 10 }, (_, i) => windS(22 + i, 'clean')), profile);
+ok(tough.scale > 30, `propre jusqu'à 31 km/h : tolérance relevée (échelle ${tough.scale})`);
+ok(learnWindTolerance([windS(30, 'clean', 100), windS(32, 'clean', 100), windS(35, 'clean', 100)], profile).source === 'level', 'un vent de terre ne dit rien de la tolérance au vent de mer');
+ok(learnWindTolerance([windS(12, 'annoying'), windS(6, 'clean')], profile).source === 'level', 'moins de trois ressentis : on reste sur le niveau');
+ok(scoreSlot({ ...perfect, windSpeed: 15, windDirection: 280 }, withS([windS(12, 'annoying'), windS(14, 'too_much'), windS(13, 'annoying'), windS(6, 'clean'), windS(15, 'too_much'), windS(11, 'annoying'), windS(5, 'clean'), windS(16, 'too_much'), windS(12, 'annoying'), windS(7, 'clean')])).score < scoreSlot({ ...perfect, windSpeed: 15, windDirection: 280 }, ctx).score, 'un surfeur sensible au vent voit sa note baisser à 15 km/h de mer');
 
 // Progression : les sessions récentes déplacent la fourchette
 const old = Array.from({ length: 10 }, () => ({ rating: 4, date: days(900), meteo: { waveHeight: 0.8, windSpeed: 10, wavePeriod: 9, sizeFeel: 'perfect' } }));

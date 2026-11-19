@@ -779,6 +779,16 @@ select option { background: #fff; color: #1a1a1a; }
           </div>
 
           <div class="card">
+            <span class="section-label">Et le vent</span>
+            <div class="size-feel" id="wind-feel">
+              <button type="button" class="size-feel-chip" data-feel="clean" onclick="selectSizeFeel(this)">Propre</button>
+              <button type="button" class="size-feel-chip" data-feel="annoying" onclick="selectSizeFeel(this)">Gênant</button>
+              <button type="button" class="size-feel-chip" data-feel="too_much" onclick="selectSizeFeel(this)">Trop fort</button>
+            </div>
+            <div class="size-feel-hint">Facultatif. SurfAI apprend le vent que tu supportes.</div>
+          </div>
+
+          <div class="card">
             <div class="form-group" style="margin-bottom:10px">
               <label>Board (optionnel)</label>
               <select id="session-board">
@@ -3565,7 +3575,7 @@ select option { background: #fff; color: #1a1a1a; }
         // Ressenti sur la taille des vagues : un seul choix, on peut le retirer en recliquant
         function selectSizeFeel(chip) {
           const wasSelected = chip.classList.contains('selected');
-          document.querySelectorAll('#size-feel .size-feel-chip').forEach(c => c.classList.remove('selected'));
+          chip.parentElement.querySelectorAll('.size-feel-chip').forEach(c => c.classList.remove('selected'));
           if (!wasSelected) chip.classList.add('selected');
         }
 
@@ -3592,7 +3602,8 @@ select option { background: #fff; color: #1a1a1a; }
               rating,
               notes: notes || '',
               boardId: boardId || null,
-              sizeFeel: document.querySelector('#size-feel .size-feel-chip.selected')?.dataset.feel || null
+              sizeFeel: document.querySelector('#size-feel .size-feel-chip.selected')?.dataset.feel || null,
+              windFeel: document.querySelector('#wind-feel .size-feel-chip.selected')?.dataset.feel || null
             };
 
             const response = await fetch(`${backendUrl}/api/v1/sessions/quick`, {
@@ -3626,7 +3637,7 @@ select option { background: #fff; color: #1a1a1a; }
             const spotDisplay = document.getElementById('session-spot-display');
             if (spotDisplay) { spotDisplay.textContent = 'Choisir un spot...'; spotDisplay.style.color = 'rgba(255,255,255,0.4)'; }
             document.querySelectorAll('input[name="rating"]').forEach(r => r.checked = false);
-            document.querySelectorAll('#size-feel .size-feel-chip').forEach(c => c.classList.remove('selected'));
+            document.querySelectorAll('.size-feel-chip').forEach(c => c.classList.remove('selected'));
             document.getElementById('session-notes').value = '';
             document.getElementById('session-board').value = '';
             dataManager.cache.aiPreferences = null;
