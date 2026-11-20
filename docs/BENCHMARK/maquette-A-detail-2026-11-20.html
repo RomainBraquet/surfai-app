@@ -234,10 +234,47 @@
   .li span{font-size:13.5px;color:var(--soft)}
   .li .r{margin-left:auto;white-space:nowrap}
   .li.act b{font-weight:400;color:var(--soft)}
+
+  /* écrans sombres : ajouter, confirmation, board, inscription */
+  .add{background:var(--ink);color:#fff}
+  .add .close{background:rgba(255,255,255,.12)} .add .close svg{stroke:#fff}
+  .add .ctx span{border-color:rgba(255,255,255,.3)}
+  .add .box{background:rgba(255,255,255,.1)} .add .box span,.add .lab,.add .auto,.add .hint{color:rgba(255,255,255,.62)}
+  .add .stars svg{fill:rgba(255,255,255,.16)} .add .stars button.on svg{fill:var(--top)}
+  .add .chip{background:rgba(255,255,255,.1);color:#fff} .add .chip.on{background:var(--top);color:var(--ink)}
+  .add .photo{border-color:rgba(255,255,255,.35);color:rgba(255,255,255,.62)} .add .photo svg{stroke:#fff}
+  .add .word,.me .word{background:rgba(255,255,255,.1);color:#fff}
+  .add .word::placeholder,.me .word::placeholder{color:rgba(255,255,255,.45)}
+  .add .save{background:var(--top);color:var(--ink)}
+  .add .skip{display:block;width:100%;border:0;background:none;color:rgba(255,255,255,.62);font:inherit;font-size:15px;padding:16px;cursor:pointer}
+  .chips.wrap{flex-wrap:wrap} .chips.wrap .chip{flex:none;padding:13px 16px}
+  .hint{font-size:14px;line-height:1.45;margin-top:12px}
+  .ok{width:64px;height:64px;border-radius:50%;background:var(--top);display:grid;place-items:center;margin-top:18px}
+  .ok svg{width:30px;height:30px;stroke:var(--ink);fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+  .share{position:relative;height:340px;border-radius:30px;overflow:hidden;margin-top:22px;background:linear-gradient(165deg,#7fb2dc 0%,#bcd9e6 38%,#e9dfb8 62%,#d9b98a 100%)}
+  .share .brand{position:absolute;left:18px;top:16px;font-size:14px;font-weight:600;letter-spacing:.02em;color:#fff}
+  .share .txt{position:absolute;left:0;right:0;bottom:0;padding:60px 18px 18px;background:linear-gradient(transparent,rgba(14,27,58,.82))}
+  .share .txt b{display:block;font-size:28px;font-weight:500;letter-spacing:-.025em}
+  .share .txt i{font-style:normal;color:var(--top);font-size:18px;letter-spacing:2px}
+  .share .txt span{display:block;font-size:14px;color:rgba(255,255,255,.8);margin-top:4px}
+  #done h2{font-size:36px}
+  #onb{z-index:8;padding-top:44px}
+  .dots{display:flex;gap:6px} .dots i{flex:1;height:4px;border-radius:4px;background:rgba(255,255,255,.18)} .dots i.on{background:var(--top)}
+  .st{display:none} .st.cur{display:block}
+  .st h2{font-size:42px;margin-top:38px}
+  .st h2 em{font-style:normal;color:var(--top)}
+  .chips.col{flex-direction:column} .chips.col .chip{text-align:left;padding:18px 18px;font-size:17px}
+  .days{display:flex;gap:5px;margin-top:10px} .days .chip{flex:1;padding:14px 0;border-radius:14px;font-size:13px}
+  .demo{font:inherit;font-size:13px;color:#555a66;background:none;border:1px solid #b9bcc6;border-radius:999px;padding:7px 14px;margin:-6px 0 18px;cursor:pointer}
+  .welcome{display:none;margin:0 10px 14px;background:var(--ink);color:#fff;border-radius:28px;padding:18px 20px;font-size:15px;line-height:1.4}
+  .welcome b{display:block;font-size:20px;font-weight:500;margin-bottom:4px}
+  .welcome.show{display:block}
 </style>
 </head>
 <body>
 <p class="note">Maquette de travail, données inventées pour l'exemple. Touche un jour pour le déplier, puis « Voir le spot » pour le détail. Le bouton + ouvre l'écran pour noter une session, « Profil » ouvre le profil. Le détail montre toujours l'exemple de samedi.</p>
+
+<button class="demo" id="openOnb">Voir l'arrivée d'un nouvel utilisateur</button>
 
 <div class="phone">
   <div class="scroll">
@@ -248,6 +285,8 @@
       </div>
       <h1>Cette semaine</h1>
     </div>
+
+    <div class="welcome" id="welcome"><b>Bienvenue</b>Voici ta semaine autour de toi. Ajoute tes spots favoris dans Profil pour l'affiner.</div>
 
     <div class="stack" id="stack">
 
@@ -366,7 +405,7 @@
           <div class="li"><div class="th b"></div><div><b>Longboard</b><span>Longboard · 9'2</span></div></div>
           <div class="li"><div class="th"></div><div><b>8'</b><span>Midlength · 8'0</span></div></div>
           <div class="li"><div class="th c"></div><div><b>6.6</b><span>Shortboard · 6'6</span></div></div>
-          <div class="li act"><b>+ Ajouter une board</b></div>
+          <div class="li act" id="openBoard" style="cursor:pointer"><b>+ Ajouter une board</b></div>
         </div></div></div>
       </article>
       <article class="day p3">
@@ -381,12 +420,24 @@
       <article class="day p4">
         <div class="row"><div class="name">Spots</div><div class="count">4 favoris</div></div>
         <div class="more"><div><div class="inner">
-          <div class="seg"><span class="on">Autour de moi</span><span>Explorer</span></div>
+          <div class="lab" style="margin-top:0">Favoris</div>
           <div class="li"><div><b>Côte des Basques</b><span>Biarritz</span></div><span class="r">★</span></div>
           <div class="li"><div><b>Grande Plage</b><span>Biarritz</span></div><span class="r">★</span></div>
           <div class="li"><div><b>Ilbaritz</b><span>Bidart</span></div><span class="r">★</span></div>
           <div class="li"><div><b>Le VVF</b><span>Anglet</span></div><span class="r">★</span></div>
-          <div class="li act"><b>Rechercher un spot...</b></div>
+          <div class="seg" id="seg" style="margin-top:14px"><span class="on">Autour de moi</span><span>Explorer</span></div>
+          <div id="near">
+            <div class="li"><div><b>Marbella</b><span>Biarritz</span></div><span class="r">1 km</span></div>
+            <div class="li"><div><b>Milady</b><span>Biarritz</span></div><span class="r">2 km</span></div>
+            <div class="li"><div><b>La Barre</b><span>Anglet</span></div><span class="r">6 km</span></div>
+          </div>
+          <div id="exp" style="display:none">
+            <input class="word" placeholder="Rechercher un spot...">
+            <div class="li" style="margin-top:6px"><div><b>France</b></div><span class="r">274 spots</span></div>
+            <div class="li"><div><b>Espagne</b></div><span class="r">388 spots</span></div>
+            <div class="li"><div><b>Portugal</b></div><span class="r">221 spots</span></div>
+            <div class="li"><div><b>Maroc</b></div><span class="r">118 spots</span></div>
+          </div>
         </div></div></div>
       </article>
       <article class="day p5">
@@ -467,6 +518,91 @@
 
     <p class="auto">La houle, le vent et la marée de ce moment-là sont enregistrés tout seuls.</p>
     <button class="save" id="save">Enregistrer la session</button>
+  </section>
+
+  <section class="add" id="done">
+    <button class="close" data-close="done" aria-label="Fermer"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+    <div class="ok"><svg viewBox="0 0 24 24"><path d="M5 12.500l4.500 4.500L19 7.500"/></svg></div>
+    <h2>Session enregistrée !</h2>
+    <div class="share">
+      <span class="brand">SurfAI</span>
+      <div class="txt"><b>Côte des Basques</b><i id="shareStars">★★★★☆</i><span>1,2 m · Vent léger · Marée montante</span></div>
+    </div>
+    <button class="save" data-close="done">Partager ta session</button>
+    <button class="skip" data-close="done">Passer</button>
+  </section>
+
+  <section class="add" id="board">
+    <button class="close" data-close="board" aria-label="Fermer"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+    <h2>Ajouter une board</h2>
+
+    <div class="q">L'essentiel</div>
+    <div class="photo" style="height:120px"><svg viewBox="0 0 24 24"><path d="M4 8h3l1.500-2h7L17 8h3v11H4z"/><circle cx="12" cy="13.200" r="3.400"/></svg>Photo</div>
+    <div class="lab">Nom</div><input class="word" placeholder="Nom de la board (optionnel)">
+    <div class="lab">Type</div><div class="chips scroll-x"><button class="chip on">Shortboard</button><button class="chip">Fish</button><button class="chip">Hybrid</button><button class="chip">Midlength</button><button class="chip">Funboard</button><button class="chip">Longboard</button><button class="chip">Gun</button><button class="chip">SUP</button><button class="chip">Foil</button></div>
+    <div class="lab">Taille</div><input class="word" placeholder="Taille (ex: 6'2)">
+
+    <div class="q">Les détails</div>
+    <div class="two"><div class="box"><span>Marque</span><b>&nbsp;</b></div><div class="box"><span>Shaper</span><b>&nbsp;</b></div></div>
+    <div class="two"><div class="box"><span>Année</span><b>&nbsp;</b></div><div class="box"><span>Largeur (")</span><b>&nbsp;</b></div></div>
+    <div class="lab">Tail</div><div class="chips scroll-x"><button class="chip">Squash</button><button class="chip">Round</button><button class="chip">Pin</button><button class="chip">Swallow</button><button class="chip">Diamond</button></div>
+    <div class="lab">Fins</div><div class="chips scroll-x"><button class="chip">Single</button><button class="chip">Twin</button><button class="chip">Thruster</button><button class="chip">Quad</button><button class="chip">2+1</button><button class="chip">5-box</button></div>
+    <div class="lab">État</div><div class="chips four"><button class="chip">Neuf</button><button class="chip">Bon</button><button class="chip">Usé</button><button class="chip">À réparer</button></div>
+
+    <div class="q">Dans quelles conditions tu la sors ?</div>
+    <div class="two"><div class="box"><span>Houle min (m)</span><b>&nbsp;</b></div><div class="box"><span>Houle max (m)</span><b>&nbsp;</b></div></div>
+    <div class="lab">Marée</div><div class="chips four"><button class="chip">Basse</button><button class="chip">Mi-marée</button><button class="chip">Haute</button><button class="chip">Peu importe</button></div>
+
+    <div class="q">Mes spots avec cette board</div>
+    <button class="skip" style="text-align:left;padding-left:0">+ Ajouter un spot</button>
+
+    <button class="save" data-close="board">Ajouter cette board</button>
+  </section>
+
+  <section class="add" id="onb">
+    <div class="dots" id="dots"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+
+    <div class="st cur">
+      <h2>Rejoins <em>SurfAI</em></h2>
+      <p class="hint">Crée ton compte en 10 secondes.</p>
+      <button class="save" data-next>Créer mon compte</button>
+      <button class="skip" data-next>Se connecter</button>
+    </div>
+    <div class="st">
+      <h2>Comment tu t'appelles ?</h2>
+      <input class="word" style="margin-top:22px" placeholder="Ton prénom ou pseudo">
+      <p class="hint">Tes buddy te retrouveront plus facilement.</p>
+      <button class="save" data-next>Suivant →</button>
+    </div>
+    <div class="st">
+      <h2>Quel est ton <em>niveau</em> ?</h2>
+      <div style="margin-top:22px"><div class="chips col"><button class="chip">Débutant</button><button class="chip">Intermédiaire</button><button class="chip">Avancé</button><button class="chip">Expert</button></div></div>
+      <p class="hint">On adapte les spots et les conditions à ton niveau. Un débutant et un expert ne cherchent pas la même vague.</p>
+      <button class="save" data-next>Suivant →</button>
+    </div>
+    <div class="st">
+      <h2>Quelles vagues tu <em>surfes</em> ?</h2>
+      <div class="two" style="margin-top:22px"><div class="box"><span>Hauteur min (m)</span><b>0,5</b></div><div class="box"><span>Hauteur max (m)</span><b>1,5</b></div></div>
+      <p class="hint">On ne te montre que les sessions dans ta zone. Pas de prévisions pour du 3m si tu surfes du 1m.</p>
+      <button class="save" data-next>Suivant →</button>
+    </div>
+    <div class="st">
+      <h2>Quand tu peux <em>surfer</em> ?</h2>
+      <div class="lab" style="margin-top:22px">Jours disponibles</div>
+      <div class="days multi"><button class="chip">Lun</button><button class="chip">Mar</button><button class="chip">Mer</button><button class="chip">Jeu</button><button class="chip">Ven</button><button class="chip">Sam</button><button class="chip">Dim</button></div>
+      <div class="lab">Créneaux préférés</div><div class="chips wrap multi"><button class="chip">Avant 8h</button><button class="chip">Matin</button><button class="chip">Midi</button><button class="chip">Après-midi</button><button class="chip">Après 18h</button></div>
+      <p class="hint">On te prévient en priorité quand tu peux y aller. Pas quand t'es au bureau.</p>
+      <button class="save" data-next>Suivant →</button>
+    </div>
+    <div class="st">
+      <h2>Ta première <em>board</em></h2>
+      <div style="margin-top:22px"><div class="chips wrap"><button class="chip">Shortboard</button><button class="chip">Fish</button><button class="chip">Mid-length</button><button class="chip">Longboard</button><button class="chip">Foamie</button><button class="chip">Autre</button></div></div>
+      <input class="word" style="margin-top:14px" placeholder="Taille (ex: 6'2)">
+      <input class="word" placeholder="Nom de la board (optionnel)">
+      <p class="hint">L'app te dit quelle board sortir selon les conditions du jour.</p>
+      <button class="save" data-next>C'est parti !</button>
+      <button class="skip" data-next>Passer cette étape</button>
+    </div>
   </section>
 
   <nav class="nav">
@@ -556,13 +692,30 @@
   // ── écran « + » ──
   document.querySelector('.nav .plus').addEventListener('click',function(){ $('add').classList.add('show'); $('add').scrollTop=0; });
   $('closeAdd').addEventListener('click',function(){ $('add').classList.remove('show'); });
-  $('save').addEventListener('click',function(){ $('add').classList.remove('show'); });
+  $('save').addEventListener('click',function(){
+    var n=document.querySelectorAll('#stars button.on').length || 4;
+    $('shareStars').textContent='★★★★★'.slice(0,n)+'☆☆☆☆☆'.slice(0,5-n);
+    $('add').classList.remove('show'); $('done').classList.add('show'); $('done').scrollTop=0;
+  });
+  document.querySelectorAll('[data-close]').forEach(function(b){ b.addEventListener('click',function(){ $(b.getAttribute('data-close')).classList.remove('show'); }); });
+  $('openBoard').addEventListener('click',function(){ $('board').classList.add('show'); $('board').scrollTop=0; });
+  [].forEach.call($('seg').children,function(sp,i){ sp.addEventListener('click',function(){
+    $('seg').children[0].classList.toggle('on',i===0); $('seg').children[1].classList.toggle('on',i===1);
+    $('near').style.display=i===0?'':'none'; $('exp').style.display=i===1?'':'none'; }); });
+  // inscription
+  var step=0, sts=document.querySelectorAll('#onb .st');
+  function showStep(k){ step=k; [].forEach.call(sts,function(x,i){ x.classList.toggle('cur',i===k); });
+    [].forEach.call($('dots').children,function(d,i){ d.classList.toggle('on',i<=k); }); $('onb').scrollTop=0; }
+  $('openOnb').addEventListener('click',function(){ showStep(0); $('onb').classList.add('show'); });
+  document.querySelectorAll('[data-next]').forEach(function(b){ b.addEventListener('click',function(){
+    if(step<sts.length-1) showStep(step+1); else { $('onb').classList.remove('show'); $('welcome').classList.add('show'); go(false); document.querySelector('.scroll').scrollTop=0; } }); });
   [].forEach.call($('stars').children,function(b,i){
     b.addEventListener('click',function(){ [].forEach.call($('stars').children,function(x,k){ x.classList.toggle('on',k<=i); }); });
   });
   document.querySelectorAll('.me .inner').forEach(function(n){ n.addEventListener('click',function(e){ e.stopPropagation(); }); });
-  document.querySelectorAll('.chips').forEach(function(g){
+  document.querySelectorAll('.chips,.days').forEach(function(g){
     g.addEventListener('click',function(e){ var c=e.target.closest('.chip'); if(!c) return;
+      e.stopPropagation(); if(g.classList.contains('multi')){ c.classList.toggle('on'); return; }
       [].forEach.call(g.children,function(x){ x.classList.remove('on'); }); c.classList.add('on'); });
   });
   $('close').addEventListener('click',function(){ $('sheet').classList.remove('show'); });
