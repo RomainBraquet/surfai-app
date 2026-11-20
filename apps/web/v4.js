@@ -181,7 +181,10 @@
           '<div class="num wide"><div class="c1"><label>Vent</label><b id="nWind"></b><em id="tWind"></em></div><div class="c2"><b id="nWd"></b><em id="tWd"></em></div><span class="arr" id="aWd">' + ICON.arrowWind + '</span></div>' +
           '<div class="num"><label>Période</label><b id="nPer"></b><em id="tPer"></em></div>' +
           '<div class="num"><label>Marée</label><b id="nTide"></b><em id="tTide"></em></div>' +
+          '<div class="num"><label>Air</label><b id="nAir"></b></div>' +
+          '<div class="num"><label>Eau</label><b id="nWater"></b></div>' +
         '</div>' : '<p class="why" style="margin-top:20px">Pas de prévision heure par heure pour ce jour.</p>') +
+      whyBlock(w) +
       '<h3>Les autres spots ' + esc(dayName(iso, day.index).toLowerCase()) + '</h3>' +
       '<div class="others">' + others.map(function (o, k) {
         var ov = o.w ? verdict(o.w.score) : { cls: 'none' };
@@ -191,6 +194,14 @@
       '<div id="past"></div>';
 
     $('close').addEventListener('click', function () { sheet.classList.remove('show'); });
+    if ($('sendMate')) $('sendMate').addEventListener('click', function () {
+      // même message que dans l'ancienne version
+      var vibe = w.score >= 8 ? 'Très bonne session prévue' : w.score >= 6 ? 'Ça devrait être bien' : 'Session pas ouf mais envie d\'aller à l\'eau';
+      var text = vibe + ' à ' + result.spot.name + ' ' + longDate(iso).toLowerCase() + (w.timeWindow ? ' (' + slotText(w) + ')' : '') + ', ' + fr(w.score) + '/10 ! Tu viens ?\n\nhttps://surfai-app.vercel.app';
+      var label = this.querySelector('span');
+      if (navigator.share) { navigator.share({ text: text }).catch(function () {}); return; }
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { label.textContent = 'Copié !'; setTimeout(function () { label.textContent = 'Envoyer à un pote'; }, 1500); });
+    });
     sheet.querySelectorAll('[data-o]').forEach(function (row) {
       row.addEventListener('click', function () { var o = others[parseInt(row.getAttribute('data-o'), 10)]; if (o.r !== result) openDetail(day, o.r); });
     });
@@ -200,6 +211,22 @@
     sheet.classList.add('show');
   }
 
+  // explications du moteur, board conseillée et envoi à un pote (contenus de l'ancienne version)
+  function clean(t) { return String(t).replace(/\s+—\s+/g, ', '); }
+  function whyBlock(w) {
+    if (!w) return '';
+    var out = '', skip = w.reminder && w.reminder.text;
+    var good = (w.whyGood || []).filter(function (t) { return t !== skip; }), bad = (w.whyNotPerfect || []).filter(function (t) { return t !== skip; });
+    if (w.narrative) out += '<p class="narr">« ' + esc(clean(w.narrative)) + ' »</p>';
+    if (good.length || bad.length) out += '<div class="whys">' +
+      good.map(function (t) { return '<div class="wy">' + esc(clean(t)) + '</div>'; }).join('') +
+      bad.map(function (t) { return '<div class="wy b">' + esc(clean(t)) + '</div>'; }).join('') + '</div>';
+    var bs = w.boardSuggestion;
+    if (bs && bs.board) out += '<div class="wy board">Prends ta ' + esc(bs.board.nickname || bs.board.name || 'board') + (bs.reason ? '. ' + esc(clean(bs.reason)) : '') + '</div>';
+    out += '<div class="go" id="sendMate" style="cursor:pointer"><span>Envoyer à un pote</span><span class="arrow">' + ICON.go + '</span></div>';
+    return out;
+  }
+
   var COL = { ok: '#1F9D55', warn: '#F2820F', bad: '#E23D28' };
   function rel(deg, facing) { return ((deg - facing) % 360 + 540) % 360 - 180; }   // 0 = vient pile du large
   function setArrow(id, relDeg, size, level) {
@@ -207,7 +234,8 @@
     a.firstChild.style.transform = 'rotate(' + (relDeg + 180) + 'deg) scale(' + size.toFixed(2) + ')';
   }
   function buildHours(hs, w) {
-    var bars = $('hbars'), labels = $('hlabels'), range = w ? windowHours(w) : [-1, -1];
+    var bars = $('hbars'), labels = $('hlabels'), range = w ? windowHours(w) : [-1, -1], highAt = null, lowAt = null;
+    hs.forEach(function (h) { var p = (h.conditions || {}).tidePhase; if (p === 'high' && highAt == null) highAt = h.hour; if (p === 'low' && lowAt == null) lowAt = h.hour; });
     hs.forEach(function (h, i) {
       var c = document.createElement('div'); c.className = 'hc';
       var n = document.createElement('span'); n.className = 'sc'; n.textContent = fr(h.score);
@@ -253,7 +281,9 @@
       $('nPer').innerHTML = c.wavePeriod != null ? Math.round(c.wavePeriod) + '<small>s</small>' : '';
       $('tPer').textContent = c.wavePeriod == null ? '' : c.wavePeriod >= 10 ? 'Vagues bien formées' : c.wavePeriod >= 7 ? 'Vagues correctes' : 'Vagues brouillonnes';
       $('nTide').textContent = tideWord(c.tidePhase);
-      $('tTide').textContent = tideLevelWord(c.tideLevel);
+      $('tTide').textContent = [tideLevelWord(c.tideLevel), highAt != null ? 'haute ~' + highAt + 'h' : '', lowAt != null ? 'basse ~' + lowAt + 'h' : ''].filter(Boolean).join(' · ');
+      $('nAir').innerHTML = c.airTemp != null ? Math.round(c.airTemp) + '<small>°C</small>' : '';
+      $('nWater').innerHTML = c.waterTemp != null ? Math.round(c.waterTemp) + '<small>°C</small>' : '';
     }
     var start = 0, bestScore = -1;
     hs.forEach(function (h, i) { if (h.score > bestScore) { bestScore = h.score; start = i; } });
@@ -298,6 +328,9 @@
   }
   function getPosition() {
     return new Promise(function (resolve) {
+      var home = null;
+      try { var hs = JSON.parse(localStorage.getItem('home_spot') || 'null'); if (hs && hs.lat) home = { lat: Number(hs.lat), lng: Number(hs.lng) }; } catch (e) { home = null; }
+      var resolveNull = resolve; resolve = function (p) { resolveNull(p || home); };
       if (DEMO || !navigator.geolocation) return resolve(null);
       var done = false, t = setTimeout(function () { if (!done) { done = true; resolve(null); } }, 4000);
       navigator.geolocation.getCurrentPosition(function (p) {
@@ -366,7 +399,7 @@
         var k = h - 8, score = Math.max(1.5, Math.min(9.6, base + shape[k]));
         hours.push({ hour: h, date: iso(i), score: Math.round(score * 10) / 10, sizeIssue: opt.size || null, conditions: {
           waveHeight: (opt.wave || 1.2) + k * 0.03, wavePeriod: opt.per || 11, waveDirection: 290, swellDirection: 290 + (opt.skew || 0),
-          windSpeed: 6 + k * (opt.windUp || 1.8), windDirection: k < 4 ? 95 : 270, tidePhase: h < 13 ? 'rising' : 'falling', tideLevel: 1 - Math.abs(13 - h) / 6 } });
+          windSpeed: 6 + k * (opt.windUp || 1.8), windDirection: k < 4 ? 95 : 270, tidePhase: h === 13 ? 'high' : h < 13 ? 'rising' : 'falling', airTemp: 13 + k * 0.5, waterTemp: 15, tideLevel: 1 - Math.abs(13 - h) / 6 } });
       }
       return hours;
     }
@@ -378,7 +411,7 @@
         var hs = spotDay(i, p.base, p.shape, p);
         hourly = hourly.concat(hs);
         var best = hs.reduce(function (a, b) { return a.score >= b.score ? a : b; });
-        if (best.score >= 4) windows.push({ date: iso(i), timeWindow: best.hour + 'h–' + (best.hour + 2) + 'h', peakHour: best.hour + 'h', score: best.score, conditions: best.conditions, reminder: p.reminder || null });
+        if (best.score >= 4) windows.push({ date: iso(i), timeWindow: best.hour + 'h–' + (best.hour + 2) + 'h', peakHour: best.hour + 'h', score: best.score, conditions: best.conditions, reminder: p.reminder || null, narrative: p.narr || null, whyGood: p.good || [], whyNotPerfect: p.bad || [], boardSuggestion: p.board || null });
       });
       var r = { spot: spot, windows: windows, hourlyScores: hourly };
       for (var key in (extra || {})) r[key] = extra[key];
@@ -386,7 +419,7 @@
     }
     var small = { base: 2.5, shape: PM, size: 'too_small', wave: 0.4 }, big = { base: 2.8, shape: AM, size: 'too_big', wave: 2.6 };
     return { success: true, results: [
-      result({ id: 'a', name: 'Côte des Basques', city: 'Biarritz' }, [{ base: 4.2, shape: PM, wave: 0.8 }, { base: 6.2, shape: AM, reminder: { tone: 'good', text: 'Tu as déjà eu ces conditions ici, et tu avais adoré' } }, { base: 4.6, shape: AM }, big, small, { base: 4.4, shape: PM }]),
+      result({ id: 'a', name: 'Côte des Basques', city: 'Biarritz' }, [{ base: 4.2, shape: PM, wave: 0.8 }, { base: 6.2, shape: AM, reminder: { tone: 'good', text: 'Tu as déjà eu ces conditions ici, et tu avais adoré' }, narr: 'Petit matin propre, des lignes bien rangées', good: ['Vent de terre léger', 'Houle longue de 11 s', 'Mi-marée montante — idéale pour ce spot'], bad: ['Du monde à l\'eau le week-end'], board: { board: { nickname: 'Longboard' }, reason: 'Parfaite dans ces vagues douces' } }, { base: 4.6, shape: AM }, big, small, { base: 4.4, shape: PM }]),
       result({ id: 'b', name: 'Grande Plage', city: 'Biarritz' }, [{ base: 3.6, shape: PM, wave: 0.8 }, { base: 5, shape: AM }, { base: 4.2, shape: AM }, big, small, { base: 5.2, shape: PM, wave: 1.6 }]),
       result({ id: 'c', name: 'Ilbaritz', city: 'Bidart' }, [{ base: 4.7, shape: PM, wave: 0.8 }, { base: 3.8, shape: AM }, { base: 3.9, shape: AM }, big, small, { base: 3.6, shape: PM }]),
       result({ id: 'd', name: 'Le VVF', city: 'Anglet' }, [null, null, { base: 5, shape: AM, wave: 1 }, null, null, null], { discovery: true, distanceKm: 4 })

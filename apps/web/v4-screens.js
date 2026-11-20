@@ -47,7 +47,10 @@
   }
   function loadEmail() {
     if (!sb || A.DEMO) return Promise.resolve(null);
-    return sb.auth.getSession().then(function (r) { return r.data && r.data.session ? r.data.session.user.email : null; }).catch(function () { return null; });
+    return sb.auth.getSession().then(function (r) {
+      var u = r.data && r.data.session ? r.data.session.user : null;
+      return u ? { email: u.email, provider: (u.app_metadata && u.app_metadata.provider) || 'email' } : null;
+    }).catch(function () { return null; });
   }
   function knownSpots() {
     var seen = {}, out = [];
@@ -94,8 +97,10 @@
         '<div class="stars" id="fStars">' + [1, 2, 3, 4, 5].map(function () { return '<button type="button">' + STAR + '</button>'; }).join('') + '</div>' +
         '<div class="q">Pour toi, les vagues étaient</div>' +
         '<div class="chips" id="fSize" data-optional><button class="chip" data-v="too_small">Trop petites</button><button class="chip" data-v="perfect">À ma taille</button><button class="chip" data-v="too_big">Trop grosses</button></div>' +
+        '<p class="auto" style="margin-top:8px">Facultatif. C\'est ce qui apprend à SurfAI ta vraie taille de vagues.</p>' +
         '<div class="q">Et le vent</div>' +
         '<div class="chips" id="fWind" data-optional><button class="chip" data-v="clean">Propre</button><button class="chip" data-v="annoying">Gênant</button><button class="chip" data-v="too_much">Trop fort</button></div>' +
+        '<p class="auto" style="margin-top:8px">Facultatif. SurfAI apprend le vent que tu supportes.</p>' +
         (boards.length ? '<div class="q">Board (optionnel)</div><div class="chips scroll-x" id="fBoard" data-optional>' + boards.map(function (b) { return '<button class="chip" data-v="' + esc(b.id) + '">' + esc(b.name || b.nickname || b.board_type || 'Board') + (b.size ? ' ' + esc(b.size) : '') + '</button>'; }).join('') + '</div>' : '') +
         '<div class="q">Notes libres</div>' +
         '<textarea class="word" id="fNotes" rows="3" placeholder="Comment était la session ?"></textarea>' +
@@ -193,18 +198,20 @@
     var box = $('me');
     box.innerHTML = '<div class="head"><h1>Profil</h1></div><div class="skel"></div><div class="skel"></div>';
     Promise.all([loadProfile(), loadBoards(), A.loadSessions(), loadFavorites(), loadEmail()]).then(function (res) {
-      var p = res[0] || {}, boards = res[1], sessions = res[2] || [], favs = res[3], email = res[4];
+      var p = res[0] || {}, boards = res[1], sessions = res[2] || [], favs = res[3], account = res[4], email = account && account.email;
       var name = p.nickname || p.pseudo || 'Surfeur', level = p.surf_level || p.level || '';
       var levelLabel = (LEVELS.filter(function (l) { return l[0] === level; })[0] || [])[1] || '';
       var home = null; try { home = JSON.parse(localStorage.getItem('home_spot') || 'null'); } catch (e) { home = null; }
       var favIds = {}; favs.forEach(function (s) { favIds[s.id] = 1; });
       var boardName = {}; boards.forEach(function (b) { boardName[b.id] = b.name || b.nickname || b.board_type; });
-      var avatar = p.avatar_url ? ' style="background:center/cover url(\'' + esc(p.avatar_url) + '\')"' : '';
+      var avatarUrl = p.avatar_url || null; try { avatarUrl = avatarUrl || localStorage.getItem('surfai_avatar'); } catch (e) { /* stockage indisponible */ }
+      var avatar = avatarUrl ? ' style="background:center/cover url(\'' + esc(avatarUrl) + '\')"' : '';
 
       var profil =
         '<div class="lab" style="margin-top:0">Pseudo</div><input class="word" id="pName" placeholder="Votre pseudo" value="' + esc(p.nickname || p.pseudo || '') + '">' +
         '<div class="lab">Niveau de surf</div><div class="chips four" id="pLevel">' + LEVELS.map(function (l) { return '<button class="chip' + (l[0] === level ? ' on' : '') + '" data-v="' + l[0] + '">' + l[1] + '</button>'; }).join('') + '</div>' +
-        '<div class="li" style="margin-top:14px"><div><b>Mon home spot</b></div><span class="r">' + esc(home && home.name ? home.name : 'Non défini') + '</span></div>' +
+        '<div class="li act" id="hsRow" style="margin-top:14px"><div><b style="color:#fff">Mon home spot</b></div><span class="r" id="hsName">' + esc(home && home.name ? home.name : 'Choisir un spot') + '</span></div>' +
+        '<div id="hsPick" style="display:none"><input class="word" id="hsSearch" placeholder="Rechercher un spot..."><div id="hsFound"></div></div>' +
         '<div class="lab">Les vagues que je surfe</div>' +
         '<div class="two"><div class="box"><span>Min (m)</span><input type="number" step="0.1" min="0" id="pMin" value="' + (p.min_wave_height != null ? p.min_wave_height : '') + '"></div>' +
         '<div class="box"><span>Max (m)</span><input type="number" step="0.1" min="0" id="pMax" value="' + (p.max_wave_height != null ? p.max_wave_height : '') + '"></div></div>' +
@@ -228,14 +235,23 @@
       }).join('') : '<p class="why" style="color:rgba(255,255,255,.62)">Aucune board dans ton quiver</p>') +
         '<div class="li act" id="openBoard"><b>+ Ajouter une board</b></div>';
 
-      var shown = 6;
+      var shown = 6, sortBy = 'date';
+      function sortedSessions() {
+        var list = sessions.slice();
+        if (sortBy === 'note') list.sort(function (a, b) { return (b.rating || 0) - (a.rating || 0); });
+        else if (sortBy === 'spot') list.sort(function (a, b) { return String((a.spots && a.spots.name) || '').localeCompare(String((b.spots && b.spots.name) || '')); });
+        else list.sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
+        return list;
+      }
       function histRows(n) {
-        return sessions.slice(0, n).map(function (s) {
-          var d = s.date ? A.dateOf(String(s.date).slice(0, 10)).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) : '';
-          return li((s.spots && s.spots.name) || 'Spot', [d, boardName[s.board_id]].filter(Boolean).join(' · '), stars(s.rating));
+        return sortedSessions().slice(0, n).map(function (s) {
+          var d = s.date ? A.dateOf(String(s.date).slice(0, 10)).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: '2-digit' }) : '';
+          var wave = s.meteo && s.meteo.waveHeight != null ? fr(s.meteo.waveHeight) + ' m' : '';
+          return '<div class="li act" data-sid="' + esc(s.id) + '"><div><b style="color:#fff">' + esc((s.spots && s.spots.name) || 'Spot') + '</b><span>' + esc([d, boardName[s.board_id], wave].filter(Boolean).join(' · ')) + '</span></div><span class="r">' + stars(s.rating) + '</span></div>';
         }).join('');
       }
-      var hist = sessions.length ? '<div id="hRows">' + histRows(shown) + '</div>' + (sessions.length > shown ? '<div class="li act" id="hMore"><b>Voir plus</b></div>' : '')
+      var hist = sessions.length ? '<div class="chips" id="hSort"><button class="chip on" data-v="date">Date</button><button class="chip" data-v="note">★ Note</button><button class="chip" data-v="spot">Spot</button></div>' +
+        '<div id="hRows" style="margin-top:8px">' + histRows(shown) + '</div>' + (sessions.length > shown ? '<div class="li act" id="hMore"><b>Voir toutes les sessions (' + sessions.length + ')</b></div>' : '')
         : '<p class="why" style="color:rgba(255,255,255,.62)">Aucune session enregistrée.</p>';
 
       var spots =
@@ -246,13 +262,17 @@
 
       var notif = '<div class="li"><div><b>Prédictions par email</b><span>Dimanche + jeudi</span></div><button class="tog" id="nTog" aria-label="Prédictions par email" style="border:0;cursor:pointer;margin-left:auto;' + (p.email_predictions ? '' : 'opacity:.35') + '"></button></div>';
 
+      var isEmail = account && account.provider === 'email';
       var compte = li('Email', null, esc(email || 'Non connecté')) +
+        (account ? (isEmail ? '<div class="li act" id="pwRow"><b>Changer le mot de passe</b></div>' +
+            '<div id="pwForm" style="display:none"><input class="word" type="password" id="pwNew" placeholder="Nouveau mot de passe (min 6 caractères)"><input class="word" type="password" id="pwConf" placeholder="Confirmer le mot de passe"><div class="msg" id="pwMsg"></div><button class="mini" id="pwSave">Sauvegarder</button></div>'
+          : '<p class="why" style="color:rgba(255,255,255,.62);padding:10px 0">Connecté via ' + esc(A.cap(account.provider)) + ', mot de passe non modifiable</p>') : '') +
         '<div class="li act" id="cOld"><b>Ouvrir l\'ancienne version</b></div>' +
         (email ? '<div class="li act" id="cOut"><b>Se déconnecter</b></div>' : '');
 
       box.innerHTML =
         '<div class="head"><h1>Profil</h1></div>' +
-        '<div class="who"><div class="avatar"' + avatar + '></div><div><b>' + esc(name) + '</b><span>' + esc(levelLabel) + '</span></div></div>' +
+        '<label class="who" style="cursor:pointer"><div class="avatar" id="avatar"' + avatar + '></div><div><b>' + esc(name) + '</b><span id="avatarTxt">Appuie pour changer la photo</span></div><input type="file" accept="image/*" id="avatarFile" style="display:none"></label>' +
         '<div class="stack">' +
           card('p1', 'Profil', esc(levelLabel), profil, !openCls) +
           card('p2', 'Mon Quiver', boards.length, quiver) +
@@ -294,7 +314,57 @@
       box.querySelectorAll('[data-share]').forEach(function (b) { b.addEventListener('click', function () { openBoardShare(boardById(b.getAttribute('data-share'))); }); });
       box.querySelectorAll('[data-del]').forEach(function (b) { b.addEventListener('click', function () { deleteBoard(b.getAttribute('data-del')); }); });
       // historique
-      if ($('hMore')) $('hMore').addEventListener('click', function () { shown += 12; $('hRows').innerHTML = histRows(shown); if (shown >= sessions.length) this.style.display = 'none'; });
+      function wireHist() {
+        $('hRows').querySelectorAll('[data-sid]').forEach(function (row) { row.addEventListener('click', function () {
+          openSession(sessions.filter(function (x) { return String(x.id) === row.getAttribute('data-sid'); })[0]); }); });
+      }
+      if ($('hRows')) {
+        wireHist();
+        $('hSort')._onpick = function (c) { sortBy = c.getAttribute('data-v'); $('hRows').innerHTML = histRows(shown); wireHist(); };
+        if ($('hMore')) $('hMore').addEventListener('click', function () { shown = sessions.length; $('hRows').innerHTML = histRows(shown); wireHist(); this.style.display = 'none'; });
+      }
+      // photo de profil (même rangement que l'ancienne version)
+      $('avatarFile').addEventListener('change', function () {
+        var f = this.files[0]; if (!f) return;
+        if (f.size > 2 * 1024 * 1024) { $('avatarTxt').textContent = 'Image trop lourde (max 2 MB)'; return; }
+        if (A.DEMO || !sb) return;
+        var path = 'avatars/' + state.userId + '.' + f.name.split('.').pop();
+        $('avatarTxt').textContent = 'Envoi en cours...';
+        sb.storage.from('avatars').upload(path, f, { upsert: true }).then(function (r) {
+          if (r.error) throw r.error;
+          var url = sb.storage.from('avatars').getPublicUrl(path).data.publicUrl + '?t=' + Date.now();
+          try { localStorage.setItem('surfai_avatar', url); } catch (e) { /* stockage indisponible */ }
+          $('avatar').style.background = 'center/cover url(' + url + ')'; $('avatarTxt').textContent = 'Appuie pour changer la photo';
+        }).catch(function (e) { $('avatarTxt').textContent = 'La photo n\'a pas pu être envoyée.'; });
+      });
+      // home spot
+      $('hsRow').addEventListener('click', function () { var b = $('hsPick'); b.style.display = b.style.display === 'none' ? '' : 'none'; if (b.style.display === '') $('hsSearch').focus(); });
+      var th = null;
+      $('hsSearch').addEventListener('input', function () {
+        var q = this.value.trim(); clearTimeout(th);
+        if (q.length < 2) { $('hsFound').innerHTML = ''; return; }
+        th = setTimeout(function () { searchSpots(q).then(function (list) {
+          $('hsFound').innerHTML = list.map(function (sp, k) { return '<div class="li act" data-k="' + k + '"><div><b style="color:#fff">' + esc(sp.name) + '</b><span>' + esc(sp.city || sp.country || '') + '</span></div></div>'; }).join('') || '<p class="why" style="color:rgba(255,255,255,.62)">Aucun spot trouvé.</p>';
+          $('hsFound').querySelectorAll('[data-k]').forEach(function (row) { row.addEventListener('click', function () {
+            var sp = list[parseInt(row.getAttribute('data-k'), 10)];
+            try { localStorage.setItem('home_spot', JSON.stringify({ id: sp.id, name: sp.name, lat: sp.lat, lng: sp.lng })); } catch (e) { /* stockage indisponible */ }
+            $('hsName').textContent = sp.name; $('hsPick').style.display = 'none'; $('hsFound').innerHTML = ''; $('hsSearch').value = ''; A.reload();
+          }); });
+        }); }, 250);
+      });
+      // mot de passe
+      if ($('pwRow')) {
+        $('pwRow').addEventListener('click', function () { var b = $('pwForm'); b.style.display = b.style.display === 'none' ? '' : 'none'; });
+        $('pwSave').addEventListener('click', function () {
+          var a = $('pwNew').value, c = $('pwConf').value, m = $('pwMsg'); m.className = 'msg';
+          if (!a || a.length < 6) { m.textContent = 'Le mot de passe doit faire au moins 6 caractères'; return; }
+          if (a !== c) { m.textContent = 'Les mots de passe ne correspondent pas'; return; }
+          sb.auth.updateUser({ password: a }).then(function (r) {
+            if (r.error) { m.textContent = r.error.message; return; }
+            m.className = 'msg fine'; m.textContent = 'Mot de passe mis à jour !'; $('pwNew').value = ''; $('pwConf').value = '';
+          });
+        });
+      }
       // spots
       function wireFavs(root) {
         root.querySelectorAll('[data-fav]').forEach(function (b) {
@@ -342,6 +412,42 @@
       $('cOld').addEventListener('click', function () { location.href = 'ancienne.html'; });
       if ($('cOut')) $('cOut').addEventListener('click', function () { sb.auth.signOut().then(function () { location.href = 'ancienne.html?retour=1'; }); });
     });
+  }
+
+  // ───────── session : modifier ou supprimer ─────────
+  function openSession(s) {
+    if (!s) return;
+    var box = $('board'), rating = Math.round(s.rating || 0), m = s.meteo || {};
+    var meteo = [m.waveHeight != null ? fr(m.waveHeight) + ' m' : '', m.windSpeed != null ? Math.round(m.windSpeed) + ' km/h' : '', m.wavePeriod != null ? Math.round(m.wavePeriod) + ' s' : ''].filter(Boolean).join(' · ');
+    box.innerHTML =
+      '<button class="close" id="eClose" aria-label="Fermer">' + CLOSE + '</button>' +
+      '<h2 style="font-size:34px">Modifier session</h2><p class="hint" style="margin-top:4px">' + esc((s.spots && s.spots.name) || '') + '</p>' +
+      '<div class="two"><div class="box" style="grid-column:1/-1"><span>Date</span><input type="date" id="eDate" value="' + esc(String(s.date || '').slice(0, 10)) + '"></div></div>' +
+      '<div class="q">Note de la session</div><div class="stars" id="eStars">' + [1, 2, 3, 4, 5].map(function (k) { return '<button type="button"' + (k <= rating ? ' class="on"' : '') + '>' + STAR + '</button>'; }).join('') + '</div>' +
+      '<div class="q">Notes</div><textarea class="word" id="eNotes" rows="3">' + esc(s.notes || '') + '</textarea>' +
+      (meteo ? '<p class="auto">Météo capturée : ' + esc(meteo) + '</p>' : '') +
+      '<div class="msg" id="eMsg"></div>' +
+      '<button class="save" id="eSave">Enregistrer</button><button class="skip" id="eDel" style="color:#FFB4A8">Supprimer</button>';
+    [].forEach.call($('eStars').children, function (b, i) { b.addEventListener('click', function () { rating = i + 1; [].forEach.call($('eStars').children, function (x, k) { x.classList.toggle('on', k <= i); }); }); });
+    function done() { state.sessions = null; box.classList.remove('show'); renderMe('p3'); A.reload(); }
+    $('eClose').addEventListener('click', function () { box.classList.remove('show'); });
+    $('eSave').addEventListener('click', function () {
+      if (A.DEMO) { box.classList.remove('show'); return; }
+      fetch(A.BACKEND + '/api/v1/sessions/' + encodeURIComponent(s.id), { method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: state.userId, rating: rating || 3, notes: $('eNotes').value, date: $('eDate').value }) })
+        .then(function (r) { return r.json(); })
+        .then(function (j) { if (j.success) done(); else $('eMsg').textContent = 'Erreur : ' + (j.error || 'Impossible de modifier'); })
+        .catch(function () { $('eMsg').textContent = 'Erreur réseau'; });
+    });
+    $('eDel').addEventListener('click', function () {
+      if (!confirm('Supprimer cette session ? Cette action est irréversible.')) return;
+      if (A.DEMO) { box.classList.remove('show'); return; }
+      fetch(A.BACKEND + '/api/v1/sessions/' + encodeURIComponent(s.id) + '?userId=' + encodeURIComponent(state.userId), { method: 'DELETE' })
+        .then(function (r) { return r.json(); })
+        .then(function (j) { if (j.success) done(); else $('eMsg').textContent = 'Erreur : ' + (j.error || 'Impossible de supprimer'); })
+        .catch(function () { $('eMsg').textContent = 'Erreur réseau'; });
+    });
+    box.scrollTop = 0; box.classList.add('show');
   }
 
   // ───────── board : ajouter ou modifier ─────────
