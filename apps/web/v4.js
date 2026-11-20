@@ -302,23 +302,27 @@
     });
   }
   function start() {
-    $('navAdd').addEventListener('click', function () { location.href = 'index.html'; });
-    $('navProfil').addEventListener('click', function () { location.href = 'index.html'; });
     getUserId().then(function (userId) {
       if (!userId) {
         $('stackWrap').innerHTML = stateCard('Connecte-toi', 'Tes prévisions t\'attendent.', { href: 'index.html', label: 'Se connecter' });
         return;
       }
       state.userId = userId;
+      if (window.SurfV4.onReady) window.SurfV4.onReady();
+      loadPredictions();
+    });
+  }
+  function loadPredictions() {
+      var userId = state.userId;
       if (DEMO) { show(demoData()); return; }
       getPosition().then(function (pos) {
+        state.position = pos;
         var url = BACKEND + '/api/v1/predictions/best-windows?userId=' + encodeURIComponent(userId) + '&days=' + DAYS +
           (pos ? '&lat=' + pos.lat.toFixed(3) + '&lng=' + pos.lng.toFixed(3) : '');
         return fetch(url).then(function (r) { return r.json(); });
       }).then(show).catch(function () {
         $('stackWrap').innerHTML = stateCard('Connexion impossible', 'Le serveur de prévisions ne répond pas. Réessaie dans un instant.');
       });
-    });
   }
   function show(json) {
     var results = (json && json.results) || [];
@@ -383,5 +387,8 @@
     ];
   }
 
-  start();
+  window.SurfV4 = { state: state, $: $, esc: esc, fr: fr, cap: cap, BACKEND: BACKEND, LOCAL: LOCAL, DEMO: DEMO,
+    SUPABASE_URL: SUPABASE_URL, SUPABASE_KEY: SUPABASE_KEY, ICON: ICON, localISO: localISO, dateOf: dateOf,
+    windWord: windWord, reload: loadPredictions, loadSessions: loadSessions };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

@@ -272,6 +272,16 @@
   .welcome.show{display:block}
 
   /* ── app réelle ── */
+  .box input,.box select{display:block;width:100%;border:0;background:none;font:inherit;font-size:17px;font-weight:500;color:inherit;padding:2px 0 0;outline:none;color-scheme:dark}
+  textarea.word{resize:none;min-height:86px;display:block}
+  .word{outline:none}
+  .msg{font-size:14.5px;margin-top:14px;color:#FFB4A8;min-height:1.2em}
+  .msg.fine{color:var(--top)}
+  .me .li{cursor:default}
+  .li .fav{border:0;background:none;font-size:20px;color:rgba(255,255,255,.35);cursor:pointer;padding:4px 2px;margin-left:auto}
+  .li .fav.on{color:var(--top)}
+  .me .li.act{cursor:pointer}
+  .me input.word{margin-top:8px}
   body{padding:20px 16px 30px}
   .sheet.v-top{background:var(--top)} .sheet.v-good{background:var(--good)} .sheet.v-mid{background:var(--mid)} .sheet.v-none{background:var(--none)}
   .other{cursor:pointer}
@@ -298,7 +308,11 @@
     <div id="stackWrap"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
   </div>
 
+  <section class="me" id="me"></section>
   <section class="sheet" id="sheet"></section>
+  <section class="add" id="add"></section>
+  <section class="add" id="done"></section>
+  <section class="add" id="board"></section>
 
   <nav class="nav">
     <button class="cur"><svg viewBox="0 0 24 24"><path d="M3 9c3 0 3 2 6 2s3-2 6-2 3 2 6 2M3 15c3 0 3 2 6 2s3-2 6-2 3 2 6 2"/></svg>Semaine</button>
@@ -309,5 +323,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="v4.js"></script>
+<script src="v4-screens.js"></script>
 </body>
 </html>
