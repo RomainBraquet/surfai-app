@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>fr.surfai.sauvegarde</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/bin/caffeinate</string>
+		<string>-i</string>
+		<string>-s</string>
+		<string>/bin/bash</string>
+		<string>/Users/imac/ANTIGRAVITY x CLAUDE/surfai/sauvegarde/sauvegarder.sh</string>
+		<string>/Users/imac/SURFAI SAUVEGARDE</string>
+	</array>
+	<key>RunAtLoad</key>
+	<false/>
+	<key>StandardErrorPath</key>
+	<string>/Users/imac/Library/Logs/surfai-sauvegarde.log</string>
+	<key>StandardOutPath</key>
+	<string>/Users/imac/Library/Logs/surfai-sauvegarde.log</string>
+	<key>StartCalendarInterval</key>
+	<dict>
+		<key>Hour</key>
+		<integer>20</integer>
+		<key>Minute</key>
+		<integer>15</integer>
+	</dict>
+</dict>
+</plist>

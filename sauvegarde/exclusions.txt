@@ -1,0 +1,14 @@
+# Exclusions de la sauvegarde (chemins relatifs à surfai/)
+# Fichiers reconstructibles
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store
+._*
+*.tmp
+graphify-out/
+
+# Secrets : jamais sur le Drive, à côté des exports chiffrés
+.env
+.env.local
+.env.production
