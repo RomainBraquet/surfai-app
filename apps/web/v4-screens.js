@@ -3,7 +3,7 @@
   'use strict';
   var A = window.SurfV4, $ = A.$, esc = A.esc, fr = A.fr, state = A.state, ICON = A.ICON;
   var sb = null;
-  try { sb = window.supabase.createClient(A.SUPABASE_URL, A.SUPABASE_KEY); } catch (e) { sb = null; }
+  sb = A.client();
 
   var cache = { boards: null, favorites: null, profile: undefined, email: null };
   var LEVELS = [['beginner', 'Débutant'], ['intermediate', 'Intermédiaire'], ['advanced', 'Avancé'], ['expert', 'Expert']];
@@ -321,8 +321,8 @@
         sb.from('profiles').upsert({ id: state.userId, email_predictions: on, updated_at: new Date().toISOString() }).then(function () { cache.profile = undefined; });
       });
       // compte
-      $('cOld').addEventListener('click', function () { location.href = 'index.html'; });
-      if ($('cOut')) $('cOut').addEventListener('click', function () { sb.auth.signOut().then(function () { location.href = 'index.html'; }); });
+      $('cOld').addEventListener('click', function () { location.href = 'ancienne.html'; });
+      if ($('cOut')) $('cOut').addEventListener('click', function () { sb.auth.signOut().then(function () { location.href = 'ancienne.html?retour=1'; }); });
     });
   }
 

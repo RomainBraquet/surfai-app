@@ -4,8 +4,8 @@
   "description": "Ton assistant surf intelligent",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0e27",
-  "theme_color": "#0a0e27",
+  "background_color": "#F6F6F4",
+  "theme_color": "#F6F6F4",
   "orientation": "portrait",
   "icons": [
     {

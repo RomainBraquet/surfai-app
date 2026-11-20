@@ -284,12 +284,16 @@
   }
 
   // ───────── chargement ─────────
+  var _client = null;
+  function client() {
+    if (!_client) { try { _client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch (e) { _client = null; } }
+    return _client;
+  }
   function getUserId() {
     if (DEMO) return Promise.resolve('demo');
     if (LOCAL) return Promise.resolve(DEV_USER_ID);
     try {
-      var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      return client.auth.getSession().then(function (r) { return r.data && r.data.session ? r.data.session.user.id : null; });
+      return client().auth.getSession().then(function (r) { return r.data && r.data.session ? r.data.session.user.id : null; });
     } catch (e) { return Promise.resolve(null); }
   }
   function getPosition() {
@@ -304,13 +308,22 @@
   function start() {
     getUserId().then(function (userId) {
       if (!userId) {
-        $('stackWrap').innerHTML = stateCard('Connecte-toi', 'Tes prévisions t\'attendent.', { href: 'index.html', label: 'Se connecter' });
+        $('stackWrap').innerHTML = stateCard('Connecte-toi', 'Tes prévisions t\'attendent.', { href: 'ancienne.html?retour=1', label: 'Se connecter' });
         return;
       }
       state.userId = userId;
       if (window.SurfV4.onReady) window.SurfV4.onReady();
       loadPredictions();
+      checkProfile(userId);
     });
+  }
+  // Un compte sans profil n'a pas fini son inscription : elle se fait encore dans l'ancienne version.
+  function checkProfile(userId) {
+    if (DEMO || LOCAL) return;
+    try {
+      client().from('profiles').select('id').eq('id', userId).maybeSingle()
+        .then(function (r) { if (!r.error && !r.data) location.replace('ancienne.html?retour=1'); });
+    } catch (e) { /* on reste sur l'accueil */ }
   }
   function loadPredictions() {
       var userId = state.userId;
@@ -389,6 +402,6 @@
 
   window.SurfV4 = { state: state, $: $, esc: esc, fr: fr, cap: cap, BACKEND: BACKEND, LOCAL: LOCAL, DEMO: DEMO,
     SUPABASE_URL: SUPABASE_URL, SUPABASE_KEY: SUPABASE_KEY, ICON: ICON, localISO: localISO, dateOf: dateOf,
-    windWord: windWord, reload: loadPredictions, loadSessions: loadSessions };
+    windWord: windWord, client: client, reload: loadPredictions, loadSessions: loadSessions };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
