@@ -27,7 +27,7 @@
     if (cache.boards && !force) return Promise.resolve(cache.boards);
     if (!sb) return Promise.resolve([]);
     return sb.from('boards').select('*').eq('user_id', state.userId).order('created_at', { ascending: false })
-      .then(function (r) { cache.boards = (r.data || []).filter(function (b) { return b.is_active !== false; }); return cache.boards; })
+      .then(function (r) { cache.boards = (r.data || []).filter(function (b) { return b.is_active !== false; }).map(function (b) { b.type = b.board_type || b.type; return b; }); window.userData.boards = cache.boards; return cache.boards; })
       .catch(function () { return []; });
   }
   function loadFavorites(force) {
@@ -137,7 +137,8 @@
           if (!j.success) throw new Error(j.error || 'Erreur serveur');
           state.sessions = null;
           box.classList.remove('show');
-          openDone(spotName, rating, (j.session && j.session.meteo) || j.meteo || null);
+          var met = (j.session && j.session.meteo) || j.meteo || null, sp = knownSpots().filter(function (x) { return String(x.id) === String(spotId); })[0];
+          openDone(spotName, rating, met, { spotName: spotName, spotCity: (sp && sp.city) || '', date: date, rating: rating, nickname: (cache.profile && (cache.profile.nickname || cache.profile.pseudo)) || '', meteo: met });
         }).catch(function (e) {
           btn.disabled = false; btn.textContent = 'Enregistrer la session'; msg.textContent = 'La session n\'a pas pu être enregistrée. ' + (e.message || '');
         });
@@ -147,7 +148,7 @@
   }
 
   // ───────── confirmation et partage ─────────
-  function openDone(spotName, rating, meteo) {
+  function openDone(spotName, rating, meteo, share) {
     var box = $('done'), bits = [];
     if (meteo) {
       if (meteo.waveHeight != null) bits.push(fr(meteo.waveHeight) + ' m');
@@ -162,15 +163,16 @@
       '<h2>Session enregistrée !</h2>' +
       '<div class="share"><span class="brand">SurfAI</span><div class="txt"><b>' + esc(spotName) + '</b><i>' + stars(rating) + '</i><span>' + esc(line) + '</span></div></div>' +
       '<div class="msg fine" id="doneMsg"></div>' +
-      '<button class="save" id="doneShare">Partager ta session</button>' +
+      '<label class="save" style="display:block;text-align:center;cursor:pointer">Partager ta session<input type="file" accept="image/*" id="doneFile" style="display:none"></label>' +
       '<button class="skip" id="doneSkip">Passer</button>';
     function close() { box.classList.remove('show'); A.reload(); }
     $('doneClose').addEventListener('click', close);
     $('doneSkip').addEventListener('click', close);
-    $('doneShare').addEventListener('click', function () {
-      var text = 'Session à ' + spotName + ' ' + stars(rating) + (line ? '\n' + line : '') + '\nNoté avec SurfAI';
-      if (navigator.share) { navigator.share({ title: 'Ma session de surf', text: text }).catch(function () {}); return; }
-      if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { $('doneMsg').textContent = 'Texte copié, tu peux le coller où tu veux.'; });
+    $('doneFile').addEventListener('change', function () {
+      var f = this.files[0]; if (!f) return;
+      $('doneMsg').textContent = 'Génération en cours...';
+      generateShareCard(f, share).then(function (canvas) { showCard(box, canvas, share, close); })
+        .catch(function () { $('doneMsg').className = 'msg'; $('doneMsg').textContent = 'Erreur lors de la génération de l\'image.'; });
     });
     box.scrollTop = 0; box.classList.add('show');
   }
@@ -187,7 +189,7 @@
     return '<article class="day ' + cls + (open ? ' open' : '') + '"><div class="row"><div class="name">' + title + '</div>' + (count != null ? '<div class="count">' + count + '</div>' : '') + '</div>' +
       '<div class="more"><div><div class="inner">' + inner + '</div></div></div></article>';
   }
-  function renderMe() {
+  function renderMe(openCls) {
     var box = $('me');
     box.innerHTML = '<div class="head"><h1>Profil</h1></div><div class="skel"></div><div class="skel"></div>';
     Promise.all([loadProfile(), loadBoards(), A.loadSessions(), loadFavorites(), loadEmail()]).then(function (res) {
@@ -208,10 +210,21 @@
         '<div class="box"><span>Max (m)</span><input type="number" step="0.1" min="0" id="pMax" value="' + (p.max_wave_height != null ? p.max_wave_height : '') + '"></div></div>' +
         '<div class="msg" id="pMsg"></div><button class="mini" id="pSave">Sauvegarder</button>';
 
+      window.userData.sessions = sessions;
       var quiver = (boards.length ? boards.map(function (b) {
-        var sub = [b.board_type ? A.cap(String(b.board_type)) : '', b.size || '', b.brand || ''].filter(Boolean).join(' · ');
-        var th = b.photo_url ? '<div class="th" style="background:center/cover url(\'' + esc(b.photo_url) + '\')"></div>' : '<div class="th c"></div>';
-        return '<div class="li">' + th + '<div><b>' + esc(b.name || b.nickname || 'Board') + '</b><span>' + esc(sub) + '</span></div></div>';
+        var dims = [b.length_ft || b.size, b.width_in ? b.width_in + '"' : '', b.thickness_in ? b.thickness_in + '"' : ''].filter(Boolean).join(' × ');
+        var line1 = [dims, b.volume_l ? b.volume_l + 'L' : '', b.type ? A.cap(String(b.type)) : ''].filter(Boolean).join(' · ');
+        var shaper = [b.shaper, b.brand].filter(Boolean).join(' · ');
+        var setup = [b.fins_setup, b.tail_shape].filter(Boolean).join(' · ');
+        var sweet = formatSweetSpot(b), st = getBoardSessionStats(b.id);
+        var th = b.photo_url ? '<div class="th big" style="background:center/cover url(\'' + esc(b.photo_url) + '\')"></div>' : '<div class="th big c"></div>';
+        return '<div class="bcard">' +
+          '<div class="li" style="border-top:0;padding-top:0">' + th + '<div><b>' + esc(b.nickname || b.name || 'Board') + '</b>' +
+            (line1 ? '<span>' + esc(line1) + '</span>' : '') + (shaper ? '<span style="display:block">' + esc(shaper) + '</span>' : '') + (setup ? '<span style="display:block">' + esc(setup) + '</span>' : '') + '</div></div>' +
+          (sweet ? '<div class="sweet">★ Sweet spot : ' + esc(sweet) + '</div>' : '') +
+          '<div class="bfoot"><span>' + (st.count ? st.count + ' session' + (st.count > 1 ? 's' : '') + ' · ' + esc(st.lastDate) : 'Pas encore de session') + '</span>' +
+            '<span class="bact"><button data-edit="' + esc(b.id) + '">Modifier</button><button data-share="' + esc(b.id) + '">Partager</button><button class="del" data-del="' + esc(b.id) + '">Supprimer</button></span></div>' +
+        '</div>';
       }).join('') : '<p class="why" style="color:rgba(255,255,255,.62)">Aucune board dans ton quiver</p>') +
         '<div class="li act" id="openBoard"><b>+ Ajouter une board</b></div>';
 
@@ -241,7 +254,7 @@
         '<div class="head"><h1>Profil</h1></div>' +
         '<div class="who"><div class="avatar"' + avatar + '></div><div><b>' + esc(name) + '</b><span>' + esc(levelLabel) + '</span></div></div>' +
         '<div class="stack">' +
-          card('p1', 'Profil', esc(levelLabel), profil, true) +
+          card('p1', 'Profil', esc(levelLabel), profil, !openCls) +
           card('p2', 'Mon Quiver', boards.length, quiver) +
           card('p3', 'Historique', sessions.length, hist) +
           card('p4', 'Spots', favs.length + (favs.length > 1 ? ' favoris' : ' favori'), spots) +
@@ -249,6 +262,7 @@
           card('p6', 'Compte', null, compte) +
         '</div>';
 
+      if (openCls && box.querySelector('.day.' + openCls)) box.querySelector('.day.' + openCls).classList.add('open');
       // dépliage
       box.querySelectorAll('.day').forEach(function (c) {
         c.addEventListener('click', function () {
@@ -274,7 +288,11 @@
         });
       });
       // quiver
-      $('openBoard').addEventListener('click', openBoard);
+      $('openBoard').addEventListener('click', function () { openBoard(null); });
+      function boardById(id) { return boards.filter(function (b) { return String(b.id) === String(id); })[0]; }
+      box.querySelectorAll('[data-edit]').forEach(function (b) { b.addEventListener('click', function () { openBoard(boardById(b.getAttribute('data-edit'))); }); });
+      box.querySelectorAll('[data-share]').forEach(function (b) { b.addEventListener('click', function () { openBoardShare(boardById(b.getAttribute('data-share'))); }); });
+      box.querySelectorAll('[data-del]').forEach(function (b) { b.addEventListener('click', function () { deleteBoard(b.getAttribute('data-del')); }); });
       // historique
       if ($('hMore')) $('hMore').addEventListener('click', function () { shown += 12; $('hRows').innerHTML = histRows(shown); if (shown >= sessions.length) this.style.display = 'none'; });
       // spots
@@ -326,51 +344,167 @@
     });
   }
 
-  // ───────── ajouter une board ─────────
-  function chipRow(id, names, optional) {
-    return '<div class="chips scroll-x" id="' + id + '"' + (optional ? ' data-optional' : '') + '>' + names.map(function (n) { return '<button class="chip" data-v="' + esc(n.toLowerCase()) + '">' + esc(n) + '</button>'; }).join('') + '</div>';
+  // ───────── board : ajouter ou modifier ─────────
+  function chipRow(id, pairs, optional, current, cls) {
+    return '<div class="chips ' + (cls || 'scroll-x') + '" id="' + id + '"' + (optional ? ' data-optional' : '') + '>' + pairs.map(function (p) {
+      return '<button class="chip' + (String(current || '') === p[0] ? ' on' : '') + '" data-v="' + esc(p[0]) + '">' + esc(p[1]) + '</button>'; }).join('') + '</div>';
   }
-  function openBoard() {
-    var box = $('board');
+  function same(names) { return names.map(function (n) { return [n.toLowerCase(), n]; }); }
+  function val(v) { return v == null ? '' : esc(v); }
+  function uploadBoardPhoto(file) {
+    if (file.size > 2 * 1024 * 1024) return Promise.reject(new Error('Image trop lourde (max 2 MB)'));
+    var path = 'boards/' + state.userId + '/' + Date.now() + '.' + file.name.split('.').pop();
+    return sb.storage.from('avatars').upload(path, file, { upsert: true }).then(function (r) {
+      if (r.error) throw r.error;
+      return sb.storage.from('avatars').getPublicUrl(path).data.publicUrl + '?t=' + Date.now();
+    });
+  }
+  function openBoard(b) {
+    var box = $('board'), edit = !!b; b = b || {};
     box.innerHTML =
       '<button class="close" id="bClose" aria-label="Fermer">' + CLOSE + '</button>' +
-      '<h2>Ajouter une board</h2>' +
+      '<h2>' + (edit ? 'Modifier la board' : 'Ajouter une board') + '</h2>' +
       '<div class="q">L\'essentiel</div>' +
-      '<div class="lab">Nom</div><input class="word" id="bName" placeholder="Nom de la board (optionnel)">' +
-      '<div class="lab">Type</div>' + chipRow('bType', ['Shortboard', 'Fish', 'Hybrid', 'Midlength', 'Funboard', 'Longboard', 'Gun', 'SUP', 'Foil']) +
-      '<div class="lab">Taille</div><input class="word" id="bSize" placeholder="Taille (ex: 6\'2)">' +
+      '<div class="lab">Nom</div><input class="word" id="bName" placeholder="La Bleue, Mon fish..." value="' + val(b.nickname || b.name) + '">' +
+      '<div class="lab">Photo</div><label class="photo" style="height:120px;cursor:pointer' + (b.photo_url ? ';background:center/cover url(\'' + esc(b.photo_url) + '\')' : '') + '" id="bPhotoBox"><span id="bPhotoTxt">' + (b.photo_url ? '' : 'Choisir une photo') + '</span><input type="file" accept="image/*" id="bPhoto" style="display:none"></label>' +
+      '<div class="lab">Type</div>' + chipRow('bType', same(['Shortboard', 'Fish', 'Midlength', 'Longboard', 'Gun', 'Funboard', 'Hybrid', 'Foil', 'SUP']), false, b.board_type || b.type) +
+      '<div class="lab">Taille</div><input class="word" id="bSize" placeholder="6\'2" value="' + val(b.size || b.length_ft) + '">' +
       '<div class="q">Les détails</div>' +
-      '<div class="two"><div class="box"><span>Marque</span><input id="bBrand"></div><div class="box"><span>Shaper</span><input id="bShaper"></div></div>' +
-      '<div class="two"><div class="box"><span>Année</span><input id="bYear" type="number" inputmode="numeric"></div><div class="box"><span>Largeur (")</span><input id="bWidth" type="number" step="0.01"></div></div>' +
-      '<div class="lab">Tail</div>' + chipRow('bTail', ['Squash', 'Round', 'Pin', 'Swallow', 'Diamond'], true) +
-      '<div class="lab">Fins</div>' + chipRow('bFins', ['Single', 'Twin', 'Thruster', 'Quad', '2+1', '5-box'], true) +
-      '<div class="lab">État</div><div class="chips four" id="bCond" data-optional><button class="chip" data-v="neuf">Neuf</button><button class="chip on" data-v="bon">Bon</button><button class="chip" data-v="use">Usé</button><button class="chip" data-v="a_reparer">À réparer</button></div>' +
+      '<div class="two"><div class="box"><span>Volume (L)</span><input id="bVol" type="number" step="0.1" placeholder="32" value="' + val(b.volume_l) + '"></div><div class="box"><span>Largeur (")</span><input id="bWidth" placeholder="20.5" value="' + val(b.width_in) + '"></div></div>' +
+      '<div class="two"><div class="box"><span>Épaisseur (")</span><input id="bThick" placeholder="2.5" value="' + val(b.thickness_in) + '"></div><div class="box"><span>Année</span><input id="bYear" type="number" inputmode="numeric" placeholder="2024" value="' + val(b.year_made) + '"></div></div>' +
+      '<div class="two"><div class="box"><span>Shaper</span><input id="bShaper" placeholder="Pukas" value="' + val(b.shaper) + '"></div><div class="box"><span>Marque</span><input id="bBrand" placeholder="Channel Islands" value="' + val(b.brand) + '"></div></div>' +
+      '<div class="lab">Fins</div>' + chipRow('bFins', same(['Thruster', 'Twin', 'Quad', 'Single', '2+1', '5-box']), true, b.fins_setup) +
+      '<div class="lab">Tail</div>' + chipRow('bTail', same(['Squash', 'Swallow', 'Pin', 'Round', 'Diamond']), true, b.tail_shape) +
+      '<div class="lab">État</div>' + chipRow('bCond', [['neuf', 'Neuf'], ['bon', 'Bon'], ['use', 'Usé'], ['reparer', 'À réparer']], false, b.condition || 'bon', 'four') +
       '<div class="q">Dans quelles conditions tu la sors ?</div>' +
-      '<div class="two"><div class="box"><span>Houle min (m)</span><input id="bMin" type="number" step="0.1"></div><div class="box"><span>Houle max (m)</span><input id="bMax" type="number" step="0.1"></div></div>' +
-      '<div class="lab">Marée</div><div class="chips four" id="bTide"><button class="chip" data-v="low">Basse</button><button class="chip" data-v="mid">Mi-marée</button><button class="chip" data-v="high">Haute</button><button class="chip on" data-v="any">Peu importe</button></div>' +
+      '<div class="two"><div class="box"><span>Houle min (m)</span><input id="bMin" type="number" step="0.1" placeholder="0.5" value="' + val(b.sweet_spot_wave_min) + '"></div><div class="box"><span>Houle max (m)</span><input id="bMax" type="number" step="0.1" placeholder="2.0" value="' + val(b.sweet_spot_wave_max) + '"></div></div>' +
+      '<div class="lab">Vent</div>' + chipRow('bWind', [['offshore', 'Offshore'], ['onshore', 'Onshore'], ['any', 'Peu importe']], false, b.sweet_spot_wind || 'any', '') +
+      '<div class="lab">Marée</div>' + chipRow('bTide', [['haute', 'Haute'], ['basse', 'Basse'], ['mi-maree', 'Mi-marée'], ['any', 'Peu importe']], false, b.sweet_spot_tide || 'any', 'four') +
       '<div class="msg" id="bMsg"></div>' +
-      '<button class="save" id="bSave">Ajouter cette board</button>';
+      '<button class="save" id="bSave">' + (edit ? 'Enregistrer' : 'Ajouter cette board') + '</button>' +
+      (edit ? '<button class="skip" id="bDel" style="color:#FFB4A8">Supprimer cette board</button>' : '');
     wireChips(box);
     $('bClose').addEventListener('click', function () { box.classList.remove('show'); });
+    $('bPhoto').addEventListener('change', function () {
+      var f = this.files[0]; if (!f) return;
+      $('bPhotoBox').style.background = 'center/cover url(' + URL.createObjectURL(f) + ')'; $('bPhotoTxt').textContent = '';
+    });
+    if (edit) $('bDel').addEventListener('click', function () { deleteBoard(b.id, function () { box.classList.remove('show'); }); });
     $('bSave').addEventListener('click', function () {
-      var type = chosen(box, '#bType'), msg = $('bMsg');
-      if (!type) { msg.textContent = 'Choisis au moins le type de board.'; return; }
-      var name = $('bName').value.trim();
-      var row = { user_id: state.userId, name: name || A.cap(type), nickname: name || null, board_type: type, size: $('bSize').value.trim() || null,
-        brand: $('bBrand').value.trim() || null, shaper: $('bShaper').value.trim() || null,
-        year_made: parseInt($('bYear').value, 10) || null, width_in: parseFloat($('bWidth').value) || null,
-        tail_shape: chosen(box, '#bTail'), fins_setup: chosen(box, '#bFins'), condition: chosen(box, '#bCond') || 'bon',
+      var type = chosen(box, '#bType'), msg = $('bMsg'), name = $('bName').value.trim();
+      if (edit && !name) { msg.textContent = 'Le nom est requis'; return; }
+      if (!edit && !type) { msg.textContent = 'Choisis au moins le type de board.'; return; }
+      var size = $('bSize').value.trim() || null;
+      var row = { name: name || A.cap(type), nickname: name || null, board_type: type || null, size: size, length_ft: size,
+        shaper: $('bShaper').value.trim() || null, brand: $('bBrand').value.trim() || null,
+        volume_l: parseFloat($('bVol').value) || null, width_in: $('bWidth').value.trim() || null, thickness_in: $('bThick').value.trim() || null,
+        fins_setup: chosen(box, '#bFins'), tail_shape: chosen(box, '#bTail'), year_made: parseInt($('bYear').value, 10) || null,
+        condition: chosen(box, '#bCond') || 'bon',
         sweet_spot_wave_min: parseFloat($('bMin').value) || null, sweet_spot_wave_max: parseFloat($('bMax').value) || null,
-        sweet_spot_wind: 'any', sweet_spot_tide: chosen(box, '#bTide') || 'any' };
+        sweet_spot_wind: chosen(box, '#bWind') || 'any', sweet_spot_tide: chosen(box, '#bTide') || 'any' };
       if (A.DEMO || !sb) { box.classList.remove('show'); return; }
-      var btn = $('bSave'); btn.disabled = true;
-      sb.from('boards').insert([row]).then(function (r) {
+      var btn = $('bSave'), file = $('bPhoto').files[0]; btn.disabled = true; msg.textContent = '';
+      (file ? uploadBoardPhoto(file) : Promise.resolve(null)).then(function (url) {
+        if (url) row.photo_url = url;
+        if (edit) return sb.from('boards').update(row).eq('id', b.id).eq('user_id', state.userId).select();
+        row.user_id = state.userId; return sb.from('boards').insert([row]).select();
+      }).then(function (r) {
         btn.disabled = false;
-        if (r.error) { msg.textContent = 'La board n\'a pas pu être ajoutée. ' + r.error.message; return; }
-        cache.boards = null; box.classList.remove('show'); renderMe();
-      });
+        if (r.error) throw r.error;
+        if (!r.data || !r.data.length) throw new Error('aucune ligne modifiée');
+        cache.boards = null; box.classList.remove('show'); renderMe('p2');
+      }).catch(function (e) { btn.disabled = false; msg.textContent = 'La board n\'a pas pu être enregistrée. ' + (e.message || ''); });
     });
     box.scrollTop = 0; box.classList.add('show');
+  }
+  function deleteBoard(id, after) {
+    if (!confirm('Supprimer cette board ?')) return;
+    if (A.DEMO || !sb) { if (after) after(); return; }
+    // on détache d'abord les sessions liées, comme dans l'ancienne version
+    sb.from('sessions').update({ board_id: null }).eq('board_id', id).then(function () {
+      return sb.from('boards').delete().eq('id', id).eq('user_id', state.userId);
+    }).then(function (r) {
+      if (r.error) { alert('Erreur suppression : ' + r.error.message); return; }
+      cache.boards = null; state.sessions = null; if (after) after(); renderMe('p2');
+    });
+  }
+
+  // ───────── board : montrer, vendre, réparer ─────────
+  function openBoardShare(b) {
+    var box = $('board'), name = b.nickname || b.name || 'Board';
+    function head(title, back) {
+      return '<button class="close" id="sClose" aria-label="Fermer">' + CLOSE + '</button><h2 style="font-size:34px">' + esc(title) + '</h2>' + (back ? '<button class="skip" id="sBack" style="text-align:left;padding-left:0">← Retour</button>' : '');
+    }
+    function wireHead() { $('sClose').addEventListener('click', function () { box.classList.remove('show'); }); if ($('sBack')) $('sBack').addEventListener('click', menu); }
+    function menu() {
+      box.innerHTML = head('Partager « ' + name + ' »') +
+        '<div class="opt" data-m="flex"><b>Montrer ma board</b><span>Partage lifestyle, montre ton quiver</span></div>' +
+        '<div class="opt" data-m="sell"><b>Vendre ma board</b><span>Crée une annonce pour Instagram</span></div>' +
+        '<div class="opt" data-m="repair"><b>Réparer ma board</b><span>Trouve un réparateur via ton réseau</span></div>';
+      wireHead();
+      box.querySelectorAll('.opt').forEach(function (o) { o.addEventListener('click', function () {
+        var m = o.getAttribute('data-m'); if (m === 'flex') pickPhoto('flex', {}); else if (m === 'sell') sell(); else repair(); }); });
+    }
+    function sell() {
+      box.innerHTML = head('Vendre ma board', true) +
+        '<div class="lab">Prix (€)</div><input class="word" id="sPrice" type="number" placeholder="350">' +
+        '<div class="lab">Localisation</div><input class="word" id="sLoc" placeholder="Biarritz">' +
+        '<div class="lab">Message (optionnel)</div><textarea class="word" id="sMsg" rows="2" placeholder="Vendue car j\'ai changé de niveau"></textarea>' +
+        '<button class="save" id="sNext">Suivant, choisir une photo</button>';
+      wireHead();
+      $('sNext').addEventListener('click', function () { pickPhoto('sell', { price: $('sPrice').value || '', location: $('sLoc').value || '', message: $('sMsg').value || '' }); });
+    }
+    function repair() {
+      box.innerHTML = head('Réparer ma board', true) +
+        '<div class="lab">Description du problème</div><textarea class="word" id="rDesc" rows="3" placeholder="Ding sur le nose, fissure rail droit..."></textarea>' +
+        '<div class="lab">Localisation</div><input class="word" id="rLoc" placeholder="Biarritz">' +
+        '<div class="lab">Urgence</div>' + chipRow('rUrg', [['tranquille', 'Tranquille'], ['rapide', 'Rapide'], ['urgent', 'Urgent']], false, 'tranquille', '') +
+        '<button class="save" id="rNext">Suivant, choisir une photo</button>';
+      wireHead(); wireChips(box);
+      $('rNext').addEventListener('click', function () { pickPhoto('repair', { description: $('rDesc').value || '', location: $('rLoc').value || '', urgency: chosen(box, '#rUrg') }); });
+    }
+    function pickPhoto(mode, extras) {
+      box.innerHTML = head(name, true) +
+        '<p class="hint">Choisis une photo pour ta story Instagram</p>' +
+        '<label class="save" style="display:block;text-align:center;cursor:pointer">Choisir une photo<input type="file" accept="image/*" id="sFile" style="display:none"></label>' +
+        '<div class="msg" id="sErr"></div>';
+      wireHead();
+      $('sFile').addEventListener('change', function () { var f = this.files[0]; if (f) build(mode, extras, f); });
+    }
+    function build(mode, extras, file) {
+      $('sErr').className = 'msg fine'; $('sErr').textContent = 'Génération en cours...';
+      // mêmes textes que l'ancienne version
+      var stats = getBoardSessionStats(b.id), sweet = formatSweetSpot(b);
+      var dims = [b.length_ft || b.size, b.type ? A.cap(String(b.type)) : ''].filter(Boolean).join(' · ');
+      var shaperLine = [b.shaper, b.brand].filter(Boolean).join(' — ');
+      var title = name, accent = '', detail = '', bottom = 'SurfAI';
+      if (mode === 'flex') { accent = sweet ? '🌊 ' + sweet : ''; detail = stats.count ? '📊 ' + stats.count + ' sessions' : ''; }
+      else if (mode === 'sell') {
+        title = 'À VENDRE · ' + title; accent = extras.price ? extras.price + ' €' : '';
+        detail = [extras.location ? '📍 ' + extras.location : '', b.condition ? 'État : ' + b.condition : ''].filter(Boolean).join(' · ');
+        bottom = extras.message ? '"' + extras.message + '"' : 'SurfAI';
+      } else {
+        title = '🔧 ' + title; accent = extras.description ? '"' + extras.description + '"' : '';
+        detail = extras.location ? '📍 ' + extras.location : '';
+        if (extras.urgency && extras.urgency !== 'tranquille') bottom = '⚡ ' + extras.urgency.toUpperCase();
+      }
+      var data = { spotName: title, spotCity: dims, date: shaperLine ? '🔨 ' + shaperLine : '', rating: null, nickname: '', meteo: accent ? { custom: true, line: accent } : null };
+      generateBoardShareCanvas(file, data, detail, bottom, mode).then(function (canvas) {
+        showCard(box, canvas, { spotName: name, date: 'board' }, function () { box.classList.remove('show'); });
+      }).catch(function () { $('sErr').className = 'msg'; $('sErr').textContent = 'Erreur lors de la génération de l\'image.'; });
+    }
+    menu(); box.scrollTop = 0; box.classList.add('show');
+  }
+  // aperçu d'une carte image : Enregistrer, Partager, Fermer (comme dans l'ancienne version)
+  function showCard(box, canvas, sessionData, onClose) {
+    box.innerHTML = '<button class="close" id="kClose" aria-label="Fermer">' + CLOSE + '</button>' +
+      '<img src="' + canvas.toDataURL('image/png') + '" alt="Aperçu" style="display:block;width:100%;border-radius:22px;margin-top:16px">' +
+      '<div class="two" style="margin-top:16px"><button class="save" id="kSave" style="margin-top:0;background:rgba(255,255,255,.12);color:#fff">Enregistrer</button><button class="save" id="kShare" style="margin-top:0">Partager</button></div>' +
+      '<button class="skip" id="kSkip">Fermer</button>';
+    $('kClose').addEventListener('click', onClose); $('kSkip').addEventListener('click', onClose);
+    $('kSave').addEventListener('click', function () { downloadShareCard(canvas, sessionData); });
+    $('kShare').addEventListener('click', function () { shareCard(canvas, sessionData); });
+    box.scrollTop = 0;
   }
 
   // ───────── menu ─────────
@@ -378,6 +512,7 @@
     var nb = document.querySelectorAll('.nav button');
     $('me').classList.toggle('show', me); nb[0].classList.toggle('cur', !me); nb[2].classList.toggle('cur', me);
     if (me) { $('me').scrollTop = 0; renderMe(); }
+
   }
   A.onReady = function () {
     var nb = document.querySelectorAll('.nav button');
