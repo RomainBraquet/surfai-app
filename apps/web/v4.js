@@ -131,7 +131,43 @@
         '<div class="go" data-detail="' + day.index + '"><span>Voir le spot</span><span class="arrow">' + ICON.go + '</span></div>' +
       '</div></div></div></article>';
   }
+  // toutes les sessions possibles, tous spots confondus, de la meilleure à la moins bonne
+  function renderByScore() {
+    var wrap = $('stackWrap'), rows = [];
+    state.results.forEach(function (r) { (r.windows || []).forEach(function (w) { rows.push({ r: r, w: w }); }); });
+    rows.sort(function (a, b) { return b.w.score - a.w.score; });
+    wrap.innerHTML = '<div class="others" style="margin:0 10px">' + rows.map(function (o, k) {
+      var day = state.days.filter(function (d) { return d.iso === o.w.date; })[0];
+      var when = day ? dayName(day.iso, day.index) + (day.index ? ' ' + shortDate(day.iso) : '') : shortDate(o.w.date);
+      return '<div class="other ' + verdict(o.w.score).cls + '" data-k="' + k + '"><span class="n" style="display:block">' + esc(o.r.spot.name) + '<span class="s" style="display:block;font-weight:400">' + esc(when + ', ' + slotText(o.w)) + '</span></span><span class="s" style="font-size:20px;font-weight:500">' + fr(o.w.score) + '</span></div>';
+    }).join('') + '</div>';
+    wrap.querySelectorAll('[data-k]').forEach(function (row) { row.addEventListener('click', function () {
+      var o = rows[parseInt(row.getAttribute('data-k'), 10)], day = state.days.filter(function (d) { return d.iso === o.w.date; })[0];
+      if (day) openDetail(day, o.r);
+    }); });
+  }
+  // conditions du moment, lues dans les prévisions déjà chargées (aucun appel de plus au fournisseur)
+  function renderNow() {
+    var box = $('now'); if (!box) return;
+    var today = localISO(new Date()), hour = new Date().getHours(), best = null;
+    state.results.forEach(function (r) {
+      if (r.discovery || best) return;
+      var hs = hoursOf(r, today).filter(function (h) { return h.hour >= hour; });
+      if (hs.length) best = { r: r, h: hs[0] };
+    });
+    if (!best) { box.innerHTML = ''; return; }
+    var c = best.h.conditions || {}, bits = [];
+    if (c.airTemp != null) bits.push('Air ' + Math.round(c.airTemp) + '°');
+    if (c.windSpeed != null) bits.push('Vent ' + Math.round(c.windSpeed) + ' km/h' + (c.windDirection != null ? ' ' + cardinal(c.windDirection).toLowerCase() : ''));
+    if (c.waveHeight != null) bits.push('Vagues ' + fr(c.waveHeight) + ' m');
+    if (c.waterTemp != null) bits.push('Eau ' + Math.round(c.waterTemp) + '°');
+    if (c.tidePhase && c.tidePhase !== 'unknown') bits.push('Marée ' + tideWord(c.tidePhase).toLowerCase());
+    box.innerHTML = '<b>' + (best.h.hour === hour ? 'Maintenant' : 'À ' + best.h.hour + 'h') + ' à ' + esc(best.r.spot.name) + '</b>' + bits.map(function (b) { return '<span>' + esc(b) + '</span>'; }).join('');
+  }
   function renderHome() {
+    renderNow();
+    var seg = $('homeSort');
+    if (seg) { seg.style.display = state.days.length ? '' : 'none'; if (state.byScore && state.days.length) return renderByScore(); }
     var wrap = $('stackWrap'), days = state.days;
     if (!days.length) { wrap.innerHTML = stateCard('Pas encore de prévisions', 'Ajoute un spot favori pour voir ta semaine.'); return; }
     var bestDay = null;
@@ -339,8 +375,13 @@
     });
   }
   function start() {
+    var seg = $('homeSort');
+    if (seg) [].forEach.call(seg.children, function (sp, i) { sp.addEventListener('click', function () {
+      state.byScore = i === 1; seg.children[0].classList.toggle('on', i === 0); seg.children[1].classList.toggle('on', i === 1); renderHome();
+    }); });
     getUserId().then(function (userId) {
       if (!userId) {
+        if (window.SurfV4.showAuth) { $('stackWrap').innerHTML = ''; window.SurfV4.showAuth(); return; }
         $('stackWrap').innerHTML = stateCard('Connecte-toi', 'Tes prévisions t\'attendent.', { href: 'ancienne.html?retour=1', label: 'Se connecter' });
         return;
       }
@@ -355,7 +396,7 @@
     if (DEMO || LOCAL) return;
     try {
       client().from('profiles').select('id').eq('id', userId).maybeSingle()
-        .then(function (r) { if (!r.error && !r.data) location.replace('ancienne.html?retour=1'); });
+        .then(function (r) { if (!r.error && !r.data) { if (window.SurfV4.showProfileSteps) window.SurfV4.showProfileSteps(userId); else location.replace('ancienne.html?retour=1'); } });
     } catch (e) { /* on reste sur l'accueil */ }
   }
   function loadPredictions() {
@@ -435,6 +476,6 @@
 
   window.SurfV4 = { state: state, $: $, esc: esc, fr: fr, cap: cap, BACKEND: BACKEND, LOCAL: LOCAL, DEMO: DEMO,
     SUPABASE_URL: SUPABASE_URL, SUPABASE_KEY: SUPABASE_KEY, ICON: ICON, localISO: localISO, dateOf: dateOf,
-    windWord: windWord, client: client, reload: loadPredictions, loadSessions: loadSessions };
+    windWord: windWord, client: client, verdict: verdict, slotText: slotText, tideWord: tideWord, cardinal: cardinal, DAYS: DAYS, shortDate: shortDate, dayLabel: function (iso) { var t = localISO(new Date()); return iso === t ? "Aujourd'hui" : cap(dateOf(iso).toLocaleDateString('fr-FR', { weekday: 'long' })) + ' ' + shortDate(iso); }, reload: loadPredictions, loadSessions: loadSessions };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

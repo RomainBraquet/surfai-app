@@ -60,7 +60,8 @@
   }
   function searchSpots(q) {
     if (A.DEMO || !sb) return Promise.resolve([]);
-    return sb.from('spots').select('id,name,city,country,lat,lng').ilike('name', '%' + q + '%').limit(12)
+    var like = '%' + q.replace(/[,()%]/g, ' ') + '%';
+    return sb.from('spots').select('id,name,city,region,country,lat,lng').or('name.ilike.' + like + ',city.ilike.' + like + ',region.ilike.' + like + ',country.ilike.' + like).order('name').limit(30)
       .then(function (r) { return r.data || []; }).catch(function () { return []; });
   }
 
@@ -187,7 +188,7 @@
     return '<div class="li"><div><b>' + esc(title) + '</b>' + (sub ? '<span>' + esc(sub) + '</span>' : '') + '</div>' + (right ? '<span class="r">' + right + '</span>' : '') + '</div>';
   }
   function spotRow(s, favIds, extra) {
-    return '<div class="li"><div><b>' + esc(s.name) + '</b><span>' + esc(s.city || s.country || '') + (extra ? ' · ' + extra : '') + '</span></div>' +
+    return '<div class="li"><div data-spot="' + esc(s.id) + '" style="cursor:pointer;flex:1"><b>' + esc(s.name) + '</b><span>' + esc(s.city || s.country || '') + (extra ? ' · ' + extra : '') + '</span><span class="live" data-live="' + esc(s.id) + '"></span></div>' +
       '<button class="fav' + (favIds[s.id] ? ' on' : '') + '" data-fav="' + esc(s.id) + '" aria-label="Favori">★</button></div>';
   }
   function card(cls, title, count, inner, open) {
@@ -258,7 +259,7 @@
         '<div class="lab" style="margin-top:0">Favoris</div><div id="sFavs">' + (favs.map(function (s) { return spotRow(s, favIds); }).join('') || '<p class="why" style="color:rgba(255,255,255,.62)">Aucun favori pour l\'instant.</p>') + '</div>' +
         '<div class="seg" id="seg" style="margin-top:14px"><span class="on">Autour de moi</span><span>Explorer</span></div>' +
         '<div id="near"><p class="why" style="color:rgba(255,255,255,.62)">Recherche des spots autour de toi...</p></div>' +
-        '<div id="exp" style="display:none"><input class="word" id="sSearch" placeholder="Rechercher un spot..."><div id="sFound"></div></div>';
+        '<div id="exp" style="display:none"><input class="word" id="sSearch" placeholder="Rechercher un spot..."><div id="sFound"></div><div id="sBrowse"></div></div>';
 
       var notif = '<div class="li"><div><b>Prédictions par email</b><span>Dimanche + jeudi</span></div><button class="tog" id="nTog" aria-label="Prédictions par email" style="border:0;cursor:pointer;margin-left:auto;' + (p.email_predictions ? '' : 'opacity:.35') + '"></button></div>';
 
@@ -367,6 +368,7 @@
       }
       // spots
       function wireFavs(root) {
+        root.querySelectorAll('[data-spot]').forEach(function (d) { d.addEventListener('click', function () { if (A.openSpot) A.openSpot(d.getAttribute('data-spot')); }); });
         root.querySelectorAll('[data-fav]').forEach(function (b) {
           b.addEventListener('click', function () {
             var id = b.getAttribute('data-fav'); b.classList.toggle('on');
@@ -376,6 +378,9 @@
         });
       }
       wireFavs(box);
+      A.ui = { spotRow: spotRow, wireFavs: wireFavs, favIds: favIds };
+      if (A.liveConditions) A.liveConditions(favs);
+      if (A.browseSpots) A.browseSpots($('sBrowse'));
       [].forEach.call($('seg').children, function (sp, i) {
         sp.addEventListener('click', function () {
           $('seg').children[0].classList.toggle('on', i === 0); $('seg').children[1].classList.toggle('on', i === 1);
@@ -395,6 +400,7 @@
       var t = null;
       $('sSearch').addEventListener('input', function () {
         var q = this.value.trim(); clearTimeout(t);
+        $('sBrowse').style.display = q.length < 2 ? '' : 'none';
         if (q.length < 2) { $('sFound').innerHTML = ''; return; }
         t = setTimeout(function () { searchSpots(q).then(function (list) {
           $('sFound').innerHTML = list.map(function (s) { return spotRow(s, favIds); }).join('') || '<p class="why" style="color:rgba(255,255,255,.62)">Aucun spot trouvé.</p>';
@@ -620,6 +626,7 @@
     if (me) { $('me').scrollTop = 0; renderMe(); }
 
   }
+  A.renderMe = renderMe; A.wireChips = wireChips; A.chosen = chosen; A.stars = stars; A.api = api; A.resetFavorites = function () { cache.favorites = null; };
   A.onReady = function () {
     var nb = document.querySelectorAll('.nav button');
     nb[0].addEventListener('click', function () { go(false); });
