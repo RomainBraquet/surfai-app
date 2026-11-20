@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SurfAI, maquette accueil A</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14161B;
+    --soft:rgba(20,22,27,.62);
+    --line:rgba(20,22,27,.28);
+    --top:#C9F27A;      /* à ne pas rater */
+    --good:#A9E8C4;     /* bonne session */
+    --mid:#FFE48A;      /* moyen */
+    --none:#ECEDF1;     /* rien à surfer */
+    --page:#F6F6F4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#DCDDE3;font-family:"DM Sans",Helvetica,Arial,sans-serif;color:var(--ink);
+       min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 16px 40px}
+  .note{max-width:390px;font-size:13px;line-height:1.45;color:#555a66;margin-bottom:18px;text-align:center}
+  .phone{width:390px;max-width:100%;height:812px;background:var(--page);border-radius:46px;position:relative;
+         overflow:hidden;box-shadow:0 30px 70px rgba(20,22,27,.28),0 0 0 10px #111318}
+  .scroll{height:100%;overflow-y:auto;padding:58px 0 130px;scrollbar-width:none}
+  .scroll::-webkit-scrollbar{display:none}
+  .head{padding:0 26px 22px}
+  .where{font-size:15px;color:var(--soft);display:flex;align-items:center;gap:6px}
+  .where svg{width:14px;height:14px}
+  h1{font-size:50px;font-weight:500;letter-spacing:-.035em;line-height:1.02;margin-top:6px}
+
+  .stack{padding:0 10px}
+  .day{position:relative;border-radius:34px 34px 0 0;padding:20px 20px 46px;margin-top:-30px;cursor:pointer;
+       -webkit-tap-highlight-color:transparent;transition:padding .35s ease}
+  .day:first-child{margin-top:0}
+  .day:last-child{border-radius:34px;padding-bottom:22px}
+  .day.top{background:var(--top)} .day.good{background:var(--good)}
+  .day.mid{background:var(--mid)} .day.none{background:var(--none)}
+  .day.none{padding-top:16px;padding-bottom:40px}
+  .day.none:last-child{padding-bottom:18px}
+
+  .row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+  .name{font-size:27px;font-weight:500;letter-spacing:-.025em}
+  .name small{font-size:15px;font-weight:400;color:var(--soft);letter-spacing:0;margin-left:6px}
+  .day.none .name{font-size:20px;color:var(--soft)}
+  .verdict{font-size:15px;font-weight:500;white-space:nowrap}
+  .day.none .verdict{font-weight:400;color:var(--soft)}
+  .sub{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .pill{font-size:13.5px;border:1px solid var(--line);border-radius:999px;padding:4px 11px;white-space:nowrap}
+  .pill.new{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  /* dépliage */
+  .more{display:grid;grid-template-rows:0fr;transition:grid-template-rows .38s ease}
+  .more > div{overflow:hidden}
+  .day.open .more{grid-template-rows:1fr}
+  .day.open{padding-bottom:58px}
+  .day.open .sub{display:none}
+  .day.open:last-child{padding-bottom:26px}
+  .inner{padding-top:14px}
+
+  .big{display:flex;align-items:flex-end;justify-content:space-between}
+  .big{gap:14px}
+  .spot{font-size:27px;font-weight:500;letter-spacing:-.03em;line-height:1.05}
+  .slot{font-size:17px;margin-top:6px}
+  .score{font-size:56px;font-weight:500;letter-spacing:-.05em;line-height:.85}
+  .score span{font-size:17px;letter-spacing:0;color:var(--soft);margin-left:2px}
+
+  .bars{display:flex;align-items:flex-end;gap:5px;height:56px;margin-top:18px}
+  .bars i{flex:1;border-radius:999px;background:rgba(20,22,27,.16);display:block}
+  .bars i.on{background:var(--ink)}
+  .hours{display:flex;justify-content:space-between;font-size:12px;color:var(--soft);margin-top:7px}
+
+  .facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+  .fact{background:rgba(255,255,255,.5);border-radius:18px;padding:11px 12px}
+  .fact b{display:block;font-size:17px;font-weight:500;letter-spacing:-.01em}
+  .fact em{font-style:normal;font-size:12.5px;color:var(--soft)}
+
+  .memory{margin-top:10px;background:rgba(255,255,255,.5);border-radius:18px;padding:13px 14px;font-size:15px;line-height:1.35;
+          display:flex;gap:10px;align-items:flex-start}
+  .memory svg{width:18px;height:18px;flex:none;margin-top:2px}
+  .go{margin-top:16px;display:flex;align-items:center;justify-content:space-between;font-size:15px;font-weight:500}
+  .arrow{width:44px;height:44px;border-radius:50%;background:var(--ink);display:grid;place-items:center}
+  .arrow svg{width:18px;height:18px;stroke:#fff}
+  .why{font-size:15px;line-height:1.4;color:var(--soft)}
+
+  .nav{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);border-radius:999px;
+       display:flex;align-items:center;gap:6px;padding:7px}
+  .nav button{border:0;background:none;color:rgba(255,255,255,.6);font:inherit;font-size:12px;width:78px;height:50px;border-radius:999px;
+       display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer}
+  .nav svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .nav .cur{color:#fff}
+  .nav .plus{width:50px;background:#fff;color:var(--ink)}
+  .nav .plus svg{width:22px;height:22px;stroke-width:2}
+</style>
+</head>
+<body>
+<p class="note">Maquette de travail, données inventées pour l'exemple. Touche un jour pour le déplier.</p>
+
+<div class="phone">
+  <div class="scroll">
+    <div class="head">
+      <div class="where">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.500C5 14.800 12 21 12 21z"/><circle cx="12" cy="9.500" r="2.500"/></svg>
+        Biarritz et alentours
+      </div>
+      <h1>Cette semaine</h1>
+    </div>
+
+    <div class="stack" id="stack">
+
+      <article class="day mid">
+        <div class="row"><div class="name">Aujourd'hui</div><div class="verdict">Moyen</div></div>
+        <div class="sub"><span class="pill">Ilbaritz</span><span class="pill">15h à 17h</span></div>
+        <div class="more"><div><div class="inner">
+          <div class="big"><div><div class="spot">Ilbaritz</div><div class="slot">Cet après-midi, 15h à 17h</div></div><div class="score">5,5<span>/10</span></div></div>
+          <div class="bars"><i style="height:22%"></i><i style="height:26%"></i><i style="height:30%"></i><i style="height:34%"></i><i style="height:40%"></i><i style="height:46%"></i><i style="height:52%"></i><i class="on" style="height:58%"></i><i class="on" style="height:60%"></i><i style="height:44%"></i></div>
+          <div class="hours"><span>8h</span><span>13h</span><span>18h</span></div>
+          <div class="facts">
+            <div class="fact"><b>0,8 m</b><em>un peu petit</em></div>
+            <div class="fact"><b>Léger</b><em>vent de côté</em></div>
+            <div class="fact"><b>Mi-marée</b><em>marée</em></div>
+          </div>
+          <div class="go"><span>Voir le spot</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+        </div></div></div>
+      </article>
+
+      <article class="day top open">
+        <div class="row"><div class="name">Samedi<small>21 nov.</small></div><div class="verdict">À ne pas rater</div></div>
+        <div class="sub"><span class="pill">Côte des Basques</span><span class="pill">9h à 11h</span></div>
+        <div class="more"><div><div class="inner">
+          <div class="big"><div><div class="spot">Côte des Basques</div><div class="slot">Samedi matin, 9h à 11h</div></div><div class="score">8,4<span>/10</span></div></div>
+          <div class="bars"><i style="height:62%"></i><i class="on" style="height:92%"></i><i class="on" style="height:100%"></i><i style="height:78%"></i><i style="height:60%"></i><i style="height:48%"></i><i style="height:40%"></i><i style="height:36%"></i><i style="height:42%"></i><i style="height:50%"></i></div>
+          <div class="hours"><span>8h</span><span>13h</span><span>18h</span></div>
+          <div class="facts">
+            <div class="fact"><b>1,2 m</b><em>à ta taille</em></div>
+            <div class="fact"><b>Léger</b><em>vent de terre</em></div>
+            <div class="fact"><b>Montante</b><em>marée</em></div>
+          </div>
+          <div class="memory">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.300-7-9.500A4 4 0 0 1 12 8a4 4 0 0 1 7 2.500C19 15.700 12 20 12 20z"/></svg>
+            <span>Tu as déjà eu ces conditions ici, et tu avais adoré</span>
+          </div>
+          <div class="go"><span>Voir le spot</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+        </div></div></div>
+      </article>
+
+      <article class="day good">
+        <div class="row"><div class="name">Dimanche<small>22 nov.</small></div><div class="verdict">Bonne session</div></div>
+        <div class="sub"><span class="pill">Le VVF</span><span class="pill">10h à 12h</span><span class="pill new">À découvrir</span></div>
+        <div class="more"><div><div class="inner">
+          <div class="big"><div><div class="spot">Le VVF</div><div class="slot">Dimanche matin, 10h à 12h</div></div><div class="score">7,1<span>/10</span></div></div>
+          <div class="bars"><i style="height:50%"></i><i style="height:64%"></i><i class="on" style="height:86%"></i><i class="on" style="height:88%"></i><i style="height:70%"></i><i style="height:56%"></i><i style="height:48%"></i><i style="height:40%"></i><i style="height:34%"></i><i style="height:30%"></i></div>
+          <div class="hours"><span>8h</span><span>13h</span><span>18h</span></div>
+          <div class="facts">
+            <div class="fact"><b>1,0 m</b><em>à ta taille</em></div>
+            <div class="fact"><b>Faible</b><em>vent de terre</em></div>
+            <div class="fact"><b>Basse</b><em>marée</em></div>
+          </div>
+          <div class="memory">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M15 9l-2 4-4 2 2-4z"/></svg>
+            <span>Tu n'as jamais surfé ici. C'est à 4 km, et ce sera mieux que sur tes spots habituels</span>
+          </div>
+          <div class="go"><span>Voir le spot</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+        </div></div></div>
+      </article>
+
+      <article class="day none">
+        <div class="row"><div class="name">Lundi</div><div class="verdict">Rien à surfer</div></div>
+        <div class="more"><div><div class="inner"><p class="why">Trop de vent toute la journée, sur tous tes spots.</p></div></div></div>
+      </article>
+
+      <article class="day none">
+        <div class="row"><div class="name">Mardi</div><div class="verdict">Rien à surfer</div></div>
+        <div class="more"><div><div class="inner"><p class="why">Trop petit toute la journée, sur tous tes spots.</p></div></div></div>
+      </article>
+
+      <article class="day mid">
+        <div class="row"><div class="name">Mercredi<small>25 nov.</small></div><div class="verdict">Moyen</div></div>
+        <div class="sub"><span class="pill">Grande Plage</span><span class="pill">12h à 14h</span></div>
+        <div class="more"><div><div class="inner">
+          <div class="big"><div><div class="spot">Grande Plage</div><div class="slot">Mercredi midi, 12h à 14h</div></div><div class="score">5,8<span>/10</span></div></div>
+          <div class="bars"><i style="height:30%"></i><i style="height:36%"></i><i style="height:44%"></i><i style="height:52%"></i><i class="on" style="height:62%"></i><i class="on" style="height:60%"></i><i style="height:50%"></i><i style="height:42%"></i><i style="height:34%"></i><i style="height:28%"></i></div>
+          <div class="hours"><span>8h</span><span>13h</span><span>18h</span></div>
+          <div class="facts">
+            <div class="fact"><b>1,6 m</b><em>un peu gros</em></div>
+            <div class="fact"><b>Modéré</b><em>vent de côté</em></div>
+            <div class="fact"><b>Haute</b><em>marée</em></div>
+          </div>
+          <div class="go"><span>Voir le spot</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+        </div></div></div>
+      </article>
+
+    </div>
+  </div>
+
+  <nav class="nav">
+    <button class="cur"><svg viewBox="0 0 24 24"><path d="M3 9c3 0 3 2 6 2s3-2 6-2 3 2 6 2M3 15c3 0 3 2 6 2s3-2 6-2 3 2 6 2"/></svg>Semaine</button>
+    <button class="plus" aria-label="Noter une session"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.500"/><path d="M5 20c1-4 4-5.500 7-5.500s6 1.500 7 5.500"/></svg>Moi</button>
+  </nav>
+</div>
+
+<script>
+  document.querySelectorAll('.day').forEach(function (card) {
+    card.addEventListener('click', function () {
+      var wasOpen = card.classList.contains('open');
+      document.querySelectorAll('.day.open').forEach(function (c) { c.classList.remove('open'); });
+      if (!wasOpen) card.classList.add('open');
+    });
+  });
+</script>
+</body>
+</html>

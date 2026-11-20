@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SurfAI, maquette A avec détail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14161B;
+    --soft:rgba(20,22,27,.62);
+    --line:rgba(20,22,27,.28);
+    --top:#C9F27A;      /* à ne pas rater */
+    --good:#A9E8C4;     /* bonne session */
+    --mid:#FFE48A;      /* moyen */
+    --none:#ECEDF1;     /* rien à surfer */
+    --page:#F6F6F4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#DCDDE3;font-family:"DM Sans",Helvetica,Arial,sans-serif;color:var(--ink);
+       min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 16px 40px}
+  .note{max-width:390px;font-size:13px;line-height:1.45;color:#555a66;margin-bottom:18px;text-align:center}
+  .phone{width:390px;max-width:100%;height:812px;background:var(--page);border-radius:46px;position:relative;
+         overflow:hidden;box-shadow:0 30px 70px rgba(20,22,27,.28),0 0 0 10px #111318}
+  .scroll{height:100%;overflow-y:auto;padding:58px 0 130px;scrollbar-width:none}
+  .scroll::-webkit-scrollbar{display:none}
+  .head{padding:0 26px 22px}
+  .where{font-size:15px;color:var(--soft);display:flex;align-items:center;gap:6px}
+  .where svg{width:14px;height:14px}
+  h1{font-size:50px;font-weight:500;letter-spacing:-.035em;line-height:1.02;margin-top:6px}
+
+  .stack{padding:0 10px}
+  .day{position:relative;border-radius:34px 34px 0 0;padding:20px 20px 46px;margin-top:-30px;cursor:pointer;
+       -webkit-tap-highlight-color:transparent;transition:padding .35s ease}
+  .day:first-child{margin-top:0}
+  .day:last-child{border-radius:34px;padding-bottom:22px}
+  .day.top{background:var(--top)} .day.good{background:var(--good)}
+  .day.mid{background:var(--mid)} .day.none{background:var(--none)}
+  .day.none{padding-top:16px;padding-bottom:40px}
+  .day.none:last-child{padding-bottom:18px}
+
+  .row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+  .name{font-size:27px;font-weight:500;letter-spacing:-.025em}
+  .name small{font-size:15px;font-weight:400;color:var(--soft);letter-spacing:0;margin-left:6px}
+  .day.none .name{font-size:20px;color:var(--soft)}
+  .verdict{font-size:15px;font-weight:500;white-space:nowrap}
+  .day.none .verdict{font-weight:400;color:var(--soft)}
+  .sub{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .pill{font-size:13.5px;border:1px solid var(--line);border-radius:999px;padding:4px 11px;white-space:nowrap}
+  .pill.new{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  /* dépliage */
+  .more{display:grid;grid-template-rows:0fr;transition:grid-template-rows .38s ease}
+  .more > div{overflow:hidden}
+  .day.open .more{grid-template-rows:1fr}
+  .day.open{padding-bottom:58px}
+  .day.open .sub{display:none}
+  .day.open:last-child{padding-bottom:26px}
+  .inner{padding-top:14px}
+
+  .big{display:flex;align-items:flex-end;justify-content:space-between}
+  .big{gap:14px}
+  .spot{font-size:27px;font-weight:500;letter-spacing:-.03em;line-height:1.05}
+  .slot{font-size:17px;margin-top:6px}
+  .score{font-size:56px;font-weight:500;letter-spacing:-.05em;line-height:.85}
+  .score span{font-size:17px;letter-spacing:0;color:var(--soft);margin-left:2px}
+
+  .bars{display:flex;align-items:flex-end;gap:5px;height:56px;margin-top:18px}
+  .bars i{flex:1;border-radius:999px;background:rgba(20,22,27,.16);display:block}
+  .bars i.on{background:var(--ink)}
+  .hours{display:flex;justify-content:space-between;font-size:12px;color:var(--soft);margin-top:7px}
+
+  .facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+  .fact{background:rgba(255,255,255,.5);border-radius:18px;padding:11px 12px}
+  .fact b{display:block;font-size:17px;font-weight:500;letter-spacing:-.01em}
+  .fact em{font-style:normal;font-size:12.5px;color:var(--soft)}
+
+  .memory{margin-top:10px;background:rgba(255,255,255,.5);border-radius:18px;padding:13px 14px;font-size:15px;line-height:1.35;
+          display:flex;gap:10px;align-items:flex-start}
+  .memory svg{width:18px;height:18px;flex:none;margin-top:2px}
+  .go{margin-top:16px;display:flex;align-items:center;justify-content:space-between;font-size:15px;font-weight:500}
+  .arrow{width:44px;height:44px;border-radius:50%;background:var(--ink);display:grid;place-items:center}
+  .arrow svg{width:18px;height:18px;stroke:#fff}
+  .why{font-size:15px;line-height:1.4;color:var(--soft)}
+
+  .nav{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);border-radius:999px;
+       display:flex;align-items:center;gap:6px;padding:7px}
+  .nav button{border:0;background:none;color:rgba(255,255,255,.6);font:inherit;font-size:12px;width:78px;height:50px;border-radius:999px;
+       display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer}
+  .nav svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .nav .cur{color:#fff}
+  .nav .plus{width:50px;background:#fff;color:var(--ink)}
+  .nav .plus svg{width:22px;height:22px;stroke-width:2}
+
+  .nav{z-index:3}
+  .sheet{position:absolute;inset:0;background:var(--top);transform:translateY(102%);transition:transform .42s cubic-bezier(.2,.8,.2,1);
+         z-index:5;overflow-y:auto;padding:52px 22px 44px;scrollbar-width:none}
+  .sheet::-webkit-scrollbar{display:none}
+  .sheet.show{transform:none}
+  .close{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.55);display:grid;place-items:center;border:0;cursor:pointer}
+  .close svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .sheet .kicker{font-size:15px;color:var(--soft);margin-top:18px}
+  .sheet h2{font-size:40px;font-weight:500;letter-spacing:-.035em;line-height:1.03;margin-top:4px}
+  .headline{display:flex;align-items:flex-end;justify-content:space-between;margin-top:10px}
+  .headline .v{font-size:17px;font-weight:500}
+  .hbars{display:flex;align-items:flex-end;gap:5px;height:118px;margin-top:26px}
+  .hb{flex:1;border:0;padding:0;border-radius:999px;background:rgba(20,22,27,.16);cursor:pointer;transition:background .15s}
+  .hb.best{background:rgba(20,22,27,.42)}
+  .hb.sel{background:var(--ink)}
+  .hlabels{display:flex;gap:5px;margin-top:7px}
+  .hlabels span{flex:1;text-align:center;font-size:11px;color:var(--soft)}
+  .hlabels span.sel{color:var(--ink);font-weight:600}
+  .at{display:flex;align-items:baseline;justify-content:space-between;margin-top:24px}
+  .at b{font-size:26px;font-weight:500;letter-spacing:-.02em}
+  .at span{font-size:15px;font-weight:500}
+  .nums{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .num{background:rgba(255,255,255,.5);border-radius:20px;padding:13px 14px}
+  .num label{display:block;font-size:12.5px;color:var(--soft)}
+  .num b{display:block;font-size:25px;font-weight:500;letter-spacing:-.02em;margin-top:3px}
+  .num b small{font-size:14px;font-weight:400;color:var(--soft);letter-spacing:0;margin-left:3px}
+  .num em{display:block;font-style:normal;font-size:13px;margin-top:2px}
+  .sheet h3{font-size:22px;font-weight:500;letter-spacing:-.02em;margin-top:34px}
+  .others{margin-top:12px;display:grid;gap:6px}
+  .other{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.62);border-radius:20px;padding:10px 14px 10px 10px}
+  .other .badge{flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:16px;font-weight:600}
+  .other .badge.top{background:var(--top);box-shadow:inset 0 0 0 1.5px rgba(20,22,27,.5)} .other .badge.good{background:var(--good)}
+  .other .badge.mid{background:var(--mid)} .other .badge.none{background:var(--none);color:var(--soft)}
+  .other .n{font-size:17px;font-weight:500;display:block}
+  .other .s{font-size:13.5px;color:var(--soft)}
+  .other .here{margin-left:auto;font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+
+  .scene{position:relative;margin-top:8px;border-radius:24px;overflow:hidden;background:rgba(255,255,255,.5);height:230px}
+  .scene canvas{display:block;width:100%;height:100%}
+  .scene .tag{position:absolute;left:14px;font-size:12px;color:var(--soft)}
+  .scene .tag.sea{top:11px} .scene .tag.sand{bottom:10px}
+  .dirs{display:grid;gap:8px;margin-top:8px}
+  .dir{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.5);border-radius:20px;padding:12px 14px}
+  .dir svg{flex:none;width:30px;height:30px;stroke:var(--ink);fill:none;stroke-linecap:round}
+  .dir b{display:block;font-size:19px;font-weight:500;letter-spacing:-.015em}
+  .dir em{display:block;font-style:normal;font-size:13px;margin-top:1px}
+  .dir .deg{margin-left:auto;text-align:right;font-size:13px;color:var(--soft);white-space:nowrap}
+  .past{display:flex;gap:10px;margin:12px -22px 0;padding:0 22px;overflow-x:auto;scrollbar-width:none}
+  .past::-webkit-scrollbar{display:none}
+  .mem{flex:none;width:168px;background:rgba(255,255,255,.5);border-radius:22px;padding:8px 8px 13px}
+  .mem .ph{height:112px;border-radius:16px;background:linear-gradient(160deg,#8fb8d8,#dfe9c9 70%,#f2e3b6)}
+  .mem .ph.b{background:linear-gradient(160deg,#f0b48a,#f3d9a8 55%,#9cc2d6)}
+  .mem .ph.c{background:linear-gradient(160deg,#9aa9c9,#cfd8e6)}
+  .mem .st{font-size:14px;letter-spacing:1px;margin:10px 6px 0}
+  .mem p{font-size:13.5px;line-height:1.35;margin:4px 6px 0}
+</style>
+</head>
+<body>
+<p class="note">Maquette de travail, données inventées pour l'exemple. Touche un jour pour le déplier, puis « Voir le spot » pour le détail. Le détail montre toujours l'exemple de samedi.</p>
+
+<div class="phone">
+  <div class="scroll">
+    <div class="head">
+      <div class="where">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.500C5 14.800 12 21 12 21z"/><circle cx="12" cy="9.500" r="2.500"/></svg>
+        Biarritz et alentours
+      </div>
+      <h1>Cette semaine</h1>
+    </div>
+
+    <div class="stack" id="stack">
+
+      <article class="day mid">
+        <div class="row"><div class="name">Aujourd'hui</div><div class="verdict">Moyen</div></div>
+        <div class="sub"><span class="pill">Ilbaritz</span><span class="pill">15h à 17h</span></div>
+        <div class="more"><div><div class="inner">
+          <div class="big"><div><div class="spot">Ilbaritz</div><div class="slot">Cet après-midi, 15h à 17h</div></div><div class="score">5,5<span>/10</span></div></div>
+          <div class="bars"><i style="height:22%"></i><i style="height:26%"></i><i style="height:30%"></i><i style="height:34%"></i><i style="height:40%"></i><i style="height:46%"></i><i style="height:52%"></i><i class="on" style="height:58%"></i><i class="on" style="height:60%"></i><i style="height:44%"></i></div>
+          <div class="hours"><span>8h</span><span>13h</span><span>18h</span></div>
+          <div class="facts">
+            <div class="fact"><b>0,8 m</b><em>un peu petit</em></div>
+            <div class="fact"><b>Léger</b><em>vent de côté</em></div>
+            <div class="fact"><b>Mi-marée</b><em>marée</em></div>
+          </div>
+          <div class="go"><span>Voir le spot</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+        </div></div></div>
+      </article>
+
+      <article class="day top open">
+        <div class="row"><div class="name">Samedi<small>21 nov.</small></div><div class="verdict">À ne pas rater</div></div>
+        <div class="sub"><span class="pill">Côte des Basques</span><span class="pill">9h à 11h</span></div>
+        <div class="more"><div><div class="inner">
+          <div class="big"><div><div class="spot">Côte des Basques</div><div class="slot">Samedi matin, 9h à 11h</div></div><div class="score">8,4<span>/10</span></div></div>
+          <div class="bars"><i style="height:62%"></i><i class="on" style="height:92%"></i><i class="on" style="height:100%"></i><i style="height:78%"></i><i style="height:60%"></i><i style="height:48%"></i><i style="height:40%"></i><i style="height:36%"></i><i style="height:42%"></i><i style="height:50%"></i></div>
+          <div class="hours"><span>8h</span><span>13h</span><span>18h</span></div>
+          <div class="facts">
+            <div class="fact"><b>1,2 m</b><em>à ta taille</em></div>
+            <div class="fact"><b>Léger</b><em>vent de terre</em></div>
+            <div class="fact"><b>Montante</b><em>marée</em></div>
+          </div>
+          <div class="memory">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.300-7-9.500A4 4 0 0 1 12 8a4 4 0 0 1 7 2.500C19 15.700 12 20 12 20z"/></svg>
+            <span>Tu as déjà eu ces conditions ici, et tu avais adoré</span>
+          </div>
+          <div class="go"><span>Voir le spot</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+        </div></div></div>
+      </article>
+
+      <article class="day good">
+        <div class="row"><div class="name">Dimanche<small>22 nov.</small></div><div class="verdict">Bonne session</div></div>
+        <div class="sub"><span class="pill">Le VVF</span><span class="pill">10h à 12h</span><span class="pill new">À découvrir</span></div>
+        <div class="more"><div><div class="inner">
+          <div class="big"><div><div class="spot">Le VVF</div><div class="slot">Dimanche matin, 10h à 12h</div></div><div class="score">7,1<span>/10</span></div></div>
+          <div class="bars"><i style="height:50%"></i><i style="height:64%"></i><i class="on" style="height:86%"></i><i class="on" style="height:88%"></i><i style="height:70%"></i><i style="height:56%"></i><i style="height:48%"></i><i style="height:40%"></i><i style="height:34%"></i><i style="height:30%"></i></div>
+          <div class="hours"><span>8h</span><span>13h</span><span>18h</span></div>
+          <div class="facts">
+            <div class="fact"><b>1,0 m</b><em>à ta taille</em></div>
+            <div class="fact"><b>Faible</b><em>vent de terre</em></div>
+            <div class="fact"><b>Basse</b><em>marée</em></div>
+          </div>
+          <div class="memory">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M15 9l-2 4-4 2 2-4z"/></svg>
+            <span>Tu n'as jamais surfé ici. C'est à 4 km, et ce sera mieux que sur tes spots habituels</span>
+          </div>
+          <div class="go"><span>Voir le spot</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+        </div></div></div>
+      </article>
+
+      <article class="day none">
+        <div class="row"><div class="name">Lundi</div><div class="verdict">Rien à surfer</div></div>
+        <div class="more"><div><div class="inner"><p class="why">Trop de vent toute la journée, sur tous tes spots.</p></div></div></div>
+      </article>
+
+      <article class="day none">
+        <div class="row"><div class="name">Mardi</div><div class="verdict">Rien à surfer</div></div>
+        <div class="more"><div><div class="inner"><p class="why">Trop petit toute la journée, sur tous tes spots.</p></div></div></div>
+      </article>
+
+      <article class="day mid">
+        <div class="row"><div class="name">Mercredi<small>25 nov.</small></div><div class="verdict">Moyen</div></div>
+        <div class="sub"><span class="pill">Grande Plage</span><span class="pill">12h à 14h</span></div>
+        <div class="more"><div><div class="inner">
+          <div class="big"><div><div class="spot">Grande Plage</div><div class="slot">Mercredi midi, 12h à 14h</div></div><div class="score">5,8<span>/10</span></div></div>
+          <div class="bars"><i style="height:30%"></i><i style="height:36%"></i><i style="height:44%"></i><i style="height:52%"></i><i class="on" style="height:62%"></i><i class="on" style="height:60%"></i><i style="height:50%"></i><i style="height:42%"></i><i style="height:34%"></i><i style="height:28%"></i></div>
+          <div class="hours"><span>8h</span><span>13h</span><span>18h</span></div>
+          <div class="facts">
+            <div class="fact"><b>1,6 m</b><em>un peu gros</em></div>
+            <div class="fact"><b>Modéré</b><em>vent de côté</em></div>
+            <div class="fact"><b>Haute</b><em>marée</em></div>
+          </div>
+          <div class="go"><span>Voir le spot</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+        </div></div></div>
+      </article>
+
+    </div>
+  </div>
+
+  <section class="sheet" id="sheet">
+    <button class="close" id="close" aria-label="Fermer"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+    <div class="kicker">Samedi 21 novembre</div>
+    <h2>Côte des Basques</h2>
+    <div class="headline"><span class="v">À ne pas rater, de 9h à 11h</span><span class="score">8,4<span>/10</span></span></div>
+
+    <div class="hbars" id="hbars"></div>
+    <div class="hlabels" id="hlabels"></div>
+
+    <div class="at"><b id="atHour">9h</b><span id="atVerdict">À ne pas rater</span></div>
+    <div class="nums">
+      <div class="num"><label>Houle</label><b id="nWave"></b><em id="tWave"></em></div>
+      <div class="num"><label>Période</label><b id="nPer"></b><em id="tPer"></em></div>
+      <div class="num"><label>Vent</label><b id="nWind"></b><em id="tWind"></em></div>
+      <div class="num"><label>Marée</label><b id="nTide"></b><em id="tTide"></em></div>
+    </div>
+
+    <h3>Vu depuis la plage</h3>
+    <div class="scene"><canvas id="cv"></canvas><span class="tag sea">Le large</span><span class="tag sand">La plage, tu es ici</span></div>
+    <div class="dirs">
+      <div class="dir"><svg viewBox="0 0 30 30" stroke-width="1.6"><path d="M4 9h12M9 15h17M4 21h10"/></svg><div><b id="dWind"></b><em id="dWindS"></em></div><span class="deg" id="dWindD"></span></div>
+      <div class="dir"><svg viewBox="0 0 30 30" stroke-width="3.2"><path d="M4 9h22M4 16h22M4 23h22"/></svg><div><b id="dSwell"></b><em id="dSwellS"></em></div><span class="deg" id="dSwellD"></span></div>
+    </div>
+
+    <h3>Les autres spots samedi</h3>
+    <div class="others">
+      <div class="other"><span class="badge top">8,4</span><span><span class="n">Côte des Basques</span><span class="s">À ne pas rater, 9h à 11h</span></span><span class="here">Ici</span></div>
+      <div class="other"><span class="badge good">7,2</span><span><span class="n">Grande Plage</span><span class="s">Bonne session, 9h à 11h</span></span></div>
+      <div class="other"><span class="badge mid">6,0</span><span><span class="n">Ilbaritz</span><span class="s">Moyen, 10h à 12h</span></span></div>
+      <div class="other"><span class="badge none">0</span><span><span class="n">Le VVF</span><span class="s">Rien à surfer, trop gros</span></span></div>
+    </div>
+
+    <h3>Ton vécu ici</h3>
+    <div class="past">
+      <div class="mem"><div class="ph"></div><div class="st">★★★★★</div><p>« Glassy jusqu'à 11h, longues droites, personne à l'eau »</p></div>
+      <div class="mem"><div class="ph b"></div><div class="st">★★★★☆</div><p>« Bien mais du monde, longboard parfait »</p></div>
+      <div class="mem"><div class="ph c"></div><div class="st">★★☆☆☆</div><p>« Trop de vent, ça hachait »</p></div>
+    </div>
+  </section>
+
+  <nav class="nav">
+    <button class="cur"><svg viewBox="0 0 24 24"><path d="M3 9c3 0 3 2 6 2s3-2 6-2 3 2 6 2M3 15c3 0 3 2 6 2s3-2 6-2 3 2 6 2"/></svg>Semaine</button>
+    <button class="plus" aria-label="Noter une session"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.500"/><path d="M5 20c1-4 4-5.500 7-5.500s6 1.500 7 5.500"/></svg>Moi</button>
+  </nav>
+</div>
+
+<script>
+  document.querySelectorAll('.day').forEach(function (card) {
+    card.addEventListener('click', function () {
+      var wasOpen = card.classList.contains('open');
+      document.querySelectorAll('.day.open').forEach(function (c) { c.classList.remove('open'); });
+      if (!wasOpen) card.classList.add('open');
+    });
+  });
+
+  // détail plein écran
+  var H = [8,9,10,11,12,13,14,15,16,17];
+  var D = {
+    score:[6.2,8.4,8.4,7.4,6.0,5.0,4.4,4.0,4.3,4.8],
+    wave:[1.1,1.2,1.2,1.3,1.3,1.4,1.4,1.5,1.5,1.4],
+    per:[11,11,11,11,10,10,10,10,9,9],
+    sd:[290,290,290,290,292,292,295,295,295,295],
+    wind:[6,8,9,12,15,18,20,22,19,16],
+    wd:[95,95,100,120,200,250,270,280,280,270],
+    tide:[1.4,1.9,2.4,2.9,3.3,3.5,3.4,3.0,2.5,1.9]
+  };
+  var CARD = ['Nord','Nord-est','Est','Sud-est','Sud','Sud-ouest','Ouest','Nord-ouest'];
+  function card(deg){ return CARD[Math.round(deg/45)%8]; }
+  function fr(n,d){ return n.toFixed(d).replace('.',','); }
+  function $(id){ return document.getElementById(id); }
+  function verdict(s){ return s>=8?'À ne pas rater':s>=6.5?'Bonne session':s>=5?'Moyen':'Pas terrible'; }
+  var bars = $('hbars'), labels = $('hlabels');
+  H.forEach(function(h,i){
+    var b=document.createElement('button'); b.className='hb'+(D.score[i]>=8?' best':''); b.style.height=(D.score[i]*11)+'%';
+    b.setAttribute('aria-label',h+'h');
+    b.addEventListener('click',function(){ pick(i); }); b.addEventListener('pointerenter',function(e){ if(e.buttons) pick(i); });
+    bars.appendChild(b);
+    var l=document.createElement('span'); l.textContent=h+'h'; labels.appendChild(l);
+  });
+  function pick(i){
+    [].forEach.call(bars.children,function(b,k){ b.classList.toggle('sel',k===i); });
+    [].forEach.call(labels.children,function(l,k){ l.classList.toggle('sel',k===i); });
+    $('atHour').textContent=H[i]+'h';
+    $('atVerdict').textContent=verdict(D.score[i])+' · '+fr(D.score[i],1);
+    $('nWave').innerHTML=fr(D.wave[i],1)+'<small>m</small>';
+    $('tWave').textContent=D.wave[i]<=1.3?'À ta taille':'Un peu gros pour toi';
+    $('nPer').innerHTML=D.per[i]+'<small>s</small>';
+    $('tPer').textContent=D.per[i]>=10?'Vagues bien formées':'Vagues plus brouillonnes';
+    $('nWind').innerHTML=D.wind[i]+'<small>km/h</small>';
+    $('tWind').textContent=D.wind[i]<12?'Léger':D.wind[i]<20?'Modéré':'Soutenu';
+    $('nTide').innerHTML=fr(D.tide[i],1)+'<small>m</small>';
+    $('tTide').textContent=(H[i]<13?'Montante':'Descendante')+', haute à 13h20';
+  }
+  // ── la scène : on est debout sur la plage, face au large ──
+  var FACE = 290;            // orientation de la plage : direction du large
+  var cur = 1;
+  function relTo(deg){ var r=((deg-FACE)%360+540)%360-180; return r; }   // 0 = vient pile du large
+  function describe(i){
+    var w=relTo(D.wd[i]), aw=Math.abs(w), sw=relTo(D.sd[i]), as=Math.abs(sw);
+    $('dWind').textContent = aw>135 ? 'Vent dans le dos' : aw<45 ? 'Vent de face' : 'Vent de côté, par la '+(w>0?'droite':'gauche');
+    $('dWindS').textContent = aw>135 ? 'Il vient de la terre et lisse les vagues' : aw<45 ? 'Il vient du large et hache les vagues' : 'Il froisse un peu le plan d\'eau';
+    $('dWindD').innerHTML = D.wind[i]+' km/h<br>'+D.wd[i]+'° '+card(D.wd[i]);
+    $('dSwell').textContent = as<20 ? 'Vagues bien en face' : 'Vagues de biais, par la '+(sw>0?'droite':'gauche');
+    $('dSwellS').textContent = as<35 ? 'Elles rentrent droit sur le spot' : 'Elles arrivent en travers, moins de force';
+    $('dSwellD').innerHTML = D.per[i]+' s<br>'+D.sd[i]+'° '+card(D.sd[i]);
+  }
+  var cv=$('cv'), cx=cv.getContext('2d'), P=[], t0=performance.now();
+  for(var k=0;k<34;k++) P.push({x:Math.random(),y:Math.random(),o:Math.random()});
+  function draw(now){
+    var W=cv.clientWidth, Hh=cv.clientHeight, dpr=window.devicePixelRatio||1;
+    if(cv.width!==W*dpr){ cv.width=W*dpr; cv.height=Hh*dpr; }
+    cx.setTransform(dpr,0,0,dpr,0,0); cx.clearRect(0,0,W,Hh);
+    var t=(now-t0)/1000, sand=Hh-44, i=cur;
+    // houle : de longues lignes épaisses qui avancent vers la plage (écart = période, épaisseur = taille)
+    var rs=relTo(D.sd[i])*Math.PI/180, mx=-Math.sin(rs), my=Math.cos(rs), gap=D.per[i]*4.2, diag=Math.hypot(W,Hh);
+    cx.save(); cx.beginPath(); cx.rect(0,0,W,sand); cx.clip();
+    cx.strokeStyle='#14161B'; cx.lineCap='round';
+    var off=(t*9)%gap;
+    for(var d=-diag; d<diag; d+=gap){
+      var px=W/2+mx*(d+off), py=sand/2+my*(d+off), fade=Math.max(0,Math.min(1,(py+40)/sand));
+      cx.globalAlpha=.16+.6*fade; cx.lineWidth=D.wave[i]*2.6*(.55+.45*fade);
+      cx.beginPath(); cx.moveTo(px-my*diag,py+mx*diag); cx.lineTo(px+my*diag,py-mx*diag); cx.stroke();
+    }
+    cx.restore();
+    // la plage
+    cx.globalAlpha=1; cx.fillStyle='rgba(20,22,27,.10)'; cx.fillRect(0,sand,W,Hh-sand);
+    cx.fillStyle='#14161B'; cx.beginPath(); cx.arc(W/2,sand+22,6,0,7); cx.fill();
+    // vent : de petits traits rapides, dans son vrai sens par rapport à la plage
+    var rw=relTo(D.wd[i])*Math.PI/180, vx=-Math.sin(rw), vy=Math.cos(rw), sp=D.wind[i], len=8+sp*1.1;
+    cx.strokeStyle='#14161B'; cx.lineWidth=1.4;
+    P.forEach(function(p){
+      var x=((p.x*W+vx*t*sp*4.5+p.o*900)%W+W)%W, y=((p.y*Hh+vy*t*sp*4.5+p.o*900)%Hh+Hh)%Hh;
+      cx.globalAlpha=.22+.4*p.o; cx.beginPath(); cx.moveTo(x,y); cx.lineTo(x-vx*len,y-vy*len); cx.stroke();
+      cx.beginPath(); cx.arc(x,y,2,0,7); cx.fill();
+    });
+    cx.globalAlpha=1; requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+  var pick0=pick; pick=function(i){ pick0(i); cur=i; describe(i); };
+  pick(1);
+  document.querySelectorAll('.go').forEach(function(g){
+    g.addEventListener('click',function(e){ e.stopPropagation(); $('sheet').classList.add('show'); $('sheet').scrollTop=0; });
+  });
+  $('close').addEventListener('click',function(){ $('sheet').classList.remove('show'); });
+</script>
+</body>
+</html>
