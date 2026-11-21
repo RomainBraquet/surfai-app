@@ -433,7 +433,17 @@
       '<div class="q">Notes</div><textarea class="word" id="eNotes" rows="3">' + esc(s.notes || '') + '</textarea>' +
       (meteo ? '<p class="auto">Météo capturée : ' + esc(meteo) + '</p>' : '') +
       '<div class="msg" id="eMsg"></div>' +
-      '<button class="save" id="eSave">Enregistrer</button><button class="skip" id="eDel" style="color:#FFB4A8">Supprimer</button>';
+      '<button class="save" id="eSave">Enregistrer</button>' +
+      '<label class="save" style="display:block;text-align:center;cursor:pointer;background:rgba(255,255,255,.12);color:#fff">Partager cette session<input type="file" accept="image/*" id="eFile" style="display:none"></label>' +
+      '<button class="skip" id="eDel" style="color:#FFB4A8">Supprimer</button>';
+    $('eFile').addEventListener('change', function () {
+      var f = this.files[0]; if (!f) return;
+      var share = { spotName: (s.spots && s.spots.name) || '', spotCity: (s.spots && s.spots.city) || '', date: String(s.date || '').slice(0, 10), rating: rating || Math.round(s.rating || 0),
+        nickname: (cache.profile && (cache.profile.nickname || cache.profile.pseudo)) || '', meteo: s.meteo || null };
+      $('eMsg').className = 'msg fine'; $('eMsg').textContent = 'Génération en cours...';
+      generateShareCard(f, share).then(function (canvas) { showCard(box, canvas, share, function () { box.classList.remove('show'); }); })
+        .catch(function () { $('eMsg').className = 'msg'; $('eMsg').textContent = 'Erreur lors de la génération de l\'image.'; });
+    });
     [].forEach.call($('eStars').children, function (b, i) { b.addEventListener('click', function () { rating = i + 1; [].forEach.call($('eStars').children, function (x, k) { x.classList.toggle('on', k <= i); }); }); });
     function done() { state.sessions = null; box.classList.remove('show'); renderMe('p3'); A.reload(); }
     $('eClose').addEventListener('click', function () { box.classList.remove('show'); });
