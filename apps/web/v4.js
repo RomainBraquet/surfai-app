@@ -32,8 +32,8 @@
     return { cls: 'none', label: 'Pas terrible' };
   }
   function windWord(v) { return v < 12 ? 'Léger' : v < 20 ? 'Modéré' : v < 30 ? 'Soutenu' : 'Fort'; }
-  function tideWord(p) { return { rising: 'Montante', falling: 'Descendante', high: 'Haute', low: 'Basse' }[p] || 'Marée'; }
-  function tideLevelWord(l) { return l == null ? '' : l < 0.25 ? 'Marée basse' : l > 0.75 ? 'Marée haute' : 'Mi-marée'; }
+  function tideWord(p) { return { rising: 'Montante', falling: 'Descendante', high: 'Pleine mer', low: 'Basse mer' }[p] || 'Marée'; }
+  function tideLevelWord(l) { return l == null ? '' : l < 0.25 ? 'Niveau bas' : l > 0.75 ? 'Niveau haut' : 'Mi-marée'; }
   function slotText(w) { return String(w.timeWindow || w.peakHour || '').replace(/[–-]/, ' à '); }
   function dayName(iso, i) {
     if (i === 0) return "Aujourd'hui";
@@ -65,7 +65,7 @@
     down: '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
     star: '<svg viewBox="0 0 24 24"><path d="M12 3.500l2.600 5.400 5.900.800-4.300 4.100 1 5.900L12 16.900 6.800 19.700l1-5.900L3.500 9.700l5.900-.800z"/></svg>',
     arrowWind: '<svg viewBox="0 0 48 48"><path d="M24 42V9M10 22L24 8l14 14"/></svg>',
-    arrowSwell: '<svg viewBox="0 0 48 48"><path d="M7 21Q24 3 41 21M10 32Q24 17 38 32M14 42Q24 31 34 42"/></svg>',
+    arrowSwell: '<svg viewBox="0 0 48 48"><path d="M2 20C9 9 17 7 24 7s15 2 22 13M5 31c6-9 12-11 19-11s13 2 19 11M9 42c5-8 9-10 15-10s10 2 15 10"/></svg>',
     // même famille de traits pour toutes les données : une donnée = une icône, partout
     air: '<svg viewBox="0 0 24 24"><path d="M12 14.5V5a2 2 0 0 0-4 0v9.500a4 4 0 1 0 4 0zM16 7h4M16 11h3"/></svg>',
     water: '<svg viewBox="0 0 24 24"><path d="M12 3.500s6 6.300 6 10.500a6 6 0 0 1-12 0c0-4.200 6-10.500 6-10.500z"/></svg>',
@@ -149,7 +149,7 @@
         '<div class="facts">' +
           '<div class="fact">' + ICON.wave + '<b>' + (c.waveHeight != null ? fr(c.waveHeight) + ' m' : '') + '</b></div>' +
           '<div class="fact">' + ICON.wind + '<b>' + ((c.windGust || 0) >= 30 ? 'Rafales ' + Math.round(c.windGust) : c.windSpeed != null ? windWord(c.windSpeed) : '') + '</b></div>' +
-          '<div class="fact">' + ICON.tide + '<b>' + tideWord(c.tidePhase) + '</b></div>' +
+          '<div class="fact">' + ICON.tide + '<b>' + (c.tidePhase && c.tidePhase !== 'unknown' ? tideWord(c.tidePhase) : '–') + '</b></div>' +
         '</div>' + memory +
         '<div class="go" data-detail="' + day.index + '"><span>Voir le spot</span><span class="arrow">' + ICON.go + '</span></div>' +
       '</div></div></div></article>';
@@ -178,26 +178,26 @@
       var hs = hoursOf(r, today).filter(function (h) { return h.hour >= hour; });
       if (hs.length) best = { r: r, h: hs[0] };
     });
-    var html = '<div class="mine" id="nowMine"></div>';
+    var html = '';
     if (best) {
       var c = best.h.conditions || {};
       var tile = function (icon, val, lbl) { return '<div><b>' + (val == null ? '–' : esc(val)) + '</b><i>' + icon + lbl + '</i></div>'; };
-      html += '<div class="grid5">' +
+      html += '<div class="loc">' + (best.h.hour === hour ? 'Maintenant' : 'À ' + best.h.hour + 'h') + ' · ' + esc(best.r.spot.name) + '</div><div class="grid5">' +
         tile(ICON.air, c.airTemp != null ? Math.round(c.airTemp) + '°' : null, 'air') +
         tile(ICON.wind, c.windSpeed != null ? Math.round(c.windSpeed) + (c.windDirection != null ? ' ' + cardinal(c.windDirection) : '') : null, 'vent') +
         tile(ICON.wave, c.waveHeight != null ? fr(c.waveHeight) + ' m' : null, 'vagues') +
         tile(ICON.water, c.waterTemp != null ? Math.round(c.waterTemp) + '°' : null, 'eau') +
-        tile(ICON.tide, c.tidePhase && c.tidePhase !== 'unknown' ? tideWord(c.tidePhase) : null, 'marée') +
-        '</div><div class="loc">' + (best.h.hour === hour ? 'Maintenant' : 'À ' + best.h.hour + 'h') + ' · ' + esc(best.r.spot.name) + '</div>';
+        tile(ICON.tide, c.tidePhase && c.tidePhase !== 'unknown' ? { rising: 'Monte', falling: 'Descend', high: 'Haute', low: 'Basse' }[c.tidePhase] : null, 'marée') +
+        '</div>';
     }
     box.innerHTML = html;
     if (!state.userId && !DEMO) return;
     loadSessions().then(function (list) {
-      var el = $('nowMine'); if (!el || !list || !list.length) return;
+      var el = $('lastSession'); if (!el || !list || !list.length) return;
       var sorted = list.slice().sort(function (x, y) { return String(y.date).localeCompare(String(x.date)); }), last = sorted[0];
       var d = last.date ? new Date(last.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '';
       var sp = (last.spots && last.spots.name) || last.spot_name || '';
-      el.textContent = list.length + ' session' + (list.length > 1 ? 's' : '') + (d ? ' · dernière le ' + d : '') + (sp ? ' · ' + sp : '');
+      el.textContent = d ? 'Dernière session le ' + d + (sp ? ' · ' + sp : '') : '';
     });
   }
   function renderHome() {
@@ -290,12 +290,16 @@
     if (!w) return '';
     var out = '', skip = w.reminder && w.reminder.text;
     var good = (w.whyGood || []).filter(function (t) { return t !== skip; }), bad = (w.whyNotPerfect || []).filter(function (t) { return t !== skip; });
-    if (w.narrative) out += '<p class="narr">« ' + esc(clean(w.narrative)) + ' »</p>';
-    if (good.length || bad.length) out += '<div class="whys">' +
-      good.map(function (t) { return '<div class="wy">' + esc(clean(t)) + '</div>'; }).join('') +
-      bad.map(function (t) { return '<div class="wy b">' + esc(clean(t)) + '</div>'; }).join('') + '</div>';
+    // un seul bloc : ce qui joue pour, puis ce qui joue contre
+    var low = function (t, k) { t = clean(t).replace(/[.\s]+$/, ''); return k ? t.charAt(0).toLowerCase() + t.slice(1) : t; };
+    var join = function (list) { list = list.map(low); return list.length > 1 ? list.slice(0, -1).join(', ') + ' et ' + list[list.length - 1] : list[0]; };
+    var lines = [];
+    if (good.length) lines.push(join(good) + '.');
+    if (bad.length) lines.push((good.length ? 'En revanche, ' + join(bad).replace(/^./, function (ch) { return ch.toLowerCase(); }) : join(bad)) + '.');
+    if (!lines.length && w.narrative) lines.push(clean(w.narrative));
+    if (lines.length) out += '<div class="explain">' + lines.map(function (t) { return '<p>' + esc(t) + '</p>'; }).join('') + '</div>';
     var bs = w.boardSuggestion;
-    if (bs && bs.board) out += '<div class="wy board">Prends ta ' + esc(bs.board.nickname || bs.board.name || 'board') + (bs.reason ? '. ' + esc(clean(bs.reason)) : '') + '</div>';
+    if (bs && bs.board) out += '<div class="reco">' + ic('board') + '<div><label>Board recommandée</label><b>' + esc(bs.board.nickname || bs.board.name || 'Ta board') + '</b>' + (bs.reason ? '<em>' + esc(clean(bs.reason)) + '</em>' : '') + '</div></div>';
     out += '<div class="go" id="sendMate" style="cursor:pointer"><span>Envoyer à un pote</span><span class="arrow">' + ICON.go + '</span></div>';
     return out;
   }
@@ -327,14 +331,14 @@
       $('atVerdict').textContent = v.label + ' · ' + fr(h.score) + (h.confidence === 'low' ? ' · à confirmer' : '');
       // houle
       $('nWave').innerHTML = c.waveHeight != null ? fr(c.waveHeight) + '<small>m</small>' : '';
-      $('tWave').textContent = h.sizeIssue === 'too_small' ? 'Trop petit pour toi' : h.sizeIssue === 'too_big' ? 'Trop gros pour toi' : 'À ta taille';
+      $('tWave').textContent = h.sizeIssue === 'too_small' ? 'Trop petit pour toi' : h.sizeIssue === 'too_big' ? 'Trop gros pour toi' : '';
       // le large est là d'où viennent les vagues : toutes les flèches se lisent plage en bas, large en haut
       var swell = c.swellDirection != null ? c.swellDirection : c.waveDirection;
       var facing = c.waveDirection != null ? c.waveDirection : swell;
       if (swell != null) {
         var sr = rel(swell, facing), as = Math.abs(sr);
-        $('nSd').textContent = Math.round(swell) + '° ' + cardinal(swell);
-        $('tSd').textContent = as < 25 ? 'Bien en face' : 'De biais, par la ' + (sr > 0 ? 'droite' : 'gauche');
+        $('nSd').textContent = cardinal(swell);
+        $('tSd').textContent = as < 25 ? 'Bonne orientation' : as < 50 ? 'Orientation moyenne' : 'Mauvaise orientation';
         setArrow('aSd', sr, 0.5 + Math.min(c.waveHeight || 0, 2) / 2 * 0.7, h.sizeIssue ? 'warn' : as < 50 ? 'ok' : 'warn');
         $('aSd').style.visibility = '';
       } else { $('nSd').textContent = ''; $('tSd').textContent = ''; $('aSd').style.visibility = 'hidden'; }
@@ -342,13 +346,13 @@
       var ws = c.windSpeed;
       $('nWind').innerHTML = ws != null ? Math.round(ws) + '<small>km/h</small>' : '';
       var gust = c.windGust;
-      $('tWind').textContent = ws != null ? windWord(ws) + (gust != null && gust >= 25 ? ' · rafales ' + Math.round(gust) : '') : '';
+      $('tWind').textContent = gust != null && gust >= 25 ? 'Rafales ' + Math.round(gust) : '';
       if (c.windDirection != null && facing != null) {
         var wr = rel(c.windDirection, facing), aw = Math.abs(wr);
         var level = aw > 135 ? (ws >= 30 ? 'warn' : 'ok') : aw < 45 ? (ws < 10 ? 'warn' : 'bad') : (ws < 12 ? 'ok' : ws >= 20 ? 'bad' : 'warn');
         if (gust != null && gust >= 40) level = 'bad'; else if (gust != null && gust >= 30 && level === 'ok') level = 'warn';
-        $('nWd').textContent = Math.round(c.windDirection) + '° ' + cardinal(c.windDirection);
-        $('tWd').textContent = aw > 135 ? 'Dans le dos' : aw < 45 ? 'De face' : 'De côté, par la ' + (wr > 0 ? 'droite' : 'gauche');
+        $('nWd').textContent = cardinal(c.windDirection);
+        $('tWd').textContent = aw > 135 ? 'Bonne orientation' : aw < 45 ? 'Mauvaise orientation' : 'Orientation moyenne';
         setArrow('aWd', wr, 0.5 + Math.min(Math.max(ws || 0, (gust || 0) * 0.7), 30) / 30 * 0.7, level);
         $('aWd').style.visibility = '';
       } else { $('nWd').textContent = ''; $('tWd').textContent = ''; $('aWd').style.visibility = 'hidden'; }
@@ -361,8 +365,12 @@
       $('nPow').innerHTML = pw != null ? fr(pw, pw < 10 ? 1 : 0) + '<small>kW/m</small>' : '';
       var pState = { weak: 'Molle, tu risques de ramer', fair: 'Correcte', good: 'Bonne pour toi', strong: 'Trop puissante pour toi' }[h.powerState];
       $('tPow').textContent = pw == null ? '' : pState || (pw < 5 ? 'Molle' : pw < 15 ? 'Correcte' : pw < 30 ? 'Puissante' : pw < 60 ? 'Très puissante' : 'Énorme');
-      $('nTide').textContent = tideWord(c.tidePhase);
-      $('tTide').textContent = [tideLevelWord(c.tideLevel), highAt != null ? 'haute ~' + highAt + 'h' : '', lowAt != null ? 'basse ~' + lowAt + 'h' : ''].filter(Boolean).join(' · ');
+      var known = c.tidePhase && c.tidePhase !== 'unknown';
+      $('nTide').textContent = known ? tideWord(c.tidePhase) : '–';
+      // la prochaine étale visible dans la journée, après l'heure choisie
+      var nextTide = '';
+      for (var k = i + 1; k < hs.length && !nextTide; k++) { var ph = (hs[k].conditions || {}).tidePhase; if (ph === 'high') nextTide = 'pleine mer vers ' + hs[k].hour + 'h'; else if (ph === 'low') nextTide = 'basse mer vers ' + hs[k].hour + 'h'; }
+      $('tTide').textContent = !known ? 'Pas de donnée pour ce créneau' : [c.tidePhase === 'high' || c.tidePhase === 'low' ? '' : tideLevelWord(c.tideLevel), nextTide].filter(Boolean).join(' · ');
       $('nAir').innerHTML = c.airTemp != null ? Math.round(c.airTemp) + '<small>°C</small>' : '';
       $('nWater').innerHTML = c.waterTemp != null ? Math.round(c.waterTemp) + '<small>°C</small>' : '';
     }
