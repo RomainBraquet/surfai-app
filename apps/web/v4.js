@@ -219,7 +219,8 @@
           '<div class="num wide"><div class="c1"><label>Houle</label><b id="nWave"></b><em id="tWave"></em></div><div class="c2"><b id="nSd"></b><em id="tSd"></em></div><span class="arr" id="aSd">' + ICON.arrowSwell + '</span></div>' +
           '<div class="num wide"><div class="c1"><label>Vent</label><b id="nWind"></b><em id="tWind"></em></div><div class="c2"><b id="nWd"></b><em id="tWd"></em></div><span class="arr" id="aWd">' + ICON.arrowWind + '</span></div>' +
           '<div class="num"><label>Période</label><b id="nPer"></b><em id="tPer"></em></div>' +
-          '<div class="num"><label>Marée</label><b id="nTide"></b><em id="tTide"></em></div>' +
+          '<div class="num"><label>Puissance</label><b id="nPow"></b><em id="tPow"></em></div>' +
+          '<div class="num" style="grid-column:1/-1"><label>Marée</label><b id="nTide"></b><em id="tTide"></em></div>' +
           '<div class="num"><label>Air</label><b id="nAir"></b></div>' +
           '<div class="num"><label>Eau</label><b id="nWater"></b></div>' +
         '</div>' : '<p class="why" style="margin-top:20px">Pas de prévision heure par heure pour ce jour.</p>') +
@@ -323,6 +324,9 @@
       var choppy = c.windWaveHeight != null && c.waveHeight ? c.windWaveHeight / c.waveHeight >= 0.4 : false;
       $('nPer').innerHTML = per != null ? Math.round(per) + '<small>s</small>' : '';
       $('tPer').textContent = per == null ? '' : choppy ? 'Mer hachée par le vent' : per >= 10 ? 'Vagues bien formées' : per >= 7 ? 'Vagues correctes' : 'Vagues brouillonnes';
+      var pw = c.wavePower;
+      $('nPow').innerHTML = pw != null ? fr(pw, pw < 10 ? 1 : 0) + '<small>kW/m</small>' : '';
+      $('tPow').textContent = pw == null ? '' : pw < 5 ? 'Molle' : pw < 15 ? 'Correcte' : pw < 30 ? 'Puissante' : pw < 60 ? 'Très puissante' : 'Énorme';
       $('nTide').textContent = tideWord(c.tidePhase);
       $('tTide').textContent = [tideLevelWord(c.tideLevel), highAt != null ? 'haute ~' + highAt + 'h' : '', lowAt != null ? 'basse ~' + lowAt + 'h' : ''].filter(Boolean).join(' · ');
       $('nAir').innerHTML = c.airTemp != null ? Math.round(c.airTemp) + '<small>°C</small>' : '';
