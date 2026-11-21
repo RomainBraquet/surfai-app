@@ -299,7 +299,7 @@
     if (!lines.length && w.narrative) lines.push(clean(w.narrative));
     if (lines.length) out += '<div class="explain">' + lines.map(function (t) { return '<p>' + esc(t) + '</p>'; }).join('') + '</div>';
     var bs = w.boardSuggestion;
-    if (bs && bs.board) out += '<div class="reco"><span>Board recommandée</span><b>' + esc(bs.board.nickname || bs.board.name || 'Ta board') + '</b></div>';
+    if (bs && bs.board) out += '<div class="reco"><span>' + ic('board') + 'Board recommandée</span><b>' + esc(bs.board.nickname || bs.board.name || 'Ta board') + '</b></div>';
     out += '<div class="go" id="sendMate" style="cursor:pointer"><span>Envoyer à un pote</span><span class="arrow">' + ICON.go + '</span></div>';
     return out;
   }
