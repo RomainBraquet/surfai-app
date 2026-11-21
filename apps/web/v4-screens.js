@@ -1,16 +1,15 @@
 // SurfAI v4 : ajouter une session, partage, profil, quiver, historique, spots.
 (function () {
   'use strict';
-  var A = window.SurfV4, $ = A.$, esc = A.esc, fr = A.fr, state = A.state, ICON = A.ICON;
+  var A = window.SurfV4, $ = A.$, esc = A.esc, fr = A.fr, state = A.state, ICON = A.ICON, ic = A.ic, stars = A.stars;
   var sb = null;
   sb = A.client();
 
   var cache = { boards: null, favorites: null, profile: undefined, email: null };
   var LEVELS = [['beginner', 'Débutant'], ['intermediate', 'Intermédiaire'], ['advanced', 'Avancé'], ['expert', 'Expert']];
   var CLOSE = '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>';
-  var STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.800l2.900 5.900 6.500.900-4.700 4.600 1.100 6.500L12 17.600l-5.800 3.100 1.100-6.500L2.600 9.600l6.500-.900z"/></svg>';
+  var STAR = ICON.star;
 
-  function stars(n) { n = Math.max(0, Math.min(5, Math.round(n || 0))); return '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n); }
   function api(path, body) {
     var opt = body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : undefined;
     return fetch(A.BACKEND + '/api/v1' + path, opt).then(function (r) { return r.json(); });
@@ -189,7 +188,7 @@
   }
   function spotRow(s, favIds, extra) {
     return '<div class="li"><div data-spot="' + esc(s.id) + '" style="cursor:pointer;flex:1"><b>' + esc(s.name) + '</b><span>' + esc(s.city || s.country || '') + (extra ? ' · ' + extra : '') + '</span><span class="live" data-live="' + esc(s.id) + '"></span></div>' +
-      '<button class="fav' + (favIds[s.id] ? ' on' : '') + '" data-fav="' + esc(s.id) + '" aria-label="Favori">★</button></div>';
+      '<button class="fav' + (favIds[s.id] ? ' on' : '') + '" data-fav="' + esc(s.id) + '" aria-label="Favori">' + ic('star', 'f') + '</button></div>';
   }
   function card(cls, title, count, inner, open) {
     return '<article class="day ' + cls + (open ? ' open' : '') + '"><div class="row"><div class="name">' + title + '</div>' + (count != null ? '<div class="count">' + count + '</div>' : '') + '</div>' +
@@ -229,7 +228,7 @@
         return '<div class="bcard">' +
           '<div class="li" style="border-top:0;padding-top:0">' + th + '<div><b>' + esc(b.nickname || b.name || 'Board') + '</b>' +
             (line1 ? '<span>' + esc(line1) + '</span>' : '') + (shaper ? '<span style="display:block">' + esc(shaper) + '</span>' : '') + (setup ? '<span style="display:block">' + esc(setup) + '</span>' : '') + '</div></div>' +
-          (sweet ? '<div class="sweet">★ Sweet spot : ' + esc(sweet) + '</div>' : '') +
+          (sweet ? '<div class="sweet">' + ic('star', 'f') + ' Sweet spot : ' + esc(sweet) + '</div>' : '') +
           '<div class="bfoot"><span>' + (st.count ? st.count + ' session' + (st.count > 1 ? 's' : '') + ' · ' + esc(st.lastDate) : 'Pas encore de session') + '</span>' +
             '<span class="bact"><button data-edit="' + esc(b.id) + '">Modifier</button><button data-share="' + esc(b.id) + '">Partager</button><button class="del" data-del="' + esc(b.id) + '">Supprimer</button></span></div>' +
         '</div>';
@@ -251,7 +250,7 @@
           return '<div class="li act" data-sid="' + esc(s.id) + '"><div><b style="color:#fff">' + esc((s.spots && s.spots.name) || 'Spot') + '</b><span>' + esc([d, boardName[s.board_id], wave].filter(Boolean).join(' · ')) + '</span></div><span class="r">' + stars(s.rating) + '</span></div>';
         }).join('');
       }
-      var hist = sessions.length ? '<div class="chips" id="hSort"><button class="chip on" data-v="date">Date</button><button class="chip" data-v="note">★ Note</button><button class="chip" data-v="spot">Spot</button></div>' +
+      var hist = sessions.length ? '<div class="chips" id="hSort"><button class="chip on" data-v="date">Date</button><button class="chip" data-v="note">' + ic('star', 'f') + ' Note</button><button class="chip" data-v="spot">Spot</button></div>' +
         '<div id="hRows" style="margin-top:8px">' + histRows(shown) + '</div>' + (sessions.length > shown ? '<div class="li act" id="hMore"><b>Voir toutes les sessions (' + sessions.length + ')</b></div>' : '')
         : '<p class="why" style="color:rgba(255,255,255,.62)">Aucune session enregistrée.</p>';
 

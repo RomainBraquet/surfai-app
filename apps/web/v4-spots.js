@@ -35,7 +35,7 @@
         '<button class="close" id="spClose" aria-label="Fermer">' + CLOSE + '</button>' +
         '<h2 style="font-size:38px">' + esc(spot.name) + '</h2>' +
         (loc ? '<p class="hint" style="margin-top:4px">' + esc(loc) + '</p>' : '') +
-        '<button class="favbtn' + (isFav ? ' on' : '') + '" id="spFav">' + (isFav ? '★ Favori' : '☆ Favori') + '</button>' +
+        '<button class="favbtn' + (isFav ? ' on' : '') + '" id="spFav">' + A.ic('star', 'f') + ' Favori' + '</button>' +
         (chars.length ? '<div class="two" style="margin-top:18px">' + chars.map(function (c) { return '<div class="box"><span>' + esc(c[0]) + '</span><b style="font-size:16px;font-weight:500">' + esc(c[1]) + '</b></div>'; }).join('') + '</div>' : '') +
         (spot.lat != null ? '<a class="save alt" style="background:rgba(255,255,255,.12);color:#fff" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=' + spot.lat + ',' + spot.lng + '">S\'y rendre (Google Maps)</a>' : '') +
         '<div class="q">Prévisions 5 jours</div>' +
@@ -51,7 +51,7 @@
       $('spFav').addEventListener('click', function () {
         var b = this;
         A.api('/favorites/toggle', { userId: state.userId, spotId: id }).then(function (j) {
-          var on = !!j.isFavorite; b.classList.toggle('on', on); b.textContent = on ? '★ Favori' : '☆ Favori';
+          var on = !!j.isFavorite; b.classList.toggle('on', on);
           A.resetFavorites(); A.reload(); if ($('me').classList.contains('show')) A.renderMe('p4');
         });
       });
@@ -65,18 +65,18 @@
           var list = j.windows.slice().sort(function (a, b) { return by === 'date' ? String(a.date).localeCompare(String(b.date)) || parseInt(a.peakHour, 10) - parseInt(b.peakHour, 10) : b.score - a.score; });
           fore.innerHTML = list.map(function (w, k) {
             var v = A.verdict(w.score), c = w.conditions || {}, tags = [];
-            if (c.waveHeight != null) tags.push(fr(c.waveHeight) + ' m');
-            if ((c.peakPeriod || c.wavePeriod) != null) tags.push(Math.round(c.peakPeriod || c.wavePeriod) + ' s');
-            if (c.windSpeed != null) tags.push(Math.round(c.windSpeed) + ' km/h' + (c.windDirection != null ? ' ' + A.cardinal(c.windDirection) : ''));
-            if ((c.windGust || 0) >= 25) tags.push('Rafales ' + Math.round(c.windGust));
-            if (c.wavePower != null) tags.push(fr(c.wavePower, c.wavePower < 10 ? 1 : 0) + ' kW/m');
-            if (c.tidePhase && c.tidePhase !== 'unknown') tags.push('Marée ' + A.tideWord(c.tidePhase).toLowerCase());
-            if (c.waterTemp != null) tags.push('Eau ' + Math.round(c.waterTemp) + '°C');
+            if (c.waveHeight != null) tags.push(['wave', fr(c.waveHeight) + ' m']);
+            if ((c.peakPeriod || c.wavePeriod) != null) tags.push(['period', Math.round(c.peakPeriod || c.wavePeriod) + ' s']);
+            if (c.windSpeed != null) tags.push(['wind', Math.round(c.windSpeed) + ' km/h' + (c.windDirection != null ? ' ' + A.cardinal(c.windDirection) : '')]);
+            if ((c.windGust || 0) >= 25) tags.push(['wind', 'Rafales ' + Math.round(c.windGust)]);
+            if (c.wavePower != null) tags.push(['power', fr(c.wavePower, c.wavePower < 10 ? 1 : 0) + ' kW/m']);
+            if (c.tidePhase && c.tidePhase !== 'unknown') tags.push(['tide', A.tideWord(c.tidePhase)]);
+            if (c.waterTemp != null) tags.push(['water', Math.round(c.waterTemp) + '°']);
             var skip = w.reminder && w.reminder.text;
             var good = (w.whyGood || []).filter(function (t) { return t !== skip; }), bad = (w.whyNotPerfect || []).filter(function (t) { return t !== skip; });
             var bs = w.boardSuggestion;
             return '<div class="fw" data-k="' + k + '"><div class="top"><span class="sb ' + v.cls + '">' + fr(w.score) + '</span><div><b>' + esc(A.dayLabel(w.date) + ', ' + A.slotText(w)) + '</b><span>' + esc(v.label) + '</span></div></div>' +
-              '<div class="det">' + (w.narrative ? '<em>« ' + esc(clean(w.narrative)) + ' »</em>' : '') + '<div class="tags">' + tags.map(function (t) { return '<span>' + esc(t) + '</span>'; }).join('') + '</div>' +
+              '<div class="det">' + (w.narrative ? '<em>« ' + esc(clean(w.narrative)) + ' »</em>' : '') + '<div class="tags">' + tags.map(function (t) { return '<span>' + A.ic(t[0]) + esc(t[1]) + '</span>'; }).join('') + '</div>' +
               (w.reminder && w.reminder.text ? '<div>' + esc(w.reminder.text) + '</div>' : '') +
               good.map(function (t) { return '<div class="plus">+ ' + esc(clean(t)) + '</div>'; }).join('') +
               bad.map(function (t) { return '<div class="minus">- ' + esc(clean(t)) + '</div>'; }).join('') +
@@ -100,13 +100,13 @@
       var cond = j.conditions || {};
       document.querySelectorAll('#sFavs [data-live]').forEach(function (el) {
         var id = el.getAttribute('data-live'), c = cond[id], bits = [];
-        if (best[id] != null) bits.push('Meilleure note ' + fr(best[id]));
+        if (best[id] != null) bits.push(A.ic('star', 'f') + fr(best[id]));
         if (c) {
-          if (c.waveHeight != null) bits.push(fr(c.waveHeight) + ' m');
-          if (c.windSpeed != null) bits.push(Math.round(c.windSpeed) + ' km/h' + (c.windDirection ? ' ' + c.windDirection : ''));
-          if (c.wavePeriod != null) bits.push(Math.round(c.wavePeriod) + ' s');
+          if (c.waveHeight != null) bits.push(A.ic('wave') + fr(c.waveHeight) + ' m');
+          if (c.windSpeed != null) bits.push(A.ic('wind') + Math.round(c.windSpeed) + ' km/h' + (c.windDirection ? ' ' + esc(c.windDirection) : ''));
+          if (c.wavePeriod != null) bits.push(A.ic('period') + Math.round(c.wavePeriod) + ' s');
         }
-        el.textContent = bits.join(' · ');
+        el.innerHTML = bits.join('<i class="sep"></i>');
       });
     }).catch(function () {});
   };

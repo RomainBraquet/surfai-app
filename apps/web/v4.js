@@ -65,8 +65,27 @@
     down: '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
     star: '<svg viewBox="0 0 24 24"><path d="M12 3.500l2.600 5.400 5.900.800-4.300 4.100 1 5.900L12 16.900 6.800 19.700l1-5.900L3.500 9.700l5.900-.800z"/></svg>',
     arrowWind: '<svg viewBox="0 0 48 48"><path d="M24 42V9M10 22L24 8l14 14"/></svg>',
-    arrowSwell: '<svg viewBox="0 0 48 48"><path d="M7 21Q24 3 41 21M10 32Q24 17 38 32M14 42Q24 31 34 42"/></svg>'
+    arrowSwell: '<svg viewBox="0 0 48 48"><path d="M7 21Q24 3 41 21M10 32Q24 17 38 32M14 42Q24 31 34 42"/></svg>',
+    // même famille de traits pour toutes les données : une donnée = une icône, partout
+    air: '<svg viewBox="0 0 24 24"><path d="M12 14.5V5a2 2 0 0 0-4 0v9.500a4 4 0 1 0 4 0zM16 7h4M16 11h3"/></svg>',
+    water: '<svg viewBox="0 0 24 24"><path d="M12 3.500s6 6.300 6 10.500a6 6 0 0 1-12 0c0-4.200 6-10.500 6-10.500z"/></svg>',
+    period: '<svg viewBox="0 0 24 24"><path d="M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9v4l2.500 2M10 2h4"/></svg>',
+    power: '<svg viewBox="0 0 24 24"><path d="M13 2.500L5 13.500h6L10 21.500l8-11h-6z"/></svg>',
+    pin: '<svg viewBox="0 0 24 24"><path d="M12 21s7-6.200 7-11.500A7 7 0 0 0 5 9.500C5 14.800 12 21 12 21z"/><circle cx="12" cy="9.500" r="2.500"/></svg>',
+    board: '<svg viewBox="0 0 24 24"><path d="M12 2.500c3 3 4.500 7 4.500 10.500 0 3.500-1.800 6.500-4.500 8.500-2.700-2-4.500-5-4.500-8.500 0-3.500 1.500-7.500 4.500-10.500zM12 15v6.500"/></svg>',
+    note: '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.500 6.500l4 4"/></svg>',
+    target: '<svg viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 12h.010"/></svg>',
+    spark: '<svg viewBox="0 0 24 24"><path d="M12 3v5M12 16v5M3 12h5M16 12h5M6 6l3 3M15 15l3 3M18 6l-3 3M9 15l-3 3"/></svg>',
+    // mode Travel
+    school: '<svg viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5zM6 11.500V16c2 2 10 2 12 0v-4.500M22 9v5"/></svg>',
+    shop: '<svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12.500H6zM9 8V6.500a3 3 0 0 1 6 0V8"/></svg>'
   };
+  // icône en ligne, à la taille du texte ; « f » = pleine (étoile)
+  function ic(name, cls) { return '<span class="ic' + (cls ? ' ' + cls : '') + '">' + ICON[name] + '</span>'; }
+  function stars(n) {
+    n = Math.max(0, Math.min(5, Math.round(n || 0)));
+    return '<span class="rate">' + [1, 2, 3, 4, 5].map(function (k) { return ic('star', k <= n ? 'f' : 'f off'); }).join('') + '</span>';
+  }
 
   // ───────── préparation : un jour = la meilleure session parmi tous les spots ─────────
   function buildDays(results) {
@@ -150,10 +169,6 @@
     }); });
   }
   // conditions du moment, lues dans les prévisions déjà chargées (aucun appel de plus au fournisseur)
-  var NOW_ICON = {
-    air: '<svg viewBox="0 0 24 24"><path d="M12 14.5V5a2 2 0 0 0-4 0v9.500a4 4 0 1 0 4 0zM16 7h4M16 11h3"/></svg>',
-    water: '<svg viewBox="0 0 24 24"><path d="M12 3.500s6 6.300 6 10.500a6 6 0 0 1-12 0c0-4.200 6-10.500 6-10.500z"/></svg>'
-  };
   function renderNow() {
     var box = $('now'); if (!box) return;
     var today = localISO(new Date()), hour = new Date().getHours(), best = null;
@@ -167,10 +182,10 @@
       var c = best.h.conditions || {};
       var tile = function (icon, val, lbl) { return '<div><b>' + (val == null ? '–' : esc(val)) + '</b><i>' + icon + lbl + '</i></div>'; };
       html += '<div class="grid5">' +
-        tile(NOW_ICON.air, c.airTemp != null ? Math.round(c.airTemp) + '°' : null, 'air') +
+        tile(ICON.air, c.airTemp != null ? Math.round(c.airTemp) + '°' : null, 'air') +
         tile(ICON.wind, c.windSpeed != null ? Math.round(c.windSpeed) + (c.windDirection != null ? ' ' + cardinal(c.windDirection) : '') : null, 'vent') +
         tile(ICON.wave, c.waveHeight != null ? fr(c.waveHeight) + ' m' : null, 'vagues') +
-        tile(NOW_ICON.water, c.waterTemp != null ? Math.round(c.waterTemp) + '°' : null, 'eau') +
+        tile(ICON.water, c.waterTemp != null ? Math.round(c.waterTemp) + '°' : null, 'eau') +
         tile(ICON.tide, c.tidePhase && c.tidePhase !== 'unknown' ? tideWord(c.tidePhase) : null, 'marée') +
         '</div><div class="loc">' + (best.h.hour === hour ? 'Maintenant' : 'À ' + best.h.hour + 'h') + ' · ' + esc(best.r.spot.name) + '</div>';
     }
@@ -233,13 +248,13 @@
         '<div class="hbars" id="hbars"></div><div class="hlabels" id="hlabels"></div>' +
         '<div class="at"><b id="atHour"></b><span id="atVerdict"></span></div>' +
         '<div class="nums">' +
-          '<div class="num wide"><div class="c1"><label>Houle</label><b id="nWave"></b><em id="tWave"></em></div><div class="c2"><b id="nSd"></b><em id="tSd"></em></div><span class="arr" id="aSd">' + ICON.arrowSwell + '</span></div>' +
-          '<div class="num wide"><div class="c1"><label>Vent</label><b id="nWind"></b><em id="tWind"></em></div><div class="c2"><b id="nWd"></b><em id="tWd"></em></div><span class="arr" id="aWd">' + ICON.arrowWind + '</span></div>' +
-          '<div class="num"><label>Période</label><b id="nPer"></b><em id="tPer"></em></div>' +
-          '<div class="num"><label>Puissance</label><b id="nPow"></b><em id="tPow"></em></div>' +
-          '<div class="num" style="grid-column:1/-1"><label>Marée</label><b id="nTide"></b><em id="tTide"></em></div>' +
-          '<div class="num"><label>Air</label><b id="nAir"></b></div>' +
-          '<div class="num"><label>Eau</label><b id="nWater"></b></div>' +
+          '<div class="num wide"><div class="c1"><label>' + ic('wave') + 'Houle</label><b id="nWave"></b><em id="tWave"></em></div><div class="c2"><b id="nSd"></b><em id="tSd"></em></div><span class="arr" id="aSd">' + ICON.arrowSwell + '</span></div>' +
+          '<div class="num wide"><div class="c1"><label>' + ic('wind') + 'Vent</label><b id="nWind"></b><em id="tWind"></em></div><div class="c2"><b id="nWd"></b><em id="tWd"></em></div><span class="arr" id="aWd">' + ICON.arrowWind + '</span></div>' +
+          '<div class="num"><label>' + ic('period') + 'Période</label><b id="nPer"></b><em id="tPer"></em></div>' +
+          '<div class="num"><label>' + ic('power') + 'Puissance</label><b id="nPow"></b><em id="tPow"></em></div>' +
+          '<div class="num" style="grid-column:1/-1"><label>' + ic('tide') + 'Marée</label><b id="nTide"></b><em id="tTide"></em></div>' +
+          '<div class="num"><label>' + ic('air') + 'Air</label><b id="nAir"></b></div>' +
+          '<div class="num"><label>' + ic('water') + 'Eau</label><b id="nWater"></b></div>' +
         '</div>' : '<p class="why" style="margin-top:20px">Pas de prévision heure par heure pour ce jour.</p>') +
       whyBlock(w) +
       '<h3>Les autres spots ' + esc(dayName(iso, day.index).toLowerCase()) + '</h3>' +
@@ -373,7 +388,7 @@
         var photo = s.photo_url || s.photo || null;
         var ph = photo ? '<div class="ph" style="background:center/cover url(\'' + esc(photo) + '\')"></div>' : '<div class="ph' + ['', ' b', ' c'][k % 3] + '"></div>';
         var note = s.notes ? '« ' + esc(String(s.notes).slice(0, 70)) + ' »' : '';
-        return '<div class="mem">' + ph + '<div class="st">' + '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n) + '</div><p>' + note + '</p></div>';
+        return '<div class="mem">' + ph + '<div class="st">' + stars(n) + '</div><p>' + note + '</p></div>';
       }).join('') + '</div>';
     });
   }
@@ -508,7 +523,7 @@
     ];
   }
 
-  window.SurfV4 = { state: state, $: $, esc: esc, fr: fr, cap: cap, BACKEND: BACKEND, LOCAL: LOCAL, DEMO: DEMO,
+  window.SurfV4 = { ic: ic, stars: stars, state: state, $: $, esc: esc, fr: fr, cap: cap, BACKEND: BACKEND, LOCAL: LOCAL, DEMO: DEMO,
     SUPABASE_URL: SUPABASE_URL, SUPABASE_KEY: SUPABASE_KEY, ICON: ICON, localISO: localISO, dateOf: dateOf,
     windWord: windWord, client: client, verdict: verdict, slotText: slotText, tideWord: tideWord, cardinal: cardinal, DAYS: DAYS, shortDate: shortDate, dayLabel: function (iso) { var t = localISO(new Date()); return iso === t ? "Aujourd'hui" : cap(dateOf(iso).toLocaleDateString('fr-FR', { weekday: 'long' })) + ' ' + shortDate(iso); }, reload: loadPredictions, loadSessions: loadSessions };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();

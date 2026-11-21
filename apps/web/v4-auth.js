@@ -6,11 +6,11 @@
   function sb() { return A.client(); }
 
   var INTRO = [
-    ['🌊', 'Une app qui parle de <em>ton</em> surf.', 'Pas de celui des autres.', 'SurfAI apprend de toi pour te trouver tes meilleures sessions.'],
-    ['📝', '<em>Tes</em> sessions. <em>Tes</em> conditions.', '', 'Note en quelques secondes. L\'app mémorise la météo, la houle et les marées pour toi.'],
-    ['🏄‍♂️', '<em>Tes</em> boards. <em>Ton</em> quiver.', '', 'Ajoute tes planches. L\'app sait laquelle est faite pour les conditions du jour.'],
-    ['🎯', '<em>Tes</em> prévisions. Rien que <em>les tiennes</em>.', '', 'Pas de graphiques illisibles. Juste une réponse claire : quand, où, avec quelle board.'],
-    ['✨', 'Plus tu surfes, plus elle <em>te</em> connaît.', '', 'Et ça ne fait que commencer.']
+    ['wave', 'Une app qui parle de <em>ton</em> surf.', 'Pas de celui des autres.', 'SurfAI apprend de toi pour te trouver tes meilleures sessions.'],
+    ['note', '<em>Tes</em> sessions. <em>Tes</em> conditions.', '', 'Note en quelques secondes. L\'app mémorise la météo, la houle et les marées pour toi.'],
+    ['board', '<em>Tes</em> boards. <em>Ton</em> quiver.', '', 'Ajoute tes planches. L\'app sait laquelle est faite pour les conditions du jour.'],
+    ['target', '<em>Tes</em> prévisions. Rien que <em>les tiennes</em>.', '', 'Pas de graphiques illisibles. Juste une réponse claire : quand, où, avec quelle board.'],
+    ['spark', 'Plus tu surfes, plus elle <em>te</em> connaît.', '', 'Et ça ne fait que commencer.']
   ];
 
   function open(html) { var box = $('onb'); box.innerHTML = html; box.scrollTop = 0; box.classList.add('show'); return box; }
@@ -20,7 +20,7 @@
   function intro(k) {
     var it = INTRO[k], last = k === INTRO.length - 1;
     var box = open(dots(INTRO.length, k) +
-      '<div class="emoji">' + it[0] + '</div>' +
+      '<div class="emoji">' + A.ICON[it[0]] + '</div>' +
       '<h2 style="font-size:36px;margin-top:18px">' + it[1] + (it[2] ? '<br><span style="color:rgba(255,255,255,.45)">' + it[2] + '</span>' : '') + '</h2>' +
       '<p class="hint">' + it[3] + '</p>' +
       '<button class="save" id="inNext">' + (last ? 'C\'est parti !' : 'Suivant') + '</button>' +
