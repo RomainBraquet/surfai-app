@@ -39,6 +39,37 @@ var userData = window.userData || (window.userData = { boards: [], sessions: [],
         }
 
 // generateShareCard : repris tel quel de l'ancienne version (lignes 5558 à 5642)
+// Texte centré avec icônes : « [[wave]] 1,2 m » dessine l'icône de l'app à la taille du texte.
+// Les icônes viennent du jeu unique (SurfV4.ICON), pour que les images parlent comme l'app.
+        function richText(ctx, text, x, y) {
+          text = String(text == null ? '' : text);
+          var ICON = (window.SurfV4 && window.SurfV4.ICON) || {};
+          var segs = text.split(/(\[\[\w+\]\])/).filter(function (t) { return t !== ''; });
+          var has = segs.some(function (t) { return /^\[\[\w+\]\]$/.test(t) && ICON[t.slice(2, -2)]; });
+          if (!has) { ctx.fillText(text.replace(/\[\[\w+\]\]\s?/g, ''), x, y); return; }
+          var px = parseFloat((/(\d+(?:\.\d+)?)px/.exec(ctx.font) || [0, 24])[1]), size = px * 1.05, gap = px * 0.12;
+          var items = segs.map(function (t) {
+            var name = /^\[\[(\w+)\]\]$/.exec(t);
+            return name && ICON[name[1]] ? { icon: name[1], w: size + gap } : { text: t, w: ctx.measureText(t).width };
+          });
+          var total = items.reduce(function (a, i) { return a + i.w; }, 0), cur = x - total / 2;
+          ctx.save(); ctx.textAlign = 'left';
+          items.forEach(function (i) {
+            if (i.text != null) { ctx.fillText(i.text, cur, y); cur += i.w; return; }
+            var svg = ICON[i.icon], k = size / 24, path = new Path2D();
+            (svg.match(/ d="[^"]+"/g) || []).forEach(function (d) { path.addPath(new Path2D(d.slice(4, -1))); });
+            (svg.match(/<circle[^>]+>/g) || []).forEach(function (c) {
+              var g = function (a) { return parseFloat((new RegExp(a + '="([\\d.]+)"').exec(c) || [0, 0])[1]); };
+              var p2 = new Path2D(); p2.arc(g('cx'), g('cy'), g('r'), 0, Math.PI * 2); path.addPath(p2);
+            });
+            ctx.save(); ctx.translate(cur, y - size * 0.86); ctx.scale(k, k);
+            if (i.icon === 'star') { ctx.fill(path); }
+            else { ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 1.9; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(path); }
+            ctx.restore(); cur += i.w;
+          });
+          ctx.restore();
+        }
+
         async function generateShareCard(photo, sessionData) {
           const canvas = document.createElement('canvas');
           canvas.width = 1080;
@@ -66,13 +97,13 @@ var userData = window.userData || (window.userData = { boards: [], sessions: [],
           const dateStr = formatSessionDate(sessionData.date);
           ctx.font = '22px -apple-system, BlinkMacSystemFont, sans-serif';
           ctx.fillStyle = 'rgba(0,0,0,0.5)';
-          ctx.fillText(dateStr, cx, curY);
+          richText(ctx, dateStr, cx, curY);
           curY -= 50;
 
           // Rating stars + nickname line
           const parts = [];
           if (sessionData.rating) {
-            parts.push('★'.repeat(sessionData.rating));
+            parts.push('[[star]]'.repeat(sessionData.rating));
           }
           if (sessionData.nickname) {
             parts.push('@' + sessionData.nickname);
@@ -80,7 +111,7 @@ var userData = window.userData || (window.userData = { boards: [], sessions: [],
           if (parts.length > 0) {
             ctx.font = '24px -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.fillStyle = '#1a1a1a';
-            ctx.fillText(parts.join('  ·  '), cx, curY);
+            richText(ctx, parts.join('  ·  '), cx, curY);
             curY -= 50;
           }
 
@@ -88,17 +119,17 @@ var userData = window.userData || (window.userData = { boards: [], sessions: [],
           if (sessionData.meteo) {
             const m = sessionData.meteo;
             const condParts = [];
-            if (m.waveHeight != null) condParts.push(m.waveHeight + 'm');
+            if (m.waveHeight != null) condParts.push('[[wave]] ' + m.waveHeight + ' m');
             if (m.windSpeed != null) {
               let windStr = m.windSpeed + ' km/h';
               if (m.windDirection) windStr += ' ' + m.windDirection;
-              condParts.push(windStr);
+              condParts.push('[[wind]] ' + windStr);
             }
-            if (m.wavePeriod != null) condParts.push(m.wavePeriod + 's');
+            if (m.wavePeriod != null) condParts.push('[[period]] ' + m.wavePeriod + ' s');
             if (condParts.length > 0) {
               ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
               ctx.fillStyle = '#56AB2F';
-              ctx.fillText(condParts.join('  ·  '), cx, curY);
+              richText(ctx, condParts.join('  ·  '), cx, curY);
               curY -= 55;
             }
           }
@@ -107,20 +138,20 @@ var userData = window.userData || (window.userData = { boards: [], sessions: [],
           if (sessionData.spotCity) {
             ctx.font = '28px -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.fillStyle = 'rgba(0,0,0,0.6)';
-            ctx.fillText(sessionData.spotCity, cx, curY);
+            richText(ctx, sessionData.spotCity, cx, curY);
             curY -= 45;
           }
 
           // Spot name
           ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, sans-serif';
           ctx.fillStyle = '#1a1a1a';
-          ctx.fillText(sessionData.spotName, cx, curY);
+          richText(ctx, sessionData.spotName, cx, curY);
           curY -= 55;
 
           // SurfAI logo text
           ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, sans-serif';
           ctx.fillStyle = '#3B82F6';
-          ctx.fillText('SurfAI', cx, curY);
+          richText(ctx, 'SurfAI', cx, curY);
 
           return canvas;
         }
@@ -195,14 +226,14 @@ var userData = window.userData || (window.userData = { boards: [], sessions: [],
           // Bottom line (SurfAI ou message)
           ctx.font = '22px -apple-system, BlinkMacSystemFont, sans-serif';
           ctx.fillStyle = 'rgba(0,0,0,0.5)';
-          ctx.fillText(bottomLine, cx, curY);
+          richText(ctx, bottomLine, cx, curY);
           curY -= 50;
 
           // Detail line
           if (detailLine) {
             ctx.font = '24px -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.fillStyle = '#1a1a1a';
-            ctx.fillText(detailLine, cx, curY);
+            richText(ctx, detailLine, cx, curY);
             curY -= 50;
           }
 
@@ -210,7 +241,7 @@ var userData = window.userData || (window.userData = { boards: [], sessions: [],
           if (data.meteo?.line) {
             ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.fillStyle = accent;
-            ctx.fillText(data.meteo.line, cx, curY);
+            richText(ctx, data.meteo.line, cx, curY);
             curY -= 55;
           }
 
@@ -218,7 +249,7 @@ var userData = window.userData || (window.userData = { boards: [], sessions: [],
           if (data.date) {
             ctx.font = '28px -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.fillStyle = 'rgba(0,0,0,0.6)';
-            ctx.fillText(data.date, cx, curY);
+            richText(ctx, data.date, cx, curY);
             curY -= 45;
           }
 
@@ -226,20 +257,20 @@ var userData = window.userData || (window.userData = { boards: [], sessions: [],
           if (data.spotCity) {
             ctx.font = '28px -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.fillStyle = 'rgba(0,0,0,0.6)';
-            ctx.fillText(data.spotCity, cx, curY);
+            richText(ctx, data.spotCity, cx, curY);
             curY -= 45;
           }
 
           // Title (board name)
           ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, sans-serif';
           ctx.fillStyle = '#1a1a1a';
-          ctx.fillText(data.spotName, cx, curY);
+          richText(ctx, data.spotName, cx, curY);
           curY -= 55;
 
           // Logo SurfAI en haut
           ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, sans-serif';
           ctx.fillStyle = 'rgba(0,0,0,0.3)';
-          ctx.fillText('SurfAI', cx, 40);
+          richText(ctx, 'SurfAI', cx, 40);
 
           return canvas;
         }

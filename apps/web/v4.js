@@ -76,6 +76,7 @@
     note: '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.500 6.500l4 4"/></svg>',
     target: '<svg viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 12h.010"/></svg>',
     spark: '<svg viewBox="0 0 24 24"><path d="M12 3v5M12 16v5M3 12h5M16 12h5M6 6l3 3M15 15l3 3M18 6l-3 3M9 15l-3 3"/></svg>',
+    repair: '<svg viewBox="0 0 24 24"><path d="M14.500 6.500a4 4 0 0 0 5 5L10 21a2.100 2.100 0 0 1-3-3l9.500-9.500a4 4 0 0 0-5-5l3 3z"/></svg>',
     // mode Travel
     school: '<svg viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5zM6 11.500V16c2 2 10 2 12 0v-4.500M22 9v5"/></svg>',
     shop: '<svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12.500H6zM9 8V6.500a3 3 0 0 1 6 0V8"/></svg>'

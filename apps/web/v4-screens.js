@@ -599,17 +599,17 @@
       var dims = [b.length_ft || b.size, b.type ? A.cap(String(b.type)) : ''].filter(Boolean).join(' · ');
       var shaperLine = [b.shaper, b.brand].filter(Boolean).join(' — ');
       var title = name, accent = '', detail = '', bottom = 'SurfAI';
-      if (mode === 'flex') { accent = sweet ? '🌊 ' + sweet : ''; detail = stats.count ? '📊 ' + stats.count + ' sessions' : ''; }
+      if (mode === 'flex') { accent = sweet ? '[[wave]] ' + sweet : ''; detail = stats.count ? '[[note]] ' + stats.count + ' sessions' : ''; }
       else if (mode === 'sell') {
         title = 'À VENDRE · ' + title; accent = extras.price ? extras.price + ' €' : '';
-        detail = [extras.location ? '📍 ' + extras.location : '', b.condition ? 'État : ' + b.condition : ''].filter(Boolean).join(' · ');
+        detail = [extras.location ? '[[pin]] ' + extras.location : '', b.condition ? 'État : ' + b.condition : ''].filter(Boolean).join(' · ');
         bottom = extras.message ? '"' + extras.message + '"' : 'SurfAI';
       } else {
-        title = '🔧 ' + title; accent = extras.description ? '"' + extras.description + '"' : '';
-        detail = extras.location ? '📍 ' + extras.location : '';
-        if (extras.urgency && extras.urgency !== 'tranquille') bottom = '⚡ ' + extras.urgency.toUpperCase();
+        title = '[[repair]] ' + title; accent = extras.description ? '"' + extras.description + '"' : '';
+        detail = extras.location ? '[[pin]] ' + extras.location : '';
+        if (extras.urgency && extras.urgency !== 'tranquille') bottom = extras.urgency.toUpperCase();
       }
-      var data = { spotName: title, spotCity: dims, date: shaperLine ? '🔨 ' + shaperLine : '', rating: null, nickname: '', meteo: accent ? { custom: true, line: accent } : null };
+      var data = { spotName: title, spotCity: dims, date: shaperLine ? shaperLine : '', rating: null, nickname: '', meteo: accent ? { custom: true, line: accent } : null };
       generateBoardShareCanvas(file, data, detail, bottom, mode).then(function (canvas) {
         showCard(box, canvas, { spotName: name, date: 'board' }, function () { box.classList.remove('show'); });
       }).catch(function () { $('sErr').className = 'msg'; $('sErr').textContent = 'Erreur lors de la génération de l\'image.'; });
