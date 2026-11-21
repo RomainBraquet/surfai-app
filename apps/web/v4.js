@@ -162,7 +162,7 @@
     if (c.waveHeight != null) bits.push('Vagues ' + fr(c.waveHeight) + ' m');
     if (c.waterTemp != null) bits.push('Eau ' + Math.round(c.waterTemp) + '°');
     if (c.tidePhase && c.tidePhase !== 'unknown') bits.push('Marée ' + tideWord(c.tidePhase).toLowerCase());
-    box.innerHTML = '<b>' + (best.h.hour === hour ? 'Maintenant' : 'À ' + best.h.hour + 'h') + ' à ' + esc(best.r.spot.name) + '</b>' + bits.map(function (b) { return '<span>' + esc(b) + '</span>'; }).join('');
+    box.innerHTML = '<b>' + (best.h.hour === hour ? 'Maintenant' : 'À ' + best.h.hour + 'h') + ' · ' + esc(best.r.spot.name) + '</b>' + bits.map(function (b) { return '<span>' + esc(b) + '</span>'; }).join('');
   }
   function renderHome() {
     renderNow();
@@ -307,7 +307,7 @@
       $('tWind').textContent = ws != null ? windWord(ws) : '';
       if (c.windDirection != null && facing != null) {
         var wr = rel(c.windDirection, facing), aw = Math.abs(wr);
-        var level = aw > 135 ? (ws >= 30 ? 'warn' : 'ok') : aw < 45 ? (ws < 10 ? 'warn' : 'bad') : (ws >= 20 ? 'bad' : 'warn');
+        var level = aw > 135 ? (ws >= 30 ? 'warn' : 'ok') : aw < 45 ? (ws < 10 ? 'warn' : 'bad') : (ws < 12 ? 'ok' : ws >= 20 ? 'bad' : 'warn');
         $('nWd').textContent = Math.round(c.windDirection) + '° ' + cardinal(c.windDirection);
         $('tWd').textContent = aw > 135 ? 'Dans le dos' : aw < 45 ? 'De face' : 'De côté, par la ' + (wr > 0 ? 'droite' : 'gauche');
         setArrow('aWd', wr, 0.5 + Math.min(ws || 0, 30) / 30 * 0.7, level);
@@ -404,6 +404,11 @@
       if (DEMO) { show(demoData()); return; }
       getPosition().then(function (pos) {
         state.position = pos;
+        if (pos) return pos;
+        return fetch(BACKEND + '/api/v1/favorites?userId=' + encodeURIComponent(userId)).then(function (r) { return r.json(); })
+          .then(function (j) { var f = (j.favorites || []).filter(function (x) { return x.lat != null; })[0]; return f ? { lat: Number(f.lat), lng: Number(f.lng) } : null; })
+          .catch(function () { return null; });
+      }).then(function (pos) {
         var url = BACKEND + '/api/v1/predictions/best-windows?userId=' + encodeURIComponent(userId) + '&days=' + DAYS +
           (pos ? '&lat=' + pos.lat.toFixed(3) + '&lng=' + pos.lng.toFixed(3) : '');
         return fetch(url).then(function (r) { return r.json(); });
