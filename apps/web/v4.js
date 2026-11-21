@@ -65,7 +65,7 @@
     down: '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
     star: '<svg viewBox="0 0 24 24"><path d="M12 3.500l2.600 5.400 5.900.800-4.300 4.100 1 5.900L12 16.900 6.800 19.700l1-5.900L3.500 9.700l5.900-.800z"/></svg>',
     arrowWind: '<svg viewBox="0 0 48 48"><path d="M24 42V9M10 22L24 8l14 14"/></svg>',
-    arrowSwell: '<svg viewBox="0 0 48 48"><path d="M2 20C9 9 17 7 24 7s15 2 22 13M5 31c6-9 12-11 19-11s13 2 19 11M9 42c5-8 9-10 15-10s10 2 15 10"/></svg>',
+    arrowSwell: '<svg viewBox="0 0 48 48"><path d="M7 17Q24 3 41 17M12 26Q24 15 36 26M24 45V33M19 38l5-6 5 6"/></svg>',
     // même famille de traits pour toutes les données : une donnée = une icône, partout
     air: '<svg viewBox="0 0 24 24"><path d="M12 14.5V5a2 2 0 0 0-4 0v9.500a4 4 0 1 0 4 0zM16 7h4M16 11h3"/></svg>',
     water: '<svg viewBox="0 0 24 24"><path d="M12 3.500s6 6.300 6 10.500a6 6 0 0 1-12 0c0-4.200 6-10.500 6-10.500z"/></svg>',
