@@ -66,7 +66,7 @@
           fore.innerHTML = list.map(function (w, k) {
             var v = A.verdict(w.score), c = w.conditions || {}, tags = [];
             if (c.waveHeight != null) tags.push(fr(c.waveHeight) + ' m');
-            if (c.wavePeriod != null) tags.push(Math.round(c.wavePeriod) + ' s');
+            if ((c.peakPeriod || c.wavePeriod) != null) tags.push(Math.round(c.peakPeriod || c.wavePeriod) + ' s');
             if (c.windSpeed != null) tags.push(Math.round(c.windSpeed) + ' km/h' + (c.windDirection != null ? ' ' + A.cardinal(c.windDirection) : ''));
             if ((c.windGust || 0) >= 25) tags.push('Rafales ' + Math.round(c.windGust));
             if (c.tidePhase && c.tidePhase !== 'unknown') tags.push('Marée ' + A.tideWord(c.tidePhase).toLowerCase());

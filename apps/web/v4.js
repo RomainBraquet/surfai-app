@@ -319,7 +319,7 @@
         $('aWd').style.visibility = '';
       } else { $('nWd').textContent = ''; $('tWd').textContent = ''; $('aWd').style.visibility = 'hidden'; }
       // période et marée
-      var per = c.swellPeriod != null ? c.swellPeriod : c.wavePeriod;
+      var per = c.peakPeriod != null ? c.peakPeriod : c.swellPeriod != null ? c.swellPeriod : c.wavePeriod;
       var choppy = c.windWaveHeight != null && c.waveHeight ? c.windWaveHeight / c.waveHeight >= 0.4 : false;
       $('nPer').innerHTML = per != null ? Math.round(per) + '<small>s</small>' : '';
       $('tPer').textContent = per == null ? '' : choppy ? 'Mer hachée par le vent' : per >= 10 ? 'Vagues bien formées' : per >= 7 ? 'Vagues correctes' : 'Vagues brouillonnes';
