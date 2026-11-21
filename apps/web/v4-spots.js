@@ -68,6 +68,7 @@
             if (c.waveHeight != null) tags.push(fr(c.waveHeight) + ' m');
             if (c.wavePeriod != null) tags.push(Math.round(c.wavePeriod) + ' s');
             if (c.windSpeed != null) tags.push(Math.round(c.windSpeed) + ' km/h' + (c.windDirection != null ? ' ' + A.cardinal(c.windDirection) : ''));
+            if ((c.windGust || 0) >= 25) tags.push('Rafales ' + Math.round(c.windGust));
             if (c.tidePhase && c.tidePhase !== 'unknown') tags.push('Marée ' + A.tideWord(c.tidePhase).toLowerCase());
             if (c.waterTemp != null) tags.push('Eau ' + Math.round(c.waterTemp) + '°C');
             var skip = w.reminder && w.reminder.text;

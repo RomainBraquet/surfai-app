@@ -24,8 +24,9 @@
   var CARD = ['Nord', 'Nord-est', 'Est', 'Sud-est', 'Sud', 'Sud-ouest', 'Ouest', 'Nord-ouest'];
   function cardinal(deg) { return CARD[Math.round((((deg % 360) + 360) % 360) / 45) % 8]; }
 
-  function verdict(score) {
-    if (score >= 8) return { cls: 'top', label: 'À ne pas rater' };
+  function verdict(score, storm) {
+    if (storm) return { cls: 'none', label: 'Tempête' };
+    if (score >= 8.5) return { cls: 'top', label: 'À ne pas rater' };
     if (score >= 6.5) return { cls: 'good', label: 'Bonne session' };
     if (score >= 4) return { cls: 'mid', label: 'Moyen' };
     return { cls: 'none', label: 'Pas terrible' };
@@ -85,8 +86,10 @@
     return days;
   }
   function whyNothing(results, iso) {
-    var small = 0, big = 0, n = 0;
-    results.forEach(function (r) { hoursOf(r, iso).forEach(function (h) { n++; if (h.sizeIssue === 'too_small') small++; if (h.sizeIssue === 'too_big') big++; }); });
+    var small = 0, big = 0, storm = 0, gusty = 0, n = 0;
+    results.forEach(function (r) { hoursOf(r, iso).forEach(function (h) { n++; if (h.sizeIssue === 'too_small') small++; if (h.sizeIssue === 'too_big') big++; if (h.storm) storm++; if (((h.conditions || {}).windGust || 0) >= 40) gusty++; }); });
+    if (n && storm / n > 0.25) return 'Tempête : trop de vent et une mer démontée. On reste à terre.';
+    if (n && gusty / n > 0.5) return 'Trop de vent toute la journée, avec de fortes rafales.';
     if (n && small / n > 0.5) return 'Trop petit toute la journée, sur tous tes spots.';
     if (n && big / n > 0.5) return 'Trop gros toute la journée, sur tous tes spots.';
     return 'Pas de bon créneau ce jour-là, sur aucun de tes spots.';
@@ -119,13 +122,13 @@
     }
     return '<article class="day ' + v.cls + (open ? ' open' : '') + '" data-i="' + day.index + '">' +
       '<div class="row"><div class="name">' + name + small + '</div><div class="verdict">' + v.label + '</div></div>' +
-      '<div class="sub"><span class="pill">' + esc(r.spot.name) + '</span><span class="pill">' + esc(slotText(w)) + '</span>' + (r.discovery ? '<span class="pill new">À découvrir</span>' : '') + '</div>' +
+      '<div class="sub"><span class="pill">' + esc(r.spot.name) + '</span><span class="pill">' + esc(slotText(w)) + '</span>' + (r.discovery ? '<span class="pill new">À découvrir</span>' : '') + (w.confidence === 'low' ? '<span class="pill">À confirmer</span>' : '') + '</div>' +
       '<div class="more"><div><div class="inner">' +
         '<div class="big"><div><div class="spot">' + esc(r.spot.name) + '</div><div class="slot">' + esc(moment(day.iso, day.index, w)) + '</div></div><div class="score">' + fr(w.score) + '<span>/10</span></div></div>' +
         miniBars(r, day.iso, w) +
         '<div class="facts">' +
           '<div class="fact">' + ICON.wave + '<b>' + (c.waveHeight != null ? fr(c.waveHeight) + ' m' : '') + '</b></div>' +
-          '<div class="fact">' + ICON.wind + '<b>' + (c.windSpeed != null ? windWord(c.windSpeed) : '') + '</b></div>' +
+          '<div class="fact">' + ICON.wind + '<b>' + ((c.windGust || 0) >= 30 ? 'Rafales ' + Math.round(c.windGust) : c.windSpeed != null ? windWord(c.windSpeed) : '') + '</b></div>' +
           '<div class="fact">' + ICON.tide + '<b>' + tideWord(c.tidePhase) + '</b></div>' +
         '</div>' + memory +
         '<div class="go" data-detail="' + day.index + '"><span>Voir le spot</span><span class="arrow">' + ICON.go + '</span></div>' +
@@ -283,11 +286,11 @@
       var l = document.createElement('span'); l.textContent = h.hour + 'h'; labels.appendChild(l);
     });
     function pick(i) {
-      var h = hs[i], c = h.conditions || {}, v = verdict(h.score);
+      var h = hs[i], c = h.conditions || {}, v = verdict(h.score, h.storm);
       [].forEach.call(bars.children, function (x, k) { x.classList.toggle('sel', k === i); });
       [].forEach.call(labels.children, function (x, k) { x.classList.toggle('sel', k === i); });
       $('atHour').textContent = h.hour + 'h';
-      $('atVerdict').textContent = v.label + ' · ' + fr(h.score);
+      $('atVerdict').textContent = v.label + ' · ' + fr(h.score) + (h.confidence === 'low' ? ' · à confirmer' : '');
       // houle
       $('nWave').innerHTML = c.waveHeight != null ? fr(c.waveHeight) + '<small>m</small>' : '';
       $('tWave').textContent = h.sizeIssue === 'too_small' ? 'Trop petit pour toi' : h.sizeIssue === 'too_big' ? 'Trop gros pour toi' : 'À ta taille';
@@ -304,18 +307,22 @@
       // vent
       var ws = c.windSpeed;
       $('nWind').innerHTML = ws != null ? Math.round(ws) + '<small>km/h</small>' : '';
-      $('tWind').textContent = ws != null ? windWord(ws) : '';
+      var gust = c.windGust;
+      $('tWind').textContent = ws != null ? windWord(ws) + (gust != null && gust >= 25 ? ' · rafales ' + Math.round(gust) : '') : '';
       if (c.windDirection != null && facing != null) {
         var wr = rel(c.windDirection, facing), aw = Math.abs(wr);
         var level = aw > 135 ? (ws >= 30 ? 'warn' : 'ok') : aw < 45 ? (ws < 10 ? 'warn' : 'bad') : (ws < 12 ? 'ok' : ws >= 20 ? 'bad' : 'warn');
+        if (gust != null && gust >= 40) level = 'bad'; else if (gust != null && gust >= 30 && level === 'ok') level = 'warn';
         $('nWd').textContent = Math.round(c.windDirection) + '° ' + cardinal(c.windDirection);
         $('tWd').textContent = aw > 135 ? 'Dans le dos' : aw < 45 ? 'De face' : 'De côté, par la ' + (wr > 0 ? 'droite' : 'gauche');
-        setArrow('aWd', wr, 0.5 + Math.min(ws || 0, 30) / 30 * 0.7, level);
+        setArrow('aWd', wr, 0.5 + Math.min(Math.max(ws || 0, (gust || 0) * 0.7), 30) / 30 * 0.7, level);
         $('aWd').style.visibility = '';
       } else { $('nWd').textContent = ''; $('tWd').textContent = ''; $('aWd').style.visibility = 'hidden'; }
       // période et marée
-      $('nPer').innerHTML = c.wavePeriod != null ? Math.round(c.wavePeriod) + '<small>s</small>' : '';
-      $('tPer').textContent = c.wavePeriod == null ? '' : c.wavePeriod >= 10 ? 'Vagues bien formées' : c.wavePeriod >= 7 ? 'Vagues correctes' : 'Vagues brouillonnes';
+      var per = c.swellPeriod != null ? c.swellPeriod : c.wavePeriod;
+      var choppy = c.windWaveHeight != null && c.waveHeight ? c.windWaveHeight / c.waveHeight >= 0.4 : false;
+      $('nPer').innerHTML = per != null ? Math.round(per) + '<small>s</small>' : '';
+      $('tPer').textContent = per == null ? '' : choppy ? 'Mer hachée par le vent' : per >= 10 ? 'Vagues bien formées' : per >= 7 ? 'Vagues correctes' : 'Vagues brouillonnes';
       $('nTide').textContent = tideWord(c.tidePhase);
       $('tTide').textContent = [tideLevelWord(c.tideLevel), highAt != null ? 'haute ~' + highAt + 'h' : '', lowAt != null ? 'basse ~' + lowAt + 'h' : ''].filter(Boolean).join(' · ');
       $('nAir').innerHTML = c.airTemp != null ? Math.round(c.airTemp) + '<small>°C</small>' : '';
