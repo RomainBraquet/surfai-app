@@ -150,6 +150,10 @@
     }); });
   }
   // conditions du moment, lues dans les prévisions déjà chargées (aucun appel de plus au fournisseur)
+  var NOW_ICON = {
+    air: '<svg viewBox="0 0 24 24"><path d="M12 14.5V5a2 2 0 0 0-4 0v9.500a4 4 0 1 0 4 0zM16 7h4M16 11h3"/></svg>',
+    water: '<svg viewBox="0 0 24 24"><path d="M12 3.500s6 6.300 6 10.500a6 6 0 0 1-12 0c0-4.200 6-10.500 6-10.500z"/></svg>'
+  };
   function renderNow() {
     var box = $('now'); if (!box) return;
     var today = localISO(new Date()), hour = new Date().getHours(), best = null;
@@ -158,14 +162,27 @@
       var hs = hoursOf(r, today).filter(function (h) { return h.hour >= hour; });
       if (hs.length) best = { r: r, h: hs[0] };
     });
-    if (!best) { box.innerHTML = ''; return; }
-    var c = best.h.conditions || {}, bits = [];
-    if (c.airTemp != null) bits.push('Air ' + Math.round(c.airTemp) + '°');
-    if (c.windSpeed != null) bits.push('Vent ' + Math.round(c.windSpeed) + ' km/h' + (c.windDirection != null ? ' ' + cardinal(c.windDirection).toLowerCase() : ''));
-    if (c.waveHeight != null) bits.push('Vagues ' + fr(c.waveHeight) + ' m');
-    if (c.waterTemp != null) bits.push('Eau ' + Math.round(c.waterTemp) + '°');
-    if (c.tidePhase && c.tidePhase !== 'unknown') bits.push('Marée ' + tideWord(c.tidePhase).toLowerCase());
-    box.innerHTML = '<b>' + (best.h.hour === hour ? 'Maintenant' : 'À ' + best.h.hour + 'h') + ' · ' + esc(best.r.spot.name) + '</b>' + bits.map(function (b) { return '<span>' + esc(b) + '</span>'; }).join('');
+    var html = '<div class="mine" id="nowMine"></div>';
+    if (best) {
+      var c = best.h.conditions || {};
+      var tile = function (icon, val, lbl) { return '<div><b>' + (val == null ? '–' : esc(val)) + '</b><i>' + icon + lbl + '</i></div>'; };
+      html += '<div class="grid5">' +
+        tile(NOW_ICON.air, c.airTemp != null ? Math.round(c.airTemp) + '°' : null, 'air') +
+        tile(ICON.wind, c.windSpeed != null ? Math.round(c.windSpeed) + (c.windDirection != null ? ' ' + cardinal(c.windDirection) : '') : null, 'vent') +
+        tile(ICON.wave, c.waveHeight != null ? fr(c.waveHeight) + ' m' : null, 'vagues') +
+        tile(NOW_ICON.water, c.waterTemp != null ? Math.round(c.waterTemp) + '°' : null, 'eau') +
+        tile(ICON.tide, c.tidePhase && c.tidePhase !== 'unknown' ? tideWord(c.tidePhase) : null, 'marée') +
+        '</div><div class="loc">' + (best.h.hour === hour ? 'Maintenant' : 'À ' + best.h.hour + 'h') + ' · ' + esc(best.r.spot.name) + '</div>';
+    }
+    box.innerHTML = html;
+    if (!state.userId && !DEMO) return;
+    loadSessions().then(function (list) {
+      var el = $('nowMine'); if (!el || !list || !list.length) return;
+      var sorted = list.slice().sort(function (x, y) { return String(y.date).localeCompare(String(x.date)); }), last = sorted[0];
+      var d = last.date ? new Date(last.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '';
+      var sp = (last.spots && last.spots.name) || last.spot_name || '';
+      el.textContent = list.length + ' session' + (list.length > 1 ? 's' : '') + (d ? ' · dernière le ' + d : '') + (sp ? ' · ' + sp : '');
+    });
   }
   function renderHome() {
     renderNow();
