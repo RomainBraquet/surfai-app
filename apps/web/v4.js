@@ -326,7 +326,8 @@
       $('tPer').textContent = per == null ? '' : choppy ? 'Mer hachée par le vent' : per >= 10 ? 'Vagues bien formées' : per >= 7 ? 'Vagues correctes' : 'Vagues brouillonnes';
       var pw = c.wavePower;
       $('nPow').innerHTML = pw != null ? fr(pw, pw < 10 ? 1 : 0) + '<small>kW/m</small>' : '';
-      $('tPow').textContent = pw == null ? '' : pw < 5 ? 'Molle' : pw < 15 ? 'Correcte' : pw < 30 ? 'Puissante' : pw < 60 ? 'Très puissante' : 'Énorme';
+      var pState = { weak: 'Molle, tu risques de ramer', fair: 'Correcte', good: 'Bonne pour toi', strong: 'Trop puissante pour toi' }[h.powerState];
+      $('tPow').textContent = pw == null ? '' : pState || (pw < 5 ? 'Molle' : pw < 15 ? 'Correcte' : pw < 30 ? 'Puissante' : pw < 60 ? 'Très puissante' : 'Énorme');
       $('nTide').textContent = tideWord(c.tidePhase);
       $('tTide').textContent = [tideLevelWord(c.tideLevel), highAt != null ? 'haute ~' + highAt + 'h' : '', lowAt != null ? 'basse ~' + lowAt + 'h' : ''].filter(Boolean).join(' · ');
       $('nAir').innerHTML = c.airTemp != null ? Math.round(c.airTemp) + '<small>°C</small>' : '';
